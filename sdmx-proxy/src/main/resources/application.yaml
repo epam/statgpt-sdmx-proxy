@@ -1,0 +1,105 @@
+spring:
+  application:
+    name: sdmx-proxy
+  mvc:
+    async:
+      request-timeout: 600000
+server:
+  port: 8050
+
+sdmxproxy:
+  feign:
+    http:
+      client:
+        # Connection timeout in milliseconds
+        connectTimeout: 10000
+        # Read timeout in milliseconds
+        readTimeout: 240000
+        # Write timeout in milliseconds
+        writeTimeout: 30000
+        ### CONNECTION POOL CONFIGURATION
+        # Maximum idle connections shared across all registries
+        # Increase if you have many registries or high concurrent load
+        maxIdleConnections: 50
+        keepAliveDuration: 300000
+        connectionPoolingEnabled: true
+  registry:
+    config:
+      source:
+        type: CLASSPATH_RESOURCE
+    resilience:
+      # Default connection timeout in milliseconds
+      defaultConnectionTimeout: 30000
+      # Default read timeout in milliseconds
+      defaultReadTimeout: 240000
+      # Default retry configuration
+      defaultRetry:
+        maxAttempts: 5
+        initialIntervalMillis: 500
+        multiplier: 2.0
+        maxIntervalMillis: 2000
+      # Default circuit breaker configuration
+      defaultCircuitBreaker:
+        failureRateThreshold: 50.0
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: 60000
+        slidingWindowSize: 10
+      # Default rate limiting enabled flag
+      # If false, rate limiting is disabled unless explicitly enabled per registry
+      defaultRateLimitingEnabled: false
+      # Default rate limit configuration (used when rate limiting is enabled)
+      defaultRateLimit:
+        limitForPeriod: 100
+        limitRefreshPeriod: 60000
+  cache:
+    mode: ${CACHE_MODE:LOCAL}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:local_password}
+      ssl: false
+    ttl:
+      parsedStructures:
+        duration: PT24H
+        jitter: PT1H
+      readyResponses:
+        duration: PT6H
+        jitter: PT30M
+
+# OpenTelemetry configuration
+otel:
+  sdk:
+    disabled: ${OTEL_SDK_DISABLED:true}
+  service:
+    name: statgpt-sdmx-proxy
+  exporter:
+    otlp:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+      protocol: ${OTEL_EXPORTER_OTLP_PROTOCOL:grpc}
+      traces:
+        endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+        protocol: ${OTEL_EXPORTER_OTLP_PROTOCOL:grpc}
+      metrics:
+        endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+        protocol: ${OTEL_EXPORTER_OTLP_PROTOCOL:grpc}
+      logs:
+        endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+        protocol: ${OTEL_EXPORTER_OTLP_PROTOCOL:grpc}
+  logs:
+    exporter: ${OTEL_LOGS_EXPORTER:otlp}
+  traces:
+    exporter: ${OTEL_TRACES_EXPORTER:otlp}
+  metrics:
+    exporter: ${OTEL_METRICS_EXPORTER:otlp}
+
+# SpringDoc OpenAPI/Swagger configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json

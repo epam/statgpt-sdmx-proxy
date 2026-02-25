@@ -1,0 +1,63 @@
+{
+  "data": {
+    "dataflows": [
+      {
+        "annotations": [
+          {
+            "id": "@IMF",
+            "title": "H_WEO_PROJECTIONS",
+            "type": "DATAFLOW_PRESENTATION",
+            "value": "hierarchy=IMF.RES:H_WEO_PROJECTIONS(1.2.0);default_values=INDICATOR=NGDP_RPCH",
+            "text": "presentation_title=WEO Projections; presentation_description=Real GDP growth (NGDP_RPCH) projections for aggregates and key economies",
+            "texts": {
+              "en": "presentation_title=WEO Projections; presentation_description=Real GDP growth (NGDP_RPCH) projections for aggregates and key economies"
+            }
+          },
+          {
+            "id": "dataEngineSettings",
+            "value": "{\"historySettingType\":\"FULL_HISTORY\"}"
+          },
+          {
+            "id": "origin",
+            "value": "INTEGRATION"
+          },
+          {
+            "id": "DataEngine",
+            "title": "timeseries_v2"
+          },
+          {
+            "id": "isFinal"
+          },
+          {
+            "id": "lastUpdatedAt",
+            "value": "2025-10-08T18:00:33.590181Z"
+          }
+        ],
+        "id": "WEO",
+        "name": "World Economic Outlook (WEO)",
+        "names": {
+          "en": "World Economic Outlook (WEO)"
+        },
+        "description": "The World Economic Outlook (WEO) database is created during the biannual WEO exercise, which begins in January and June of each year and results in the April and September/October WEO publication. Selected series from the publication are available in a database format. ",
+        "descriptions": {
+          "en": "The World Economic Outlook (WEO) database is created during the biannual WEO exercise, which begins in January and June of each year and results in the April and September/October WEO publication. Selected series from the publication are available in a database format. "
+        },
+        "version": "9.0.0",
+        "agencyID": "IMF.RES",
+        "structure": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=IMF.RES:DSD_WEO(9.0+.0)"
+      }
+    ]
+  },
+  "meta": {
+    "schema": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/master/metadata-message/tools/schemas/2.0.0/sdmx-json-metadata-schema.json",
+    "id": "IDREF4335",
+    "test": false,
+    "prepared": "2026-02-20T11:22:28.554965923Z",
+    "contentLanguages": [
+      "en"
+    ],
+    "sender": {
+      "id": "unknown"
+    }
+  }
+}
