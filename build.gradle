@@ -1,0 +1,17 @@
+// Root build.gradle - shared configuration for all subprojects
+
+var mavenProxy = findProperty('MAVEN_PROXY_CONFIG') ?: System.getenv('MAVEN_PROXY_CONFIG') ?: "Deltix"
+
+allprojects {
+    apply from: "$rootDir/gradle/Common.gradle"
+    apply from: "$rootDir/gradle/${mavenProxy}.gradle"
+}
+
+ext {
+    vendor = 'EPAM Systems, Inc.'
+    publisherUser = findProperty('ARTIFACTORY_USER') ?: System.getenv('ARTIFACTORY_USER') ?: "FakeUser"
+    publisherPassword = findProperty('ARTIFACTORY_PASS') ?: System.getenv('ARTIFACTORY_PASS') ?: "FakePassword"
+    archivesBaseName = 'epam' + project.path.replaceAll(':', '-')
+}
+
+defaultTasks 'clean', 'build'

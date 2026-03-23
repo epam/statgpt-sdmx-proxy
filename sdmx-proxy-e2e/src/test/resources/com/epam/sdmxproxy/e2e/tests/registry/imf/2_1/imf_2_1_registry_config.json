@@ -1,0 +1,67 @@
+{
+  "configs": [
+    {
+      "name": "IMF",
+      "description": "International Monetary Fund",
+      "supportedAgencies": [
+        "IMF",
+        "IMF.STA",
+        "IMF.FAD",
+        "IMF.RES"
+      ],
+      "versions": {
+        "SDMX_2_1": {
+          "sdmxVersion": "SDMX_2_1",
+          "structureEndpointConfig": {
+            "url": "https://api.imf.org/external/sdmx/2.1/",
+            "supportedFormats": [
+              "XML_2_1"
+            ],
+            "defaultFormat": "XML_2_1",
+            "bypassEnabled": false,
+            "supportedStructures": [
+              "datastructure",
+              "conceptscheme",
+              "codelist",
+              "dataflow"
+            ]
+          },
+          "dataEndpointConfig": {
+            "url": "https://api.imf.org/external/sdmx/2.1/data/",
+            "supportedFormats": [
+              "XML_STRUCTURE_SPECIFIC_2_1"
+            ],
+            "defaultFormat": "XML_STRUCTURE_SPECIFIC_2_1",
+            "bypassEnabled": false
+          },
+          "availabilityEndpointConfig": {
+            "url": "https://api.imf.org/external/sdmx/2.1/",
+            "supportedFormats": [
+              "XML_2_1"
+            ],
+            "defaultFormat": "XML_2_1",
+            "bypassEnabled": false,
+            "availabilityEnabled": true
+          },
+          "resilienceConfig": {
+            "connectionTimeout": 45000,
+            "readTimeout": 60000,
+            "circuitBreaker": {
+              "failureRateThreshold": 40.0,
+              "minimumNumberOfCalls": 5,
+              "waitDurationInOpenState": 120000,
+              "slidingWindowSize": 20
+            },
+            "retry": {
+              "maxAttempts": 3,
+              "initialIntervalMillis": 1000,
+              "multiplier": 2.0,
+              "maxIntervalMillis": 4000
+            }
+          }
+        }
+      }
+    }
+  ]
+}
+

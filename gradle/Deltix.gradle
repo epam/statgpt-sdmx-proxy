@@ -1,0 +1,23 @@
+apply from: "$rootDir/gradle/Common.gradle"
+
+gradle.beforeProject {
+    if (!proxyRepository)
+        ant.fail('ERROR: Maven repository URL is not specified. Define "proxyRepository" variable. Note: ensure that you have applied "Common.gradle"')
+    else if (!repoUser)
+        ant.fail('ERROR: Repository user property ("repoUser") to access ' + proxyRepository + ' is NOT defined')
+    else if (findProperty('NEXUS_PASS') == null && System.getenv('NEXUS_PASS') == null)
+        ant.fail('ERROR: Repository password property ("repoPassword") to access ' + proxyRepository + ' is NOT defined')
+}
+
+repositories.ext.mavenDeltixProxy = { name ->
+    repositories.maven {
+        credentials {
+            username repoUser
+            password repoPassword
+        }
+        authentication {
+            digest(BasicAuthentication)
+        }
+        url proxyRepository + "/" + name
+    }
+}

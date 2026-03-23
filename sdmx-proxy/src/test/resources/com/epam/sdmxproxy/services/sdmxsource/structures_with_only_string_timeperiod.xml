@@ -1,0 +1,684 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<message:Structure xmlns:message="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+                   xmlns:structure="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure"
+                   xmlns:common="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns:xml="http://www.w3.org/XML/1998/namespace"
+                   xsi:schemaLocation="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message ../../schemas/SDMXMessage.xsd">
+    <message:Header>
+        <message:ID>IDREF3668</message:ID>
+        <message:Test>false</message:Test>
+        <message:Prepared>2026-01-12T14:29:30.792908424Z</message:Prepared>
+        <message:Sender id="unknown"/>
+    </message:Header>
+    <message:Structures>
+        <structure:DataStructures>
+            <structure:DataStructure
+                    urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(6.1.0)"
+                    agencyID="IMF" id="SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID" version="6.1.0"
+                    isExternalReference="false">
+                <common:Annotations>
+                    <common:Annotation id="origin">
+                        <common:AnnotationValue>INTEGRATION</common:AnnotationValue>
+                    </common:Annotation>
+                    <common:Annotation id="isFinal"/>
+                    <common:Annotation id="lastUpdatedAt">
+                        <common:AnnotationValue>2025-07-12T20:42:16.871347Z</common:AnnotationValue>
+                    </common:Annotation>
+                </common:Annotations>
+                <common:Name xml:lang="en">Surveys: Campaign Answers</common:Name>
+                <common:Description xml:lang="en">DSD for Responses and Drafts datasets.</common:Description>
+                <structure:DataStructureComponents>
+                    <structure:DimensionList id="DimensionDescriptor">
+                        <structure:Dimension id="FREQ"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(6.1.0).FREQ"
+                                             position="0">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).FREQ
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="SUBJECT_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(6.1.0).SUBJECT_ID"
+                                             position="1">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IMF:IMF_CL_COUNTRY_1_5_1_SUBJECT_ID_SCHEME(1.0.0).SUBJECT_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="ANSWER_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(6.1.0).ANSWER_ID"
+                                             position="2">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.0+.0).ANSWER_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:TimeDimension id="TIME_PERIOD"
+                                                 urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(6.1.0).TIME_PERIOD">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).TIME_PERIOD
+                            </structure:ConceptIdentity>
+                            <structure:LocalRepresentation>
+                                <structure:TextFormat textType="String"/>
+                            </structure:LocalRepresentation>
+                        </structure:TimeDimension>
+                    </structure:DimensionList>
+                    <structure:AttributeList id="AttributeDescriptor">
+                        <structure:Attribute id="ANSWER_METADATA"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(6.1.0).ANSWER_METADATA"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.0+.0).ANSWER_METADATA
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                        <structure:Attribute id="FILLING_START_TIMESTAMP"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(6.1.0).FILLING_START_TIMESTAMP"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.6+.0).FILLING_START_TIMESTAMP
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                        <structure:Attribute id="FILLING_FINISH_TIMESTAMP"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(6.1.0).FILLING_FINISH_TIMESTAMP"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.6+.0).FILLING_FINISH_TIMESTAMP
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                        <structure:Attribute id="SURVEY_FILLING_DURATION"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(6.1.0).SURVEY_FILLING_DURATION"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.6+.0).SURVEY_FILLING_DURATION
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                        <structure:Attribute id="FILLING_EVENT_LIST"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(6.1.0).FILLING_EVENT_LIST"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.6+.0).FILLING_EVENT_LIST
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                    </structure:AttributeList>
+                    <structure:MeasureList id="MeasureDescriptor">
+                        <structure:Measure id="ANSWER_DATA"
+                                           urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(6.1.0).ANSWER_DATA">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.0+.0).ANSWER_DATA
+                            </structure:ConceptIdentity>
+                        </structure:Measure>
+                    </structure:MeasureList>
+                </structure:DataStructureComponents>
+            </structure:DataStructure>
+            <structure:DataStructure
+                    urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=IMF:SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.2.0)"
+                    agencyID="IMF" id="SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID"
+                    version="1.2.0" isExternalReference="false">
+                <common:Annotations>
+                    <common:Annotation id="origin">
+                        <common:AnnotationValue>INTEGRATION</common:AnnotationValue>
+                    </common:Annotation>
+                    <common:Annotation id="isFinal"/>
+                    <common:Annotation id="lastUpdatedAt">
+                        <common:AnnotationValue>2025-07-12T20:42:16.961040Z</common:AnnotationValue>
+                    </common:Annotation>
+                </common:Annotations>
+                <common:Name xml:lang="en">Surveys: subject survey statuses</common:Name>
+                <structure:DataStructureComponents>
+                    <structure:DimensionList id="DimensionDescriptor">
+                        <structure:Dimension id="FREQ"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.2.0).FREQ"
+                                             position="0">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).FREQ
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="SUBJECT_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.2.0).SUBJECT_ID"
+                                             position="1">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IMF:IMF_CL_COUNTRY_1_5_1_SUBJECT_ID_SCHEME(1.0.0).SUBJECT_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="ANSWER_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.2.0).ANSWER_ID"
+                                             position="2">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.0+.0).ANSWER_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="SURVEY_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.2.0).SURVEY_ID"
+                                             position="3">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.0+.0).SURVEY_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:TimeDimension id="TIME_PERIOD"
+                                                 urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=IMF:SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.2.0).TIME_PERIOD">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).TIME_PERIOD
+                            </structure:ConceptIdentity>
+                            <structure:LocalRepresentation>
+                                <structure:TextFormat textType="String"/>
+                            </structure:LocalRepresentation>
+                        </structure:TimeDimension>
+                    </structure:DimensionList>
+                    <structure:AttributeList id="AttributeDescriptor"/>
+                    <structure:MeasureList id="MeasureDescriptor">
+                        <structure:Measure id="SURVEY_STATUS"
+                                           urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=IMF:SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.2.0).SURVEY_STATUS">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.4+.0).SURVEY_STATUS
+                            </structure:ConceptIdentity>
+                        </structure:Measure>
+                    </structure:MeasureList>
+                </structure:DataStructureComponents>
+            </structure:DataStructure>
+            <structure:DataStructure
+                    urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.1.0)"
+                    agencyID="IMF" id="SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID" version="1.1.0"
+                    isExternalReference="false">
+                <common:Annotations>
+                    <common:Annotation id="origin">
+                        <common:AnnotationValue>INTEGRATION</common:AnnotationValue>
+                    </common:Annotation>
+                    <common:Annotation id="isFinal"/>
+                    <common:Annotation id="lastUpdatedAt">
+                        <common:AnnotationValue>2025-07-12T20:42:16.941331Z</common:AnnotationValue>
+                    </common:Annotation>
+                </common:Annotations>
+                <common:Name xml:lang="en">Surveys: subject contacts</common:Name>
+                <structure:DataStructureComponents>
+                    <structure:DimensionList id="DimensionDescriptor">
+                        <structure:Dimension id="FREQ"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.1.0).FREQ"
+                                             position="0">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).FREQ
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="SUBJECT_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.1.0).SUBJECT_ID"
+                                             position="1">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IMF:IMF_CL_COUNTRY_1_5_1_SUBJECT_ID_SCHEME(1.0.0).SUBJECT_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="CONTACT_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.1.0).CONTACT_ID"
+                                             position="2">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).CONTACT_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="CONTACT_TYPE"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.1.0).CONTACT_TYPE"
+                                             position="3">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).CONTACT_TYPE
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:TimeDimension id="TIME_PERIOD"
+                                                 urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.1.0).TIME_PERIOD">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).TIME_PERIOD
+                            </structure:ConceptIdentity>
+                            <structure:LocalRepresentation>
+                                <structure:TextFormat textType="String"/>
+                            </structure:LocalRepresentation>
+                        </structure:TimeDimension>
+                    </structure:DimensionList>
+                    <structure:AttributeList id="AttributeDescriptor">
+                        <structure:Attribute id="CONTACT_VALUE"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.1.0).CONTACT_VALUE"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).CONTACT_VALUE
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                    </structure:AttributeList>
+                    <structure:MeasureList id="MeasureDescriptor">
+                        <structure:Measure id="OBS_VALUE"
+                                           urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(1.1.0).OBS_VALUE">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).OBS_VALUE
+                            </structure:ConceptIdentity>
+                        </structure:Measure>
+                    </structure:MeasureList>
+                </structure:DataStructureComponents>
+            </structure:DataStructure>
+            <structure:DataStructure
+                    urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.1.0)"
+                    agencyID="IMF" id="SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID" version="1.1.0"
+                    isExternalReference="false">
+                <common:Annotations>
+                    <common:Annotation id="origin">
+                        <common:AnnotationValue>INTEGRATION</common:AnnotationValue>
+                    </common:Annotation>
+                    <common:Annotation id="isFinal"/>
+                    <common:Annotation id="lastUpdatedAt">
+                        <common:AnnotationValue>2025-05-11T18:43:38.443270Z</common:AnnotationValue>
+                    </common:Annotation>
+                </common:Annotations>
+                <common:Name xml:lang="en">Surveys: subject contacts</common:Name>
+                <structure:DataStructureComponents>
+                    <structure:DimensionList id="DimensionDescriptor">
+                        <structure:Dimension id="FREQ"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.1.0).FREQ"
+                                             position="0">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).FREQ
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="SUBJECT_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.1.0).SUBJECT_ID"
+                                             position="1">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IMF:IMF_CL_COUNTRY_1_5_0_SUBJECT_ID_SCHEME(1.0.0).SUBJECT_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="CONTACT_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.1.0).CONTACT_ID"
+                                             position="2">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).CONTACT_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="CONTACT_TYPE"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.1.0).CONTACT_TYPE"
+                                             position="3">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).CONTACT_TYPE
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:TimeDimension id="TIME_PERIOD"
+                                                 urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.1.0).TIME_PERIOD">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).TIME_PERIOD
+                            </structure:ConceptIdentity>
+                            <structure:LocalRepresentation>
+                                <structure:TextFormat textType="String"/>
+                            </structure:LocalRepresentation>
+                        </structure:TimeDimension>
+                    </structure:DimensionList>
+                    <structure:AttributeList id="AttributeDescriptor">
+                        <structure:Attribute id="CONTACT_VALUE"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.1.0).CONTACT_VALUE"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).CONTACT_VALUE
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                    </structure:AttributeList>
+                    <structure:MeasureList id="MeasureDescriptor">
+                        <structure:Measure id="OBS_VALUE"
+                                           urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=IMF:SURVEYS_SUBJECT_CONTACTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.1.0).OBS_VALUE">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).OBS_VALUE
+                            </structure:ConceptIdentity>
+                        </structure:Measure>
+                    </structure:MeasureList>
+                </structure:DataStructureComponents>
+            </structure:DataStructure>
+            <structure:DataStructure
+                    urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=IMF:SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.2.0)"
+                    agencyID="IMF" id="SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID"
+                    version="1.2.0" isExternalReference="false">
+                <common:Annotations>
+                    <common:Annotation id="origin">
+                        <common:AnnotationValue>INTEGRATION</common:AnnotationValue>
+                    </common:Annotation>
+                    <common:Annotation id="isFinal"/>
+                    <common:Annotation id="lastUpdatedAt">
+                        <common:AnnotationValue>2025-05-11T18:43:38.514823Z</common:AnnotationValue>
+                    </common:Annotation>
+                </common:Annotations>
+                <common:Name xml:lang="en">Surveys: subject survey statuses</common:Name>
+                <structure:DataStructureComponents>
+                    <structure:DimensionList id="DimensionDescriptor">
+                        <structure:Dimension id="FREQ"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.2.0).FREQ"
+                                             position="0">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).FREQ
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="SUBJECT_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.2.0).SUBJECT_ID"
+                                             position="1">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IMF:IMF_CL_COUNTRY_1_5_0_SUBJECT_ID_SCHEME(1.0.0).SUBJECT_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="ANSWER_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.2.0).ANSWER_ID"
+                                             position="2">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.0+.0).ANSWER_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="SURVEY_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.2.0).SURVEY_ID"
+                                             position="3">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.0+.0).SURVEY_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:TimeDimension id="TIME_PERIOD"
+                                                 urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=IMF:SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.2.0).TIME_PERIOD">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).TIME_PERIOD
+                            </structure:ConceptIdentity>
+                            <structure:LocalRepresentation>
+                                <structure:TextFormat textType="String"/>
+                            </structure:LocalRepresentation>
+                        </structure:TimeDimension>
+                    </structure:DimensionList>
+                    <structure:AttributeList id="AttributeDescriptor"/>
+                    <structure:MeasureList id="MeasureDescriptor">
+                        <structure:Measure id="SURVEY_STATUS"
+                                           urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=IMF:SURVEYS_SUBJECT_SURVEY_STATUSES_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(1.2.0).SURVEY_STATUS">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.4+.0).SURVEY_STATUS
+                            </structure:ConceptIdentity>
+                        </structure:Measure>
+                    </structure:MeasureList>
+                </structure:DataStructureComponents>
+            </structure:DataStructure>
+            <structure:DataStructure
+                    urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(3.1.0)"
+                    agencyID="IMF" id="SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID" version="3.1.0"
+                    isExternalReference="false">
+                <common:Annotations>
+                    <common:Annotation id="origin">
+                        <common:AnnotationValue>INTEGRATION</common:AnnotationValue>
+                    </common:Annotation>
+                    <common:Annotation id="isFinal"/>
+                    <common:Annotation id="lastUpdatedAt">
+                        <common:AnnotationValue>2025-05-11T18:43:38.496923Z</common:AnnotationValue>
+                    </common:Annotation>
+                </common:Annotations>
+                <common:Name xml:lang="en">Surveys: Campaign Subjects</common:Name>
+                <common:Description xml:lang="en">DSD for Campaign Subjects dataset, that stores info on who an what
+                    about we are asking during survey campaign.
+                </common:Description>
+                <structure:DataStructureComponents>
+                    <structure:DimensionList id="DimensionDescriptor">
+                        <structure:Dimension id="FREQ"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(3.1.0).FREQ"
+                                             position="0">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).FREQ
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="SUBJECT_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(3.1.0).SUBJECT_ID"
+                                             position="1">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IMF:IMF_CL_COUNTRY_1_5_0_SUBJECT_ID_SCHEME(1.0.0).SUBJECT_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="SUBJECT_CODE"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(3.1.0).SUBJECT_CODE"
+                                             position="2">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).SUBJECT_CODE
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:TimeDimension id="TIME_PERIOD"
+                                                 urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(3.1.0).TIME_PERIOD">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).TIME_PERIOD
+                            </structure:ConceptIdentity>
+                            <structure:LocalRepresentation>
+                                <structure:TextFormat textType="String"/>
+                            </structure:LocalRepresentation>
+                        </structure:TimeDimension>
+                    </structure:DimensionList>
+                    <structure:AttributeList id="AttributeDescriptor">
+                        <structure:Attribute id="SUBJECT_NAME"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(3.1.0).SUBJECT_NAME"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).SUBJECT_NAME
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                        <structure:Attribute id="SUBJECT_DESCRIPTION"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(3.1.0).SUBJECT_DESCRIPTION"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).SUBJECT_DESCRIPTION
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                    </structure:AttributeList>
+                    <structure:MeasureList id="MeasureDescriptor">
+                        <structure:Measure id="SUBJECT_STATUS"
+                                           urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(3.1.0).SUBJECT_STATUS">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).SUBJECT_STATUS
+                            </structure:ConceptIdentity>
+                        </structure:Measure>
+                    </structure:MeasureList>
+                </structure:DataStructureComponents>
+            </structure:DataStructure>
+            <structure:DataStructure
+                    urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(6.1.0)"
+                    agencyID="IMF" id="SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID" version="6.1.0"
+                    isExternalReference="false">
+                <common:Annotations>
+                    <common:Annotation id="origin">
+                        <common:AnnotationValue>INTEGRATION</common:AnnotationValue>
+                    </common:Annotation>
+                    <common:Annotation id="isFinal"/>
+                    <common:Annotation id="lastUpdatedAt">
+                        <common:AnnotationValue>2025-05-11T18:43:38.471394Z</common:AnnotationValue>
+                    </common:Annotation>
+                </common:Annotations>
+                <common:Name xml:lang="en">Surveys: Campaign Answers</common:Name>
+                <common:Description xml:lang="en">DSD for Responses and Drafts datasets.</common:Description>
+                <structure:DataStructureComponents>
+                    <structure:DimensionList id="DimensionDescriptor">
+                        <structure:Dimension id="FREQ"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(6.1.0).FREQ"
+                                             position="0">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).FREQ
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="SUBJECT_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(6.1.0).SUBJECT_ID"
+                                             position="1">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IMF:IMF_CL_COUNTRY_1_5_0_SUBJECT_ID_SCHEME(1.0.0).SUBJECT_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="ANSWER_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(6.1.0).ANSWER_ID"
+                                             position="2">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.0+.0).ANSWER_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:TimeDimension id="TIME_PERIOD"
+                                                 urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(6.1.0).TIME_PERIOD">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).TIME_PERIOD
+                            </structure:ConceptIdentity>
+                            <structure:LocalRepresentation>
+                                <structure:TextFormat textType="String"/>
+                            </structure:LocalRepresentation>
+                        </structure:TimeDimension>
+                    </structure:DimensionList>
+                    <structure:AttributeList id="AttributeDescriptor">
+                        <structure:Attribute id="ANSWER_METADATA"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(6.1.0).ANSWER_METADATA"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.0+.0).ANSWER_METADATA
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                        <structure:Attribute id="FILLING_START_TIMESTAMP"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(6.1.0).FILLING_START_TIMESTAMP"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.6+.0).FILLING_START_TIMESTAMP
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                        <structure:Attribute id="FILLING_FINISH_TIMESTAMP"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(6.1.0).FILLING_FINISH_TIMESTAMP"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.6+.0).FILLING_FINISH_TIMESTAMP
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                        <structure:Attribute id="SURVEY_FILLING_DURATION"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(6.1.0).SURVEY_FILLING_DURATION"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.6+.0).SURVEY_FILLING_DURATION
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                        <structure:Attribute id="FILLING_EVENT_LIST"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(6.1.0).FILLING_EVENT_LIST"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.6+.0).FILLING_EVENT_LIST
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                    </structure:AttributeList>
+                    <structure:MeasureList id="MeasureDescriptor">
+                        <structure:Measure id="ANSWER_DATA"
+                                           urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=IMF:SURVEYS_CAMPAIGN_ANSWERS_WITH_IMF_CL_COUNTRY_1_5_0_SUBJECT_ID(6.1.0).ANSWER_DATA">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.0+.0).ANSWER_DATA
+                            </structure:ConceptIdentity>
+                        </structure:Measure>
+                    </structure:MeasureList>
+                </structure:DataStructureComponents>
+            </structure:DataStructure>
+            <structure:DataStructure
+                    urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(3.1.0)"
+                    agencyID="IMF" id="SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID" version="3.1.0"
+                    isExternalReference="false">
+                <common:Annotations>
+                    <common:Annotation id="origin">
+                        <common:AnnotationValue>INTEGRATION</common:AnnotationValue>
+                    </common:Annotation>
+                    <common:Annotation id="isFinal"/>
+                    <common:Annotation id="lastUpdatedAt">
+                        <common:AnnotationValue>2025-07-12T20:42:16.909408Z</common:AnnotationValue>
+                    </common:Annotation>
+                </common:Annotations>
+                <common:Name xml:lang="en">Surveys: Campaign Subjects</common:Name>
+                <common:Description xml:lang="en">DSD for Campaign Subjects dataset, that stores info on who an what
+                    about we are asking during survey campaign.
+                </common:Description>
+                <structure:DataStructureComponents>
+                    <structure:DimensionList id="DimensionDescriptor">
+                        <structure:Dimension id="FREQ"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(3.1.0).FREQ"
+                                             position="0">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).FREQ
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="SUBJECT_ID"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(3.1.0).SUBJECT_ID"
+                                             position="1">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IMF:IMF_CL_COUNTRY_1_5_1_SUBJECT_ID_SCHEME(1.0.0).SUBJECT_ID
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:Dimension id="SUBJECT_CODE"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(3.1.0).SUBJECT_CODE"
+                                             position="2">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).SUBJECT_CODE
+                            </structure:ConceptIdentity>
+                        </structure:Dimension>
+                        <structure:TimeDimension id="TIME_PERIOD"
+                                                 urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(3.1.0).TIME_PERIOD">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.7+.0).TIME_PERIOD
+                            </structure:ConceptIdentity>
+                            <structure:LocalRepresentation>
+                                <structure:TextFormat textType="String"/>
+                            </structure:LocalRepresentation>
+                        </structure:TimeDimension>
+                    </structure:DimensionList>
+                    <structure:AttributeList id="AttributeDescriptor">
+                        <structure:Attribute id="SUBJECT_NAME"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(3.1.0).SUBJECT_NAME"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).SUBJECT_NAME
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                        <structure:Attribute id="SUBJECT_DESCRIPTION"
+                                             urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(3.1.0).SUBJECT_DESCRIPTION"
+                                             usage="optional">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).SUBJECT_DESCRIPTION
+                            </structure:ConceptIdentity>
+                            <structure:AttributeRelationship>
+                                <structure:Observation/>
+                            </structure:AttributeRelationship>
+                        </structure:Attribute>
+                    </structure:AttributeList>
+                    <structure:MeasureList id="MeasureDescriptor">
+                        <structure:Measure id="SUBJECT_STATUS"
+                                           urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=IMF:SURVEYS_CAMPAIGN_SUBJECTS_WITH_IMF_CL_COUNTRY_1_5_1_SUBJECT_ID(3.1.0).SUBJECT_STATUS">
+                            <structure:ConceptIdentity>
+                                urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SURVEY:SURVEYS(1.3+.1).SUBJECT_STATUS
+                            </structure:ConceptIdentity>
+                        </structure:Measure>
+                    </structure:MeasureList>
+                </structure:DataStructureComponents>
+            </structure:DataStructure>
+        </structure:DataStructures>
+    </message:Structures>
+</message:Structure>

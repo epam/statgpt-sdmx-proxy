@@ -1,0 +1,78 @@
+{
+  "configs": [
+    {
+      "name": "IMF",
+      "description": "International Monetary Fund",
+      "supportedAgencies": [
+        "IMF",
+        "IMF.STA",
+        "IMF.FAD",
+        "IMF.RES",
+        "IMF.STA.DS",
+        "IMF.MCM"
+      ],
+      "versions": {
+        "SDMX_3_0": {
+          "sdmxVersion": "SDMX_3_0",
+          "structureEndpointConfig": {
+            "url": "https://api.imf.org/external/sdmx/3.0/structure/",
+            "supportedFormats": [
+              "JSON_STRUCTURE_2_0_0"
+            ],
+            "defaultFormat": "JSON_STRUCTURE_2_0_0",
+            "bypassEnabled": false,
+            "supportedStructures": [
+              "datastructure",
+              "conceptscheme",
+              "codelist",
+              "dataflow"
+            ],
+            "fixtures": [
+              {
+                "type": "VERSION_WILDCARD",
+                "config": {}
+              },
+              {
+                "type": "METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE",
+                "config": {}
+              }
+            ]
+          },
+          "dataEndpointConfig": {
+            "url": "https://api.imf.org/external/sdmx/3.0/data/",
+            "supportedFormats": [
+              "JSON_DATA_2_0_0"
+            ],
+            "defaultFormat": "JSON_DATA_2_0_0",
+            "bypassEnabled": false
+          },
+          "availabilityEndpointConfig": {
+            "url": "https://api.imf.org/external/sdmx/3.0/availability/",
+            "supportedFormats": [
+              "JSON_STRUCTURE_2_0_0"
+            ],
+            "defaultFormat": "JSON_STRUCTURE_2_0_0",
+            "bypassEnabled": false,
+            "availabilityEnabled": true
+          },
+          "resilienceConfig": {
+            "connectionTimeout": 45000,
+            "readTimeout": 60000,
+            "circuitBreaker": {
+              "failureRateThreshold": 40.0,
+              "minimumNumberOfCalls": 5,
+              "waitDurationInOpenState": 120000,
+              "slidingWindowSize": 20
+            },
+            "retry": {
+              "maxAttempts": 3,
+              "initialIntervalMillis": 1000,
+              "multiplier": 2.0,
+              "maxIntervalMillis": 4000
+            }
+          }
+        }
+      }
+    }
+  ]
+}

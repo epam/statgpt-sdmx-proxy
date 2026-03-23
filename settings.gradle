@@ -1,0 +1,10 @@
+rootProject.name = 'sdmx-proxy'
+
+include 'sdmx-proxy'
+include 'sdmx-proxy-config'
+include 'sdmx-proxy-e2e'
+
+// Allow repositories to be defined in build.gradle files
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+}

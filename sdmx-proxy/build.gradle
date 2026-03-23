@@ -1,0 +1,285 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'org.springframework.boot' version '4.0.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.epam'
+version = '0.0.1-SNAPSHOT'
+description = 'SDMX API Proxy'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+    // Exclude default Logback to use Log4j2
+    all {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+}
+
+
+ext {
+    publisherUser = findProperty('ARTIFACTORY_USER') ?: System.getenv('ARTIFACTORY_USER') ?: "FakeUser"
+    publisherPassword = findProperty('ARTIFACTORY_PASS') ?: System.getenv('ARTIFACTORY_PASS') ?: "FakePassword"
+}
+
+// allprojects block is now in root build.gradle
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':sdmx-proxy-config')
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+    implementation("org.springframework:spring-aspects")
+    testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Mockito for unit testing
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+
+    implementation("com.epam.jsdmx:sdmx30-infomodel:${sdmx30_infomodel_version}")
+
+    //EXTRENAL QH DEPENDENCIES.
+    [
+            "sdmx30-serializer",
+            "sdmx-json10",
+            "sdmx-json20",
+            "sdmx-ml21",
+            "sdmx-ml30"
+    ].each { module ->
+        implementation("com.epam.jsdmx:${module}:${sdmx30_internal_version}") {
+            exclude group: 'com.sun.xml.bind', module: 'jaxb-core'
+            exclude group: 'jakarta.xml.bind', module: 'jaxb-core'
+            exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j2-impl'
+        }
+    }
+
+    //SDMXSOURCE DEPENDENCIES. CURRENT OPENSOURCE VERSIONS ARE OUTDATED. USING JARS FROM /lib-repo
+//    implementation("com.epam.deltix:SDMX1-0:1.0.0")
+//    implementation("com.epam.deltix:SDMX2-0:2.0.0")
+//    implementation("com.epam.deltix:SDMX2-1:3.0.0")
+//    implementation("com.epam.deltix:SdmxApi:${sdmx_version}")
+//    implementation("com.epam.deltix:SdmxBeans:${sdmx_version}")
+//    implementation("com.epam.deltix:SdmxDataParser:${sdmx_version}")
+//    implementation("com.epam.deltix:SdmxEdiParser:${sdmx_version}")
+//    implementation("com.epam.deltix:SdmxFileQueryProcessor:${sdmx_version}")
+//    implementation("com.epam.deltix:SdmxQueryBuilder:${sdmx_version}")
+//    implementation("com.epam.deltix:SdmxSourceUtil:${sdmx_version}")
+//    implementation("com.epam.deltix:SdmxStructureParser:${sdmx_version}")
+//    implementation("com.epam.deltix:SdmxStructureRetrieval:${sdmx_version}")
+    implementation(files([
+            "../lib-repo/sdmxsource/fusion-api-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-api-dao-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-api-sdmx-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-api-service-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-audit-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-core-data-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-core-sdmx-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-core-structure-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-sdmx-csv-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-sdmx-im-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-sdmx-json-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-sdmx-ml-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-sdmx-publication-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-sdmx-reporttemplate-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-sdmx-rest-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-sdmx-search-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-sdmx-vtl-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-utils-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-utils-http-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-utils-json-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-utils-sdmx-2.3.9.jar",
+            "../lib-repo/sdmxsource/fusion-utils-spring-2.3.9.jar"
+    ]))
+
+    //------SDMX CORE dependencies start----
+    implementation("org.codehaus.jettison:jettison:1.5.4")
+    implementation("com.fasterxml.woodstox:woodstox-core:7.1.1")
+    implementation("it.unimi.dsi:fastutil-core:8.5.18")
+    implementation("com.esotericsoftware:kryo:5.6.2")
+    //------SDMX CORE dependencies end------
+
+    implementation("org.apache.xmlbeans:xmlbeans:2.3.0")
+    implementation 'org.threeten:threetenbp:1.6.8'
+    implementation 'org.json:json:20240303'
+    implementation("commons-io:commons-io:2.21.0")
+
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+    testCompileOnly("org.projectlombok:lombok")
+    testAnnotationProcessor("org.projectlombok:lombok")
+
+    implementation("org.slf4j:slf4j-api:${slf4j_version}")
+
+    implementation("io.github.openfeign:feign-core:${feign_version}")
+    implementation("io.github.openfeign:feign-jackson:${feign_version}")
+    implementation("io.github.openfeign:feign-okhttp:${feign_version}")
+    implementation("io.github.openfeign:feign-slf4j:${feign_version}")
+    implementation("com.squareup.okhttp3:okhttp:${okhttp_version}")
+
+    // Resilience4j for circuit breaker, retry, and rate limiting
+    implementation("io.github.resilience4j:resilience4j-core:${resilience4j_version}")
+    implementation("io.github.resilience4j:resilience4j-retry:${resilience4j_version}")
+    implementation("io.github.resilience4j:resilience4j-circuitbreaker:${resilience4j_version}")
+    implementation("io.github.resilience4j:resilience4j-ratelimiter:${resilience4j_version}")
+    implementation("io.github.resilience4j:resilience4j-feign:${resilience4j_version}")
+
+    implementation("org.apache.commons:commons-lang3:${org_apache_commons_commons_lang3_version}")
+    implementation("org.apache.commons:commons-collections4:${org_apache_commons_commons_collections4_version}")
+
+    // Caching dependencies
+    implementation("com.github.ben-manes.caffeine:caffeine:${caffeine_version}")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
+    // OpenTelemetry dependencies
+    implementation platform('io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.24.0')
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:2.24.0'
+    implementation 'io.opentelemetry:opentelemetry-sdk'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-log4j-appender-2.17:2.24.0-alpha'
+    // Required for automatic trace_id/span_id injection into Log4j2 MDC
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-log4j-context-data-2.17-autoconfigure:2.24.0-alpha'
+
+    // OpenAPI/Swagger documentation
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1'
+}
+
+tasks.named('test') {
+    maxHeapSize = '2g'
+    useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes 'Created-By': vendor,
+                // Note: if a child project has custom "archivesBaseName" then this child project have to override value for this property
+                'Implementation-Title': archiveBaseName.get(),
+                'Implementation-Vendor': vendor,
+                'Implementation-Version': findProperty("version")
+    }
+}
+
+tasks.register('sourcesJar', Jar) {
+    dependsOn classes, jar
+    archiveClassifier.set('sources')
+    archiveBaseName.set(jar.getArchiveBaseName())
+    from sourceSets.main.allSource
+}
+
+tasks.register('javadocJar', Jar) {
+    dependsOn jar, javadoc
+    archiveClassifier.set('javadoc')
+    archiveBaseName.set(jar.getArchiveBaseName())
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
+compileJava {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+clean.doLast {
+    file('out').deleteDir()
+}
+
+test {
+    ignoreFailures Boolean.getBoolean("test.ignoreFailures")
+    reports.junitXml.required = true
+
+    doLast {
+        copy {
+            from reports.junitXml.getOutputLocation() include { "*.xml" }
+            into file("$rootDir/build/test-results/test")
+        }
+    }
+}
+
+// Publishing
+publishing {
+    repositories {
+        maven {
+            url publishUrl
+            credentials {
+                username publisherUser
+                password publisherPassword
+            }
+        }
+    }
+
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact javadocJar
+            artifact sourcesJar
+            artifactId = archivesBaseName
+
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+        }
+    }
+}
+
+def dockerDir = getRootProject().layout.buildDirectory.dir("docker/backend")
+
+tasks.register('prepareFilesForDocker', Copy) {
+    dependsOn bootJar
+    from bootJar.getArchiveFile().get(), layout.projectDirectory.file('src/main/docker/Dockerfile')
+    into dockerDir
+    from bootJar.getArchiveFile().get(), layout.projectDirectory.file('src/main/resources/sdmx_registries_config.json')
+    into dockerDir
+    // Ensure docker directory exists
+    doFirst {
+        dockerDir.get().asFile.mkdirs()
+    }
+}
+
+// Configure bootJar to merge Log4j2Plugins.dat files
+tasks.named('bootJar') {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+build.dependsOn bootJar, prepareFilesForDocker
+
+defaultTasks 'clean', 'build'
+
+// Debug task to check repository resolution
+tasks.register('debugRepositories') {
+    doLast {
+        println "Configured repositories:"
+        repositories.each { repo ->
+            println "  - ${repo.name}: ${repo.url}"
+        }
+        println "\nTrying to resolve io.sdmx:fusion-sdmx-json:2.3.9..."
+        try {
+            def deps = configurations.compileClasspath.incoming.resolutionResult.allDependencies
+            println "Dependencies: ${deps.size()}"
+        } catch (Exception e) {
+            println "Error: ${e.message}"
+        }
+    }
+}
