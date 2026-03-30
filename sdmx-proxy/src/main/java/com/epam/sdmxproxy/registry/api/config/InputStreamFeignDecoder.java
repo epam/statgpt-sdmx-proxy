@@ -12,6 +12,8 @@ import java.lang.reflect.Type;
 public class InputStreamFeignDecoder implements Decoder {
     @Override
     public Object decode(Response response, Type type) throws IOException, FeignException {
-        return response.body().asInputStream();
+        return response.body() != null
+                ? response.body().asInputStream()
+                : null;
     }
 }

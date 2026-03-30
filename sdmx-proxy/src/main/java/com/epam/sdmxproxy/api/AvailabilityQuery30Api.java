@@ -145,7 +145,9 @@ public interface AvailabilityQuery30Api {
             @Parameter(
                     description = "Accept header for content negotiation. Supported: application/vnd.sdmx.structure+json;version=2.0.0, */* (defaults to application/vnd.sdmx.structure+json;version=2.0.0)"
             )
-            @RequestHeader(value = "Accept", required = false) @Nullable String accept
+            @RequestHeader(value = "Accept", required = false) @Nullable String accept,
+            @Parameter(description = "URN of the source artefact that contained the cross-reference (for routing context)")
+            @RequestHeader(value = "X-Source-Artefact-Urn", required = false) @Nullable String sourceArtefactUrn
     );
 
     @Operation(
@@ -239,6 +241,8 @@ public interface AvailabilityQuery30Api {
             @Parameter(
                     description = "Accept header for content negotiation. Supported: application/vnd.sdmx.structure+json;version=2.0.0, */* (defaults to application/vnd.sdmx.structure+json;version=2.0.0)"
             )
-            @RequestHeader(value = "Accept", required = false) @Nullable String accept
+            @RequestHeader(value = "Accept", required = false) @Nullable String accept,
+            @Parameter(description = "URN of the source artefact that contained the cross-reference (for routing context)")
+            @RequestHeader(value = "X-Source-Artefact-Urn", required = false) @Nullable String sourceArtefactUrn
     );
 }

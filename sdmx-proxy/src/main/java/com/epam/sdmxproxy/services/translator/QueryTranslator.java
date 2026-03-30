@@ -7,10 +7,29 @@ import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import org.springframework.util.MultiValueMap;
 
 import java.time.Instant;
-import java.util.List;
 
 public interface QueryTranslator {
 
+    /**
+     * Translates structure query parameters into a {@link TranslatedStructureQuery} bound to a specific registry.
+     * <p>
+     * Registry selection uses {@code sourceArtefactUrn} for cross-reference routing when present,
+     * falling back to standard agency-based routing otherwise. See {@code AgencyRoutingService} for the
+     * two-path algorithm.
+     * <p>
+     * Throws {@link com.epam.sdmxproxy.exception.UnsupportedAgencyWildcardException} if agencyID is "*"
+     * or contains commas. Clients should use the /structure/agencyscheme endpoint to discover agencies.
+     *
+     * @param structureType     structure type (e.g. "datastructure", "codelist", "dataflow")
+     * @param agencyID          agency ID from the request path
+     * @param resourceID        resource ID (can be null for "all")
+     * @param version           version (can be null for "latest")
+     * @param references        references parameter
+     * @param detail            detail parameter
+     * @param acceptHeader      Accept header from the client request
+     * @param sourceArtefactUrn URN from X-Source-Artefact-Urn header for cross-reference routing (can be null)
+     * @return translated query with resolved registry and version configuration
+     */
     TranslatedStructureQuery translateStructureQuery(
             String structureType,
             String agencyID,
@@ -18,46 +37,9 @@ public interface QueryTranslator {
             String version,
             String references,
             String detail,
-            String acceptHeader
+            String acceptHeader,
+            String sourceArtefactUrn
     );
-
-    /**
-     * Checks if fan-out is needed for the given agency ID.
-     *
-     * @param agencyId Agency ID to check
-     * @return true if fan-out is needed, false otherwise
-     */
-    boolean requiresFanOut(String agencyId);
-
-    /**
-     * Translates structure query parameters to queries for fan-out.
-     * Handles two cases:
-     * 1. Wildcard agency ("*") → creates queries for all registries
-     * 2. Comma-separated agencies → creates queries per registry (only if agencies are in different registries)
-     * <p>
-     * If comma-separated agencies all map to same registry, returns single TranslatedStructureQuery (normal path).
-     *
-     * @param structureType Structure type (e.g., "datastructure")
-     * @param agencyId      Agency ID - can be "*" (wildcard) or comma-separated list (e.g., "BIS,AMF")
-     *                      Note: "all" is treated as a regular agency ID (not a wildcard)
-     * @param resourceId    Resource ID (can be null for "all")
-     * @param version       Version (can be null for "latest")
-     * @param references    References parameter
-     * @param detail        Detail parameter
-     * @param acceptHeader  Accept header
-     * @return List of TranslatedStructureQuery (one per registry for fan-out, or single query for normal path)
-     * @throws IllegalArgumentException if any agency is invalid (not found in any registry)
-     */
-    List<TranslatedStructureQuery> translateToFanOutStructures(
-            String structureType,
-            String agencyId,
-            String resourceId,
-            String version,
-            String references,
-            String detail,
-            String acceptHeader
-    );
-
 
     TranslatedDataQuery translateDataQuery(
             String context,
@@ -77,7 +59,8 @@ public interface QueryTranslator {
             Instant asOf,
             boolean skipEmptySeries,
             String acceptHeader,
-            SdmxBeans sdmxBeans
+            SdmxBeans sdmxBeans,
+            String sourceArtefactUrn
     );
 
     TranslatedAvailabilityQuery translateAvailabilityQuery(
@@ -95,7 +78,7 @@ public interface QueryTranslator {
             String endPeriod,
             String reportingYearStartDay,
             String acceptHeader,
-            SdmxBeans sdmxBeans
+            SdmxBeans sdmxBeans,
+            String sourceArtefactUrn
     );
 }
-

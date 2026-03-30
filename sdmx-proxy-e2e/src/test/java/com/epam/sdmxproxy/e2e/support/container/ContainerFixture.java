@@ -93,6 +93,7 @@ public class ContainerFixture implements BeforeAllCallback, AfterAllCallback {
 
             container.withEnv("SDMXPROXY_REGISTRY_CONFIG_SOURCE_FILENAME", "/opt/epam/sdmx-proxy/sdmx_registries_config.json");
             container.withEnv("SDMXPROXY_REGISTRY_CONFIG_SOURCE_TYPE", "FILESYSTEM");
+            container.withEnv("SDMXPROXY_TEST_CONFIG_ENDPOINT_ENABLED", "true");
             container.withEnv("FEIGN_LOG_LEVEL", "HEADERS");
             container.withEnv("JAVA_OPTS", "-server -Djava.awt.headless=true -XX:InitialRAMPercentage=40.0 -XX:MaxRAMPercentage=50.0 -XX:+AlwaysActAsServerClassMachine -XX:+AlwaysPreTouch -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -XX:+ExitOnOutOfMemoryError -Dnetworkaddress.cache.ttl=60s");
             container.start();

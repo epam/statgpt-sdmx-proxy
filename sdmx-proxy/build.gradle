@@ -146,6 +146,11 @@ dependencies {
     implementation("com.github.ben-manes.caffeine:caffeine:${caffeine_version}")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
+    // Cloud provider Redis authentication
+    implementation("com.azure:azure-identity:${azure_identity_version}")
+    implementation("com.amazonaws:aws-java-sdk-core:${aws_sdk_core_version}")
+    implementation("com.google.cloud:google-cloud-iamcredentials:${gcp_iamcredentials_version}")
+
     // OpenTelemetry dependencies
     implementation platform('io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.24.0')
     implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:2.24.0'
@@ -244,7 +249,7 @@ publishing {
     }
 }
 
-def dockerDir = getRootProject().layout.buildDirectory.dir("docker/backend")
+def dockerDir = getRootProject().layout.buildDirectory.dir("docker/sdmx-proxy")
 
 tasks.register('prepareFilesForDocker', Copy) {
     dependsOn bootJar

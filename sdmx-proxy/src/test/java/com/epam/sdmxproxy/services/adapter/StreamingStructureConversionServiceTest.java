@@ -1,11 +1,11 @@
 package com.epam.sdmxproxy.services.adapter;
 
 import com.epam.sdmxproxy.common.data.SdmxMediaType;
-import com.epam.sdmxproxy.configuration.data.FixtureConfiguration;
-import com.epam.sdmxproxy.configuration.data.FixtureType;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
+import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
-import com.epam.sdmxproxy.services.fixture.FixtureService;
+import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,7 @@ public class StreamingStructureConversionServiceTest {
     @Autowired
     private StreamingStructureConversionService sut;
     @Autowired
-    private FixtureService fixtureService;
+    private StructureFixtureService fixtureService;
 
     @Test
     @SneakyThrows
@@ -41,14 +41,15 @@ public class StreamingStructureConversionServiceTest {
 
 
         FixtureConfiguration metadataAttributeFixture = new FixtureConfiguration();
-        metadataAttributeFixture.setType(FixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
+        metadataAttributeFixture.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
         metadataAttributeFixture.setConfig(new HashMap<>());
 
         FixtureConfiguration versionWildcardFixture = new FixtureConfiguration();
-        versionWildcardFixture.setType(FixtureType.VERSION_WILDCARD);
+        versionWildcardFixture.setType(StructureFixtureType.VERSION_WILDCARD);
         versionWildcardFixture.setConfig(new HashMap<>());
 
-        InputStream fixedInputStream = fixtureService.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, List.of(metadataAttributeFixture, versionWildcardFixture));
+        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(metadataAttributeFixture, versionWildcardFixture);
+        InputStream fixedInputStream = fixtureService.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
 
         //WHEN
         sut.convert(fixedInputStream, outputStream, ReturnFormat.JSON_STRUCTURE_2_0_0, targetMediaType);
@@ -68,14 +69,15 @@ public class StreamingStructureConversionServiceTest {
 
 
         FixtureConfiguration dsdAttributeFixture = new FixtureConfiguration();
-        dsdAttributeFixture.setType(FixtureType.DSD_ATTRIBUTE_ATTACHMENT_LEVEL);
+        dsdAttributeFixture.setType(StructureFixtureType.DSD_ATTRIBUTE_ATTACHMENT_LEVEL);
         dsdAttributeFixture.setConfig(Map.of("sourceValue", "none", "fallbackValue", "observation"));
 
         FixtureConfiguration versionWildcardFixture = new FixtureConfiguration();
-        versionWildcardFixture.setType(FixtureType.VERSION_WILDCARD);
+        versionWildcardFixture.setType(StructureFixtureType.VERSION_WILDCARD);
         versionWildcardFixture.setConfig(new HashMap<>());
 
-        InputStream fixedInputStream = fixtureService.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, List.of(dsdAttributeFixture, versionWildcardFixture));
+        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(dsdAttributeFixture, versionWildcardFixture);
+        InputStream fixedInputStream = fixtureService.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
 
         //WHEN
         sut.convert(fixedInputStream, outputStream, ReturnFormat.JSON_STRUCTURE_2_0_0, targetMediaType);
@@ -110,10 +112,11 @@ public class StreamingStructureConversionServiceTest {
         MediaType targetMediaType = MediaType.valueOf(SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE);
 
         FixtureConfiguration fc = new FixtureConfiguration();
-        fc.setType(FixtureType.DSD_ATTRIBUTE_ATTACHMENT_LEVEL);
+        fc.setType(StructureFixtureType.DSD_ATTRIBUTE_ATTACHMENT_LEVEL);
         fc.setConfig(Map.of("sourceValue", "none", "fallbackValue", "observation"));
 
-        InputStream fixedInputStream = fixtureService.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, List.of(fc));
+        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(fc);
+        InputStream fixedInputStream = fixtureService.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
 
         //WHEN
         sut.convert(fixedInputStream, outputStream, ReturnFormat.JSON_STRUCTURE_2_0_0, targetMediaType);
@@ -132,10 +135,11 @@ public class StreamingStructureConversionServiceTest {
         MediaType targetMediaType = MediaType.valueOf(SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE);
 
         FixtureConfiguration fc = new FixtureConfiguration();
-        fc.setType(FixtureType.VERSION_WILDCARD);
+        fc.setType(StructureFixtureType.VERSION_WILDCARD);
         fc.setConfig(new HashMap<>());
 
-        InputStream fixedInputStream = fixtureService.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, List.of(fc));
+        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(fc);
+        InputStream fixedInputStream = fixtureService.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
 
         //WHEN
         sut.convert(fixedInputStream, outputStream, ReturnFormat.JSON_STRUCTURE_2_0_0, targetMediaType);
@@ -155,10 +159,11 @@ public class StreamingStructureConversionServiceTest {
 
 
         FixtureConfiguration fc = new FixtureConfiguration();
-        fc.setType(FixtureType.VERSION_WILDCARD);
+        fc.setType(StructureFixtureType.VERSION_WILDCARD);
         fc.setConfig(new HashMap<>());
 
-        InputStream fixedInputStream = fixtureService.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, List.of(fc));
+        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(fc);
+        InputStream fixedInputStream = fixtureService.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
 
         //WHEN
         sut.convert(fixedInputStream, outputStream, ReturnFormat.JSON_STRUCTURE_2_0_0, targetMediaType);
@@ -177,14 +182,15 @@ public class StreamingStructureConversionServiceTest {
         MediaType targetMediaType = MediaType.valueOf(SdmxMediaType.STRUCTURE_SDMX_XML_2_1_VALUE);
 
         FixtureConfiguration dsdAttributeFixture = new FixtureConfiguration();
-        dsdAttributeFixture.setType(FixtureType.DSD_ATTRIBUTE_ATTACHMENT_LEVEL);
+        dsdAttributeFixture.setType(StructureFixtureType.DSD_ATTRIBUTE_ATTACHMENT_LEVEL);
         dsdAttributeFixture.setConfig(Map.of("sourceValue", "none", "fallbackValue", "observation"));
 
         FixtureConfiguration versionWildcardFixture = new FixtureConfiguration();
-        versionWildcardFixture.setType(FixtureType.VERSION_WILDCARD);
+        versionWildcardFixture.setType(StructureFixtureType.VERSION_WILDCARD);
         versionWildcardFixture.setConfig(new HashMap<>());
 
-        InputStream fixedInputStream = fixtureService.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, List.of(dsdAttributeFixture, versionWildcardFixture));
+        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(dsdAttributeFixture, versionWildcardFixture);
+        InputStream fixedInputStream = fixtureService.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
 
         //WHEN
         sut.convert(fixedInputStream, outputStream, ReturnFormat.JSON_STRUCTURE_2_0_0, targetMediaType);

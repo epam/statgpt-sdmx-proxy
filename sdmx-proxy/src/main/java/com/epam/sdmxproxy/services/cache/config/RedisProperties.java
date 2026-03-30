@@ -11,4 +11,7 @@ public class RedisProperties {
     private int port = 6379;
     private String password;
     private boolean ssl = false;
+    private RedisAuthProvider provider = RedisAuthProvider.NONE;
+    private AwsRedisProperties aws = new AwsRedisProperties();
+    private GcpRedisProperties gcp = new GcpRedisProperties();
 }

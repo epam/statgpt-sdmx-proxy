@@ -8,7 +8,6 @@ import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.common.utils.FormatSupportChecker;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
-import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistrySelectionResult;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
@@ -16,14 +15,15 @@ import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.exception.FilterValidationException;
-import com.epam.sdmxproxy.registry.configuration.ProxyConfigurationProvider;
+import com.epam.sdmxproxy.exception.UnsupportedAgencyWildcardException;
 import com.epam.sdmxproxy.services.filter.FilterTranslator;
 import com.epam.sdmxproxy.services.filter.FilterValidator;
 import com.epam.sdmxproxy.services.misc.DimensionService;
+import com.epam.sdmxproxy.services.routing.AgencyRoutingService;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -31,12 +31,9 @@ import org.springframework.util.MultiValueMap;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.epam.sdmxproxy.common.data.SdmxMediaType.parseMediaType;
 
@@ -47,13 +44,12 @@ import static com.epam.sdmxproxy.common.data.SdmxMediaType.parseMediaType;
 public class QueryTranslatorImpl implements QueryTranslator {
     public static final String SDMX_30_ALL_WILDCARD = "*";
     public static final String SDMX_21_ALL_WILDCARD = "all";
-    private static final String SDMX_30_AGENCY_SEPARATOR = ",";
     private static final String AND_SEPARATOR_REGEX = "\\+";
     private static final String AND_SEPARATOR = "+";
     private static final String OPERATOR_VALUE_SEPARATOR = ":";
     private static final Set<String> START_OPERATORS = Set.of("ge", "gt");
     private static final Set<String> END_OPERATORS = Set.of("le", "lt");
-    private final ProxyConfigurationProvider configurationProvider;
+    private final AgencyRoutingService agencyRoutingService;
     private final FilterValidator filterValidationService;
     private final FilterTranslator filterTranslator;
     private final DimensionService dimensionService;
@@ -111,37 +107,11 @@ public class QueryTranslatorImpl implements QueryTranslator {
     }
 
     /**
-     * Selects registry configuration for a given agency.
-     * Returns the registry that supports the agency.
-     */
-    private RegistryConfiguration getRegistryConfigurationForAgency(String agencyID, ProxyConfiguration configuration) {
-        List<RegistryConfiguration> registryConfigurations = configuration.getConfigs().stream()
-                .filter(registryConfiguration -> registryConfiguration.getSupportedAgencies() != null
-                        && registryConfiguration.getSupportedAgencies().contains(agencyID))
-                .toList();
-
-        if (CollectionUtils.isEmpty(registryConfigurations)) {
-            throw new IllegalArgumentException(String.format("%s agency is not supported by any of used SDMX registries", agencyID));
-        }
-
-        if (registryConfigurations.size() > 1) {
-            throw new IllegalArgumentException(String.format("%s agency is supported by multiple registries: %s. FALLBACK TO 500", agencyID, registryConfigurations.stream().map(RegistryConfiguration::getName).collect(Collectors.joining(","))));
-        }
-
-        return registryConfigurations.getFirst();
-    }
-
-    /**
      * Selects registry and version configuration for a given agency and desired SDMX version.
-     * Uses fallback logic: tries exact version match first, then prefers 3.0 over 2.1.
-     *
-     * @param agencyID       Agency ID to find registry for
-     * @param desiredVersion Desired SDMX version (can be null for auto-selection)
-     * @return RegistrySelectionResult containing both registry and version configurations
+     * Uses AgencyRoutingService for registry resolution, then version fallback logic.
      */
-    private RegistrySelectionResult selectRegistryAndVersion(String agencyID, SdmxVersion desiredVersion) {
-        ProxyConfiguration configuration = configurationProvider.getConfiguration();
-        RegistryConfiguration registryConfig = getRegistryConfigurationForAgency(agencyID, configuration);
+    private RegistrySelectionResult selectRegistryAndVersion(String agencyID, SdmxVersion desiredVersion, @Nullable String sourceArtefactUrn) {
+        RegistryConfiguration registryConfig = agencyRoutingService.resolveRegistry(agencyID, sourceArtefactUrn);
 
         // Try exact version match first
         if (desiredVersion != null) {
@@ -182,12 +152,16 @@ public class QueryTranslatorImpl implements QueryTranslator {
             String version,
             String references,
             String detail,
-            String acceptHeader
+            String acceptHeader,
+            String sourceArtefactUrn
     ) {
+        if ("*".equals(agencyId) || (agencyId != null && agencyId.contains(","))) {
+            throw new UnsupportedAgencyWildcardException("Wildcard and comma-separated agency queries are not supported. Use /structure/agencyscheme to discover agencies.");
+        }
 
         MediaTypeParseResult parsedMediaType = parseMediaType(acceptHeader);
 
-        RegistrySelectionResult selectedRegistry = selectRegistryAndVersion(agencyId, parsedMediaType.getSdmxVersion());
+        RegistrySelectionResult selectedRegistry = selectRegistryAndVersion(agencyId, parsedMediaType.getSdmxVersion(), sourceArtefactUrn);
 
         ReturnFormat returnFormat = determineStructureReturnFormat(
                 selectedRegistry,
@@ -205,286 +179,6 @@ public class QueryTranslatorImpl implements QueryTranslator {
                 .registryReturnFormat(returnFormat)
                 .build();
 
-    }
-
-    /**
-     * Checks if comma-separated agencies require fan-out (i.e., they are in different registries).
-     */
-    private boolean checkCommaSeparatedAgenciesRequireFanOut(String agencyId) {
-        ProxyConfiguration configuration = configurationProvider.getConfiguration();
-        String[] agencies = agencyId.split(SDMX_30_AGENCY_SEPARATOR);
-        Set<RegistryConfiguration> registries = new HashSet<>();
-
-        for (String agency : agencies) {
-            String trimmedAgency = agency.trim();
-            if (trimmedAgency.isEmpty()) {
-                continue;
-            }
-
-            try {
-                RegistryConfiguration registryConfig = getRegistryConfigurationForAgency(trimmedAgency, configuration);
-                registries.add(registryConfig);
-            } catch (IllegalArgumentException e) {
-                // Agency not found - will be handled later in translateToFanOutStructures
-                // For now, assume fan-out might be needed
-                return true;
-            }
-        }
-
-        // Fan-out needed if agencies map to more than one registry
-        return registries.size() > 1;
-    }
-
-    @Override
-    public boolean requiresFanOut(String agencyId) {
-        if (agencyId == null || agencyId.isEmpty()) {
-            return false;
-        }
-
-        if (SDMX_30_ALL_WILDCARD.equals(agencyId)) {
-            return true;
-        }
-
-        // Comma-separated agencies: check if they are in different registries
-        if (agencyId.contains(SDMX_30_AGENCY_SEPARATOR)) {
-            return checkCommaSeparatedAgenciesRequireFanOut(agencyId);
-        }
-
-        // Single agency: no fan-out needed
-        return false;
-    }
-
-    @Override
-    public List<TranslatedStructureQuery> translateToFanOutStructures(
-            String structureType,
-            String agencyId,
-            String resourceId,
-            String version,
-            String references,
-            String detail,
-            String acceptHeader
-    ) {
-        MediaTypeParseResult parsedMediaType = parseMediaType(acceptHeader);
-        ProxyConfiguration configuration = configurationProvider.getConfiguration();
-
-        // Wildcard case: agencyId = SDMX_30_ALL_WILDCARD
-        if (SDMX_30_ALL_WILDCARD.equals(agencyId)) {
-            return createWildcardFanOutQueries(
-                    structureType, resourceId, version, references, detail, parsedMediaType, configuration
-            );
-        }
-
-        // Comma-separated agencies case
-        if (agencyId.contains(",")) {
-            return createCommaSeparatedFanOutQueries(
-                    structureType, agencyId, resourceId, version, references, detail, parsedMediaType, configuration
-            );
-        }
-
-        // Should not reach here if called correctly, but handle gracefully
-        throw new IllegalArgumentException("translateToFanOutStructures should only be called with '*' or comma-separated agencies");
-    }
-
-    /**
-     * Creates fan-out queries for wildcard agency (SDMX_30_ALL_WILDCARD).
-     */
-    private List<TranslatedStructureQuery> createWildcardFanOutQueries(
-            String structureType,
-            String resourceId,
-            String version,
-            String references,
-            String detail,
-            MediaTypeParseResult parsedMediaType,
-            ProxyConfiguration configuration
-    ) {
-        List<TranslatedStructureQuery> queries = new ArrayList<>();
-
-        for (RegistryConfiguration registryConfig : configuration.getConfigs()) {
-            // Filter registries that support the structure type
-            VersionSpecificRegistryConfiguration versionConfig = selectVersionForStructureType(
-                    registryConfig, structureType, parsedMediaType.getSdmxVersion()
-            );
-
-            if (versionConfig != null) {
-                RegistrySelectionResult selectedRegistry = RegistrySelectionResult.builder()
-                        .registryConfiguration(registryConfig)
-                        .versionConfiguration(versionConfig)
-                        .build();
-
-                ReturnFormat returnFormat = determineStructureReturnFormat(selectedRegistry, parsedMediaType);
-
-                String agencyId = getVersionSpecificQueryId(SDMX_30_ALL_WILDCARD, versionConfig);
-                String queryResourceId = getVersionSpecificQueryId(resourceId, versionConfig);
-                String queryVersion = getVersionSpecificQueryId(version, versionConfig);
-
-                TranslatedStructureQuery query = TranslatedStructureQuery.builder()
-                        .registryConfiguration(registryConfig)
-                        .versionConfiguration(versionConfig)
-                        .structure(getStructure(versionConfig, structureType, agencyId, queryResourceId, queryVersion))
-                        .references(references)
-                        .detail(detail)
-                        .contentType(parsedMediaType.getMediaType())
-                        .registryReturnFormat(returnFormat)
-                        .build();
-
-                queries.add(query);
-            }
-        }
-
-        return queries;
-    }
-
-    /**
-     * Creates fan-out queries for comma-separated agencies.
-     * Groups agencies by registry and creates queries per registry.
-     */
-    private List<TranslatedStructureQuery> createCommaSeparatedFanOutQueries(
-            String structureType,
-            String agencyId,
-            String resourceId,
-            String version,
-            String references,
-            String detail,
-            MediaTypeParseResult parsedMediaType,
-            ProxyConfiguration configuration
-    ) {
-        // Split and validate agencies
-        String[] agencies = agencyId.split(",");
-        Map<String, RegistryConfiguration> agencyToRegistry = new HashMap<>();
-
-        // Validate all agencies and create mapping
-        for (String agency : agencies) {
-            String trimmedAgency = agency.trim();
-            if (trimmedAgency.isEmpty()) {
-                continue;
-            }
-
-            RegistryConfiguration registryConfig = getRegistryConfigurationForAgency(trimmedAgency, configuration);
-            agencyToRegistry.put(trimmedAgency, registryConfig);
-        }
-
-        // Group agencies by registry
-        Map<RegistryConfiguration, List<String>> registryToAgencies = new HashMap<>();
-        for (Map.Entry<String, RegistryConfiguration> entry : agencyToRegistry.entrySet()) {
-            registryToAgencies.computeIfAbsent(entry.getValue(), k -> new ArrayList<>()).add(entry.getKey());
-        }
-
-        // If all agencies map to one registry, return single query (normal path)
-        if (registryToAgencies.size() == 1) {
-            RegistryConfiguration registryConfig = registryToAgencies.keySet().iterator().next();
-            List<String> agenciesForRegistry = registryToAgencies.get(registryConfig);
-            String combinedAgencyId = String.join(",", agenciesForRegistry);
-
-            VersionSpecificRegistryConfiguration versionConfig = selectVersionForStructureType(
-                    registryConfig, structureType, parsedMediaType.getSdmxVersion()
-            );
-
-
-            if (versionConfig == null) {
-                throw new IllegalArgumentException(
-                        String.format("Registry %s does not support structure type %s", registryConfig.getName(), structureType)
-                );
-            }
-
-
-            RegistrySelectionResult selectedRegistry = RegistrySelectionResult.builder()
-                    .registryConfiguration(registryConfig)
-                    .versionConfiguration(versionConfig)
-                    .build();
-
-            ReturnFormat returnFormat = determineStructureReturnFormat(selectedRegistry, parsedMediaType);
-
-            TranslatedStructureQuery query = TranslatedStructureQuery.builder()
-                    .registryConfiguration(registryConfig)
-                    .versionConfiguration(versionConfig)
-                    .structure(getStructure(versionConfig, structureType, combinedAgencyId, getVersionSpecificQueryId(resourceId, versionConfig), getVersionSpecificQueryId(version, versionConfig)))
-                    .references(references)
-                    .detail(detail)
-                    .contentType(parsedMediaType.getMediaType())
-                    .registryReturnFormat(returnFormat)
-                    .build();
-
-            return List.of(query);
-        }
-
-        // Multiple registries - create queries per registry
-        List<TranslatedStructureQuery> queries = new ArrayList<>();
-        for (Map.Entry<RegistryConfiguration, List<String>> entry : registryToAgencies.entrySet()) {
-            RegistryConfiguration registryConfig = entry.getKey();
-            List<String> agenciesForRegistry = entry.getValue();
-            String combinedAgencyId = String.join(",", agenciesForRegistry);
-
-            VersionSpecificRegistryConfiguration versionConfig = selectVersionForStructureType(
-                    registryConfig, structureType, parsedMediaType.getSdmxVersion()
-            );
-
-            if (versionConfig != null) {
-                RegistrySelectionResult selectedRegistry = RegistrySelectionResult.builder()
-                        .registryConfiguration(registryConfig)
-                        .versionConfiguration(versionConfig)
-                        .build();
-
-                ReturnFormat returnFormat = determineStructureReturnFormat(selectedRegistry, parsedMediaType);
-
-
-                TranslatedStructureQuery query = TranslatedStructureQuery.builder()
-                        .registryConfiguration(registryConfig)
-                        .versionConfiguration(versionConfig)
-                        .structure(getStructure(versionConfig, structureType, combinedAgencyId, getVersionSpecificQueryId(resourceId, versionConfig), getVersionSpecificQueryId(version, versionConfig)))
-                        .references(references)
-                        .detail(detail)
-                        .contentType(parsedMediaType.getMediaType())
-                        .registryReturnFormat(returnFormat)
-                        .build();
-
-                queries.add(query);
-            }
-        }
-
-        return queries;
-    }
-
-    /**
-     * Selects version configuration for a registry that supports the given structure type.
-     * Prefers 3.0, falls back to 2.1 if structure type is not supported in 3.0.
-     */
-    private VersionSpecificRegistryConfiguration selectVersionForStructureType(
-            RegistryConfiguration registryConfig,
-            String structureType,
-            SdmxVersion desiredVersion
-    ) {
-        // Try exact version match first
-        if (desiredVersion != null) {
-            VersionSpecificRegistryConfiguration versionConfig = registryConfig.getVersionConfiguration(desiredVersion);
-            if (versionConfig != null && supportsStructureType(versionConfig, structureType)) {
-                return versionConfig;
-            }
-        }
-
-        // Fallback: prefer 3.0, then 2.1
-        VersionSpecificRegistryConfiguration version30 = registryConfig.getVersionConfiguration(SdmxVersion.SDMX_3_0);
-        if (version30 != null && supportsStructureType(version30, structureType)) {
-            return version30;
-        }
-
-        VersionSpecificRegistryConfiguration version21 = registryConfig.getVersionConfiguration(SdmxVersion.SDMX_2_1);
-        if (version21 != null && supportsStructureType(version21, structureType)) {
-            return version21;
-        }
-
-        return null; // No suitable version found
-    }
-
-    /**
-     * Checks if version configuration supports the given structure type.
-     */
-    private boolean supportsStructureType(VersionSpecificRegistryConfiguration versionConfig, String structureType) {
-        StructureEndpointConfiguration structureConfig = versionConfig.getStructureEndpointConfig();
-        if (structureConfig == null) {
-            return false;
-        }
-        Set<String> supportedStructures = structureConfig.getSupportedStructures();
-        return supportedStructures != null && supportedStructures.contains(structureType);
     }
 
     private void validateFilters(MultiValueMap<String, String> filters, VersionSpecificRegistryConfiguration versionConfig, SdmxBeans sdmxBeans, String agencyID, String resourceID, String version) {
@@ -519,11 +213,12 @@ public class QueryTranslatorImpl implements QueryTranslator {
             String endPeriod,
             String reportingYearStartDay,
             String acceptHeader,
-            SdmxBeans sdmxBeans
+            SdmxBeans sdmxBeans,
+            String sourceArtefactUrn
     ) {
         // Parse media type from Accept header to get both output type and SDMX version
         MediaTypeParseResult mediaTypeResult = parseMediaType(acceptHeader);
-        RegistrySelectionResult selectedRegistry = selectRegistryAndVersion(agencyID, mediaTypeResult.getSdmxVersion());
+        RegistrySelectionResult selectedRegistry = selectRegistryAndVersion(agencyID, mediaTypeResult.getSdmxVersion(), sourceArtefactUrn);
 
         MultiValueMap<String, String> filters = extractFilters(c);
 
@@ -653,11 +348,12 @@ public class QueryTranslatorImpl implements QueryTranslator {
             Instant asOf,
             boolean skipEmptySeries,
             String acceptHeader,
-            SdmxBeans sdmxBeans
+            SdmxBeans sdmxBeans,
+            String sourceArtefactUrn
     ) {
         // Parse media type from Accept header to get both output type and SDMX version
         MediaTypeParseResult mediaTypeResult = parseMediaType(acceptHeader);
-        RegistrySelectionResult selectedRegistry = selectRegistryAndVersion(agencyID, mediaTypeResult.getSdmxVersion());
+        RegistrySelectionResult selectedRegistry = selectRegistryAndVersion(agencyID, mediaTypeResult.getSdmxVersion(), sourceArtefactUrn);
 
         MultiValueMap<String, String> filters = extractFilters(c);
         VersionSpecificRegistryConfiguration versionConfig = selectedRegistry.getVersionConfiguration();

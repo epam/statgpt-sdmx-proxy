@@ -8,17 +8,22 @@ import com.epam.sdmxproxy.services.sdmxsource.JsonDataWriterFactoryProducer;
 import io.sdmx.api.io.ReadableDataLocation;
 import io.sdmx.api.sdmx.constants.DATA_TYPE;
 import io.sdmx.api.sdmx.engine.DataReaderEngine;
+import io.sdmx.api.sdmx.engine.DataWriterEngine;
 import io.sdmx.api.sdmx.engine.ISeriesObsDataWriterEngine;
+import io.sdmx.api.sdmx.manager.structure.SdmxSuperBeanRetrievalManager;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
-import io.sdmx.api.sdmx.model.beans.datastructure.DataStructureBean;
-import io.sdmx.api.sdmx.model.beans.datastructure.DataflowBean;
 import io.sdmx.api.sdmx.model.data.DataFormat;
 import io.sdmx.core.data.util.DataTransformOptions;
 import io.sdmx.core.data.util.DataTransformationUtil;
+import io.sdmx.core.sdmx.api.engine.data.IFlatDataWriterEngine;
 import io.sdmx.core.sdmx.api.factory.data.DataReaderFactory;
 import io.sdmx.core.sdmx.manager.structure.InMemoryRetrievalManager;
+import io.sdmx.core.sdmx.manager.structure.SdmxSuperBeanRetrievalManagerImpl;
+import io.sdmx.format.csv.engine.v2.SdmxCsvDataWriterEngineV2;
+import io.sdmx.format.csv.format.SdmxCsvDataFormat;
 import io.sdmx.format.json.model.SdmxJsonDataFormat;
 import io.sdmx.format.ml.factory.data.SdmxMLDataReaderFactory;
+import io.sdmx.format.ml.factory.data.SdmxMLDataWriterFactory;
 import io.sdmx.format.ml.model.SDMXMLDataFormat;
 import io.sdmx.utils.core.io.SdmxSourceReadableDataLocationFactory;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +34,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.NoSuchElementException;
+import java.util.Locale;
 
 /**
  * Service that orchestrates the streaming conversion of SDMX data between different formats.
@@ -68,13 +73,14 @@ public class StreamingDataConversionService {
             processAsJson(inputStream, outputStream, sdmxBeans, targetMediaType, sourceFormat);
             return;
         }
-
-        if (isXmlMediaType(targetMediaType)) {
-            throw new UnsupportedOperationException(
-                    String.format("Data conversion to XML format (%s) is not supported in MVP", targetMediaType)
-            );
+        if (isCsvMediaType(targetMediaType)) {
+            processAsCsv(inputStream, outputStream, sdmxBeans, targetMediaType, sourceFormat);
+            return;
         }
-
+        if (isXmlMediaType(targetMediaType)) {
+            processAsXml(inputStream, outputStream, sdmxBeans, targetMediaType, sourceFormat);
+            return;
+        }
         throw new UnsupportedOperationException(
                 String.format("Data conversion to %s is not supported", targetMediaType)
         );
@@ -82,6 +88,10 @@ public class StreamingDataConversionService {
 
     private boolean isJsonMediaType(MediaType mediaType) {
         return mediaType.getSubtype().contains("json");
+    }
+
+    private boolean isCsvMediaType(MediaType mediaType) {
+        return mediaType.getSubtype().contains("csv");
     }
 
     private boolean isXmlMediaType(MediaType mediaType) {
@@ -147,6 +157,57 @@ public class StreamingDataConversionService {
     }
 
 
+    // targetMediaType included for signature consistency with processAsJson/processAsCsv,
+    // though XML 3.0 output has no Accept header parameters to parse
+    private void processAsXml(
+            InputStream inputStream,
+            OutputStream outputStream,
+            SdmxBeans sdmxBeans,
+            MediaType targetMediaType,
+            ReturnFormat sourceFormat
+    ) {
+        DataReaderEngine reader = getDataReader(sdmxBeans, inputStream, sourceFormat);
+
+        // SDMX 3.0 uses Compact (Structure-Specific) format -- no Generic/Compact distinction in 3.0
+        DataWriterEngine writer = SdmxMLDataWriterFactory.getInstance().getDataWriterEngine(SDMXMLDataFormat.COMPACT_3_0, outputStream, null);
+
+        DataTransformOptions options = DataTransformOptions.getInstance();
+        options.setCopyHeader(true);
+        options.setCloseWriter(true);
+
+        DataTransformationUtil.copyData(reader, writer, options);
+    }
+
+    private void processAsCsv(
+            InputStream inputStream,
+            OutputStream outputStream,
+            SdmxBeans sdmxBeans,
+            MediaType targetMediaType,
+            ReturnFormat sourceFormat
+    ) {
+        DataReaderEngine reader = getDataReader(sdmxBeans, inputStream, sourceFormat);
+
+        SdmxCsvDataFormat csvFormat = buildCsvDataFormat(targetMediaType);
+        SdmxSuperBeanRetrievalManager superBeanRetrievalManager = new SdmxSuperBeanRetrievalManagerImpl(new InMemoryRetrievalManager(sdmxBeans));
+
+        IFlatDataWriterEngine writer = new SdmxCsvDataWriterEngineV2(csvFormat, superBeanRetrievalManager, outputStream);
+
+        DataTransformationUtil.copyData(reader, writer, true, true, true);
+    }
+
+    private SdmxCsvDataFormat buildCsvDataFormat(MediaType targetMediaType) {
+        String labelsParam = targetMediaType.getParameter("labels");
+        String timeFormatParam = targetMediaType.getParameter("timeFormat");
+        String keysParam = targetMediaType.getParameter("keys");
+
+        boolean normalizedTime = "normalized".equals(timeFormatParam);
+        boolean includeSeriesKey = "series".equals(keysParam) || "both".equals(keysParam);
+        boolean includeObsKey = "obs".equals(keysParam) || "both".equals(keysParam);
+
+        // Locale.ENGLISH for deterministic output across container environments
+        return new SdmxCsvDataFormat(DATA_TYPE.SDMX_CSV_2_0_0, labelsParam, normalizedTime, false, Locale.ENGLISH, includeSeriesKey, includeObsKey, null, false);
+    }
+
     private ISeriesObsDataWriterEngine getDataWriterEngine(SdmxBeans sdmxBeans, OutputStream outputStream, SdmxVersion sdmxVersion) {
         DataFormat dataFormat;
         switch (sdmxVersion) {
@@ -167,17 +228,5 @@ public class StreamingDataConversionService {
                 outputStream,
                 null
         );
-    }
-
-    private static class DsdAndDataflow {
-        DataStructureBean dsd;
-        DataflowBean dataflow;
-
-        DsdAndDataflow(SdmxBeans sdmxBeans) {
-            this.dsd = sdmxBeans.getDataStructures().stream().findFirst()
-                    .orElseThrow(() -> new NoSuchElementException("No dataStructure present"));
-            this.dataflow = sdmxBeans.getDataflows().stream().findFirst()
-                    .orElseThrow(() -> new NoSuchElementException("No dataflow present"));
-        }
     }
 }

@@ -3,18 +3,15 @@
     {
       "name": "BIS",
       "description": "Bank for International Settlements",
-      "supportedAgencies": [
-        "BIS"
-      ],
       "versions": {
-        "SDMX_2_1": {
-          "sdmxVersion": "SDMX_2_1",
+        "SDMX_3_0": {
+          "sdmxVersion": "SDMX_3_0",
           "structureEndpointConfig": {
-            "url": "https://stats.bis.org/api/v1/",
+            "url": "https://stats.bis.org/api/v2/structure/",
             "supportedFormats": [
-              "XML_2_1"
+              "JSON_STRUCTURE_2_0_0"
             ],
-            "defaultFormat": "XML_2_1",
+            "defaultFormat": "JSON_STRUCTURE_2_0_0",
             "bypassEnabled": false,
             "supportedStructures": [
               "datastructure",
@@ -24,21 +21,22 @@
             ]
           },
           "dataEndpointConfig": {
-            "url": "https://stats.bis.org/api/v1/data/",
+            "url": "https://stats.bis.org/api/v2/data/",
             "supportedFormats": [
-              "XML_STRUCTURE_SPECIFIC_2_1"
+              "JSON_1_0_0"
             ],
-            "defaultFormat": "XML_STRUCTURE_SPECIFIC_2_1",
+            "defaultFormat": "JSON_1_0_0",
             "bypassEnabled": false
           },
           "availabilityEndpointConfig": {
-            "url": "https://stats.bis.org/api/v1/",
+            "url": "https://stats.bis.org/api/v2/availability/",
             "supportedFormats": [
-              "XML_2_1"
+              "JSON_STRUCTURE_2_0_0"
             ],
-            "defaultFormat": "XML_2_1",
+            "defaultFormat": "JSON_STRUCTURE_2_0_0",
             "bypassEnabled": false,
-            "availabilityEnabled": true
+            "availabilityEnabled": true,
+            "unwrapStarComponentId": true
           },
           "resilienceConfig": {
             "connectionTimeout": 30000,
@@ -67,14 +65,6 @@
     {
       "name": "IMF",
       "description": "International Monetary Fund",
-      "supportedAgencies": [
-        "IMF",
-        "IMF.STA",
-        "IMF.FAD",
-        "IMF.RES",
-        "IMF.STA.DS",
-        "IMF.MCM"
-      ],
       "versions": {
         "SDMX_3_0": {
           "sdmxVersion": "SDMX_3_0",
@@ -117,7 +107,13 @@
             ],
             "defaultFormat": "JSON_STRUCTURE_2_0_0",
             "bypassEnabled": false,
-            "availabilityEnabled": true
+            "availabilityEnabled": true,
+            "fixtures": [
+              {
+                "type": "MOVE_CUBE_REGION_COMPONENTS_TO_KEY_VALUES",
+                "config": {}
+              }
+            ]
           },
           "resilienceConfig": {
             "connectionTimeout": 45000,
@@ -138,6 +134,16 @@
         }
       }
     }
+  ],
+  "agencies": [
+    {
+      "name": "BIS",
+      "primaryRegistry": "BIS"
+    },
+    {
+      "name": "IMF",
+      "primaryRegistry": "IMF",
+      "allowSubAgencies": true
+    }
   ]
 }
-

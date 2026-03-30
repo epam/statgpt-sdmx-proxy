@@ -20,7 +20,7 @@ public interface ConfigApi {
 
     @Operation(
             summary = "Get configuration",
-            description = "Retrieves the current proxy configuration including all registry settings."
+            description = "Retrieves the current proxy configuration including all registry settings. For debugging purposes."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -33,19 +33,12 @@ public interface ConfigApi {
     ResponseEntity<ProxyConfiguration> getConfig();
 
     @Operation(
-            summary = "Update configuration",
-            description = "Updates the proxy configuration with new registry settings. " +
-                    "Note: This approach may not work in a scalable environment."
+            summary = "Update configuration (test only)",
+            description = "Updates the proxy configuration. Only available when sdmxproxy.test.config-endpoint.enabled=true."
     )
     @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Configuration updated successfully"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid configuration provided"
-            )
+            @ApiResponse(responseCode = "200", description = "Configuration updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Endpoint not available")
     })
     @PostMapping(consumes = "application/json")
     ResponseEntity<?> updateConfig(

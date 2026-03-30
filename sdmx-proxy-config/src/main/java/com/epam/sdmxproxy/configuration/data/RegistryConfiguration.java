@@ -2,7 +2,6 @@ package com.epam.sdmxproxy.configuration.data;
 
 import lombok.Data;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,12 +19,6 @@ public class RegistryConfiguration {
      * Human-readable description of the registry.
      */
     private String description;
-
-    /**
-     * List of agency IDs supported by this registry.
-     * These agencies are supported across all versions configured for this registry.
-     */
-    private List<String> supportedAgencies;
 
     /**
      * Map of SDMX version to version-specific configuration.

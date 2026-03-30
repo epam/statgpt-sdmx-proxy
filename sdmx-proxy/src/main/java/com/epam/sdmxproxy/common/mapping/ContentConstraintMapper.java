@@ -110,14 +110,8 @@ public class ContentConstraintMapper implements Mapper<ContentConstraintBean> {
             var cubeRegion = new CubeRegionImpl();
             cubeRegion.setIncluded(included);
 
-            /*
-            Mapping sdmx-source cubeRegionBean.getKeyValues()
-            to jsdmx cubeRegion.setMemberSelections
-            because our API is SDMX 3.0 and key values are comming filled in 2.1
-            Probably needs to be redone in a better way;
-             */
-            if (CollectionUtils.isNotEmpty(cubeRegionBean.getKeyValues()) && CollectionUtils.isEmpty(cubeRegionBean.getAttributeValues())) {
-                cubeRegion.setMemberSelections(mapMemberSelections(cubeRegionBean.getKeyValues(), included));
+            if (CollectionUtils.isNotEmpty(cubeRegionBean.getKeyValues())) {
+                cubeRegion.setCubeRegionKeys(mapKeyValues(cubeRegionBean.getKeyValues(), included));
             }
 
             if (CollectionUtils.isNotEmpty(cubeRegionBean.getAttributeValues())) {
