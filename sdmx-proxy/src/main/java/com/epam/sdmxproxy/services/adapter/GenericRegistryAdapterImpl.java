@@ -15,6 +15,8 @@ import com.epam.sdmxproxy.registry.api.client.Sdmx30DataClient;
 import com.epam.sdmxproxy.registry.api.client.Sdmx30StructureClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.collections4.MapUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -204,6 +206,9 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
 
     private MultiValueMap<String, String> wrapIntoC(MultiValueMap<String, String> filters) {
         MultiValueMap<String, String> wrapped = new LinkedMultiValueMap<>();
+        if (MapUtils.isEmpty(filters)) {
+            return wrapped;
+        }
         filters.forEach((key, values) -> wrapped.addAll("c[" + key + "]", values));
         return wrapped;
     }
