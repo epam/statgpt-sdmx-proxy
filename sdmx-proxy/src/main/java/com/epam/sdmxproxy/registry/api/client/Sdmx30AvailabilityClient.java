@@ -4,9 +4,9 @@ import feign.Headers;
 import feign.Param;
 import feign.QueryMap;
 import feign.RequestLine;
+import org.springframework.util.MultiValueMap;
 
 import java.io.InputStream;
-import java.util.Map;
 
 public interface Sdmx30AvailabilityClient extends SdmxApiBase {
 
@@ -26,7 +26,7 @@ public interface Sdmx30AvailabilityClient extends SdmxApiBase {
             @Param("version") String version,
             @Param("key") String key,
             @Param("componentId") String componentId,
-            @QueryMap Map<String, String> filters,
+            @QueryMap MultiValueMap<String, String> filters,
             @Param("updatedAfter") String updatedAfter, // Format as ISO string
             @Param("mode") String mode,
             @Param("references") String references,

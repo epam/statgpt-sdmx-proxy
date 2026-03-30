@@ -23,5 +23,5 @@ public class AvailabilityQueryRequestDto {
     private String reportingYearStartDay;
 
     @JsonAlias("c")  // standard name is `c`
-    private List<DataComponentFilterDto> filter = new ArrayList<>();
+    private List<DataComponentFilterDto> filters = new ArrayList<>();
 }

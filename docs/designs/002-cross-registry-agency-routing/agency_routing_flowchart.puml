@@ -1,0 +1,93 @@
+@startuml Agency Routing Flowchart
+title AgencyRoutingService.resolveRegistry(agencyId, sourceArtefactUrn)
+
+start
+
+if (sourceArtefactUrn present?) then (yes)
+  :Parse URN to extract **sourceAgency**;
+  note right
+    URN format:
+    urn:sdmx:org.sdmx.infomodel
+      .{pkg}.{class}=**{agency}**:{id}({ver})
+  end note
+
+  if (URN parse successful\nAND sourceAgency found in agencies[]?) then (yes)
+    :Resolve **candidateRegistry** from\nsourceAgency config;
+    note right
+      Same sub-algorithm as
+      "Resolve registry from
+      agency config" below:
+      try primary, then walk
+      secondaries
+    end note
+
+    if (candidateRegistry resolved?) then (yes)
+      :Get AgencyConfiguration\nfor **agencyId** (requested agency);
+
+      if (agencyId found in agencies[]?) then (yes)
+        :Collect **all registries** for agencyId:\nprimary + all secondaries;
+
+        if (candidateRegistry is in\nagencyId's registry set?) then (yes)
+          #palegreen:Return **candidateRegistry**;
+          note right
+            **Cross-reference match**
+            Source URN says "look in this registry"
+            AND the requested agency's artefacts
+            can be fetched from that registry
+          end note
+          stop
+        else (no -- candidate not in agencyId's registries)
+          note right
+            Candidate registry doesn't host
+            this agency's artefacts.
+            Fall through to standard routing.
+          end note
+        endif
+      else (no -- agencyId not in agencies[])
+        note right: Fall through
+      endif
+    else (no -- sourceAgency has no resolvable registry)
+    endif
+  else (no -- parse failed or sourceAgency unknown)
+  endif
+endif
+
+' ============================================================
+' Standard routing: resolve from requested agencyId directly
+' ============================================================
+
+partition "Standard routing (resolve from agencyId)" {
+
+  if (agencyId found in agencies[]?) then (yes)
+    :Get AgencyConfiguration for **agencyId**;
+
+    if (primaryRegistry is set\nAND found in configs[]?) then (yes)
+      #palegreen:Return **primaryRegistry**;
+      note right: **Standard path** -- requested agency's primary
+      stop
+    else (no)
+    endif
+
+    :Walk secondaryRegistries[] in order;
+    while (next secondary?) is (yes)
+      if (secondary found in configs[]?) then (yes)
+        #palegreen:Return **secondary registry**;
+        note right: **Standard fallback** -- first available secondary
+        stop
+      else (no)
+      endif
+    endwhile (no more)
+
+    #salmon:Throw IllegalArgumentException;
+    note right: Agency configured but no registry resolvable
+    stop
+
+  else (no -- agencyId not in agencies[])
+    #salmon:Throw IllegalArgumentException;
+    note right: Unknown agency
+    stop
+  endif
+
+}
+
+@enduml

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Component
@@ -19,7 +20,18 @@ public class ProxyConfigurationProviderImpl implements ProxyConfigurationProvide
     @Value("${sdmxproxy.registry.config.source.type}")
     private ProxyConfigurationSourceType sourceType;
 
+    /**
+     * Runtime override for test/debug purposes (e.g., E2E tests pushing config via POST /config).
+     * When set, takes precedence over the extractor.
+     */
+    private final AtomicReference<ProxyConfiguration> runtimeOverride = new AtomicReference<>();
+
     public ProxyConfiguration getConfiguration() {
+        ProxyConfiguration override = runtimeOverride.get();
+        if (override != null) {
+            return override;
+        }
+
         ProxyConfigurationExtractor configurationExtractor = configExtractors.stream()
                 .filter(extractor -> extractor.supports() == sourceType)
                 .findFirst()
@@ -28,5 +40,11 @@ public class ProxyConfigurationProviderImpl implements ProxyConfigurationProvide
         return configurationExtractor.getConfiguration();
     }
 
-
+    /**
+     * Sets a runtime configuration override. Used by test endpoints.
+     * Pass null to clear the override and revert to the configured extractor.
+     */
+    public void setRuntimeOverride(ProxyConfiguration configuration) {
+        runtimeOverride.set(configuration);
+    }
 }

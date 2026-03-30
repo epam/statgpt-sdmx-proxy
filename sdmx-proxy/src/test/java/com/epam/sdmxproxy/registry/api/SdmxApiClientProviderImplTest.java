@@ -333,7 +333,7 @@ class SdmxApiClientProviderImplTest {
     private RegistrySelectionResult createSelectedRegistry(String name, String baseUrl, String dataUrl, SdmxVersion version) {
         RegistryConfiguration registryConfig = new RegistryConfiguration();
         registryConfig.setName(name);
-        registryConfig.setSupportedAgencies(java.util.List.of("TEST"));
+
 
         VersionSpecificRegistryConfiguration versionConfig = new VersionSpecificRegistryConfiguration();
         versionConfig.setSdmxVersion(version);

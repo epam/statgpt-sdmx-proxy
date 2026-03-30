@@ -4,23 +4,27 @@ import com.epam.sdmxproxy.common.data.TranslatedAvailabilityQuery;
 import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.common.utils.FormatSupportChecker;
-import com.epam.sdmxproxy.configuration.data.FixtureConfiguration;
+import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
-import com.epam.sdmxproxy.exception.StructureFanOutException;
+import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
+import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingAvailabilityConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingDataConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
 import com.epam.sdmxproxy.services.cache.CacheKeyGenerator;
 import com.epam.sdmxproxy.services.cache.CacheService;
-import com.epam.sdmxproxy.services.fixture.FixtureService;
+import com.epam.sdmxproxy.services.fixture.availability.AvailabilityFixtureService;
+import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
 import com.epam.sdmxproxy.services.translator.QueryTranslator;
 import feign.FeignException;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
-import io.sdmx.im.beans.container.SdmxBeansImpl;
+import io.sdmx.api.sdmx.model.beans.base.IdentifiableBean;
+import io.sdmx.api.sdmx.model.beans.datastructure.DataStructureBean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -29,13 +33,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -48,7 +49,8 @@ public class AdapterRouterImpl implements AdapterRouter {
     private final GenericRegistryAdapter genericRegistryAdapter;
     private final QueryTranslator queryTranslator;
     private final CacheService cacheService;
-    private final FixtureService fixtureService;
+    private final StructureFixtureService fixtureService;
+    private final AvailabilityFixtureService availabilityFixtureService;
 
     @Override
     public StreamingResponseBody getStructures(TranslatedStructureQuery query) {
@@ -76,16 +78,22 @@ public class AdapterRouterImpl implements AdapterRouter {
     }
 
     private InputStream getFixedStructureStream(TranslatedStructureQuery query) {
-        InputStream raw = genericRegistryAdapter.getStructures(query);
-        List<FixtureConfiguration> fixtures = query.getVersionConfiguration()
-                .getStructureEndpointConfig().getFixtures();
-        return fixtureService.applyFixtures(raw, query.getRegistryReturnFormat(), fixtures);
+        InputStream structures = genericRegistryAdapter.getStructures(query);
+        return structures != null
+                ? fixtureService.applyFixtures(
+                structures,
+                query.getRegistryReturnFormat(),
+                query.getVersionConfiguration().getStructureEndpointConfig().getFixtures()
+        )
+                : null;
     }
 
-    @NotNull
     private StreamingResponseBody getStructuresConversion(TranslatedStructureQuery query, ReturnFormat returnFormat, MediaType requestedMediaType, String responseKey) {
         return outputStream -> {
             try (InputStream inputStream = getFixedStructureStream(query)) {
+                if (inputStream == null) {
+                    return;
+                }
                 ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
                 streamingStructureConversionService.convert(
@@ -146,77 +154,6 @@ public class AdapterRouterImpl implements AdapterRouter {
     }
 
     @Override
-    public StreamingResponseBody getStructuresWithFanOut(List<TranslatedStructureQuery> queries) {
-        if (queries == null || queries.isEmpty()) {
-            throw new IllegalArgumentException("Queries list cannot be null or empty");
-        }
-
-        return outputStream -> {
-            try (ExecutorService executorService = Executors.newFixedThreadPool(queries.size())) {
-                SdmxBeans structuresPerRegistry = getStructuresPerRegistry(queries, executorService);
-                streamingStructureConversionService.convert(structuresPerRegistry, outputStream, queries.getFirst().getContentType());
-            }
-        };
-    }
-
-    private SdmxBeans getStructuresPerRegistry(List<TranslatedStructureQuery> queries, ExecutorService executorService) {
-        List<CompletableFuture<Optional<SdmxBeans>>> futures = new ArrayList<>();
-
-        for (TranslatedStructureQuery query : queries) {
-            futures.add(getStructurePerRegistryFuture(executorService, query));
-        }
-
-        return mergeSdmxBeans(collectFanOutResult(queries, futures));
-    }
-
-    private List<SdmxBeans> collectFanOutResult(List<TranslatedStructureQuery> queries, List<CompletableFuture<Optional<SdmxBeans>>> futures) {
-        List<SdmxBeans> results = new ArrayList<>();
-        List<String> failedRegistries = new ArrayList<>();
-
-        for (int i = 0; i < futures.size(); i++) {
-            TranslatedStructureQuery query = queries.get(i);
-            Optional<SdmxBeans> result = futures.get(i).join();
-
-            if (result.isPresent()) {
-                results.add(result.get());
-            } else {
-                String registryName = query.getRegistryConfiguration().getName();
-                log.warn("Failed to fetch structures from registry: {}", registryName);
-                failedRegistries.add(registryName);
-            }
-        }
-
-        boolean allRegistriesFailed = results.isEmpty() && !failedRegistries.isEmpty();
-        if (allRegistriesFailed) {
-            throw new StructureFanOutException(
-                    String.format("All registries failed during fan-out: %s", String.join(", ", failedRegistries)),
-                    failedRegistries
-            );
-        }
-        return results;
-    }
-
-    private CompletableFuture<Optional<SdmxBeans>> getStructurePerRegistryFuture(ExecutorService executorService, TranslatedStructureQuery query) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                SdmxBeans beans = getSdmxBeans(query);
-                return Optional.of(beans);
-            } catch (Exception e) {
-                log.warn("Failed to fetch structures from registry {}: {}",
-                        query.getRegistryConfiguration().getName(), e.getMessage(), e);
-                return Optional.empty();
-            }
-        }, executorService);
-    }
-
-    private SdmxBeans mergeSdmxBeans(List<SdmxBeans> sdmxBeans) {
-        SdmxBeans results = new SdmxBeansImpl();
-        sdmxBeans.forEach(results::merge);
-        return results;
-    }
-
-
-    @Override
     public StreamingResponseBody getData(TranslatedDataQuery query) {
         VersionSpecificRegistryConfiguration versionConfig = query.getVersionConfiguration();
         MediaType requestedMediaType = query.getContentType();
@@ -261,6 +198,20 @@ public class AdapterRouterImpl implements AdapterRouter {
                 query.getVersion(),
                 "descendants",
                 "full",
+                null,
+                null
+        );
+    }
+
+    private TranslatedStructureQuery getStructureQuery(TranslatedAvailabilityQuery query) {
+        return queryTranslator.translateStructureQuery(
+                "dataflow",
+                query.getAgencyID(),
+                query.getResourceID(),
+                query.getVersion(),
+                "descendants",
+                "full",
+                null,
                 null
         );
     }
@@ -270,6 +221,10 @@ public class AdapterRouterImpl implements AdapterRouter {
         VersionSpecificRegistryConfiguration versionConfig = query.getVersionConfiguration();
         MediaType requestedMediaType = query.getContentType();
         ReturnFormat returnFormat = query.getReturnFormat();
+
+        if (shouldUnwrapStarComponentId(query, versionConfig)) {
+            unwrapStarComponentId(query);
+        }
 
         // BYPASS: if bypass is enabled and requested format is in supportedFormats
         if (FormatSupportChecker.canBypassAvailabilityFormat(versionConfig, requestedMediaType)) {
@@ -284,7 +239,7 @@ public class AdapterRouterImpl implements AdapterRouter {
         // CONVERSION: use returnFormat from query (determined by QueryTranslator) and convert
         log.debug("Converting availability from {} to {}", returnFormat, requestedMediaType);
         return outputStream -> {
-            try (InputStream inputStream = genericRegistryAdapter.getAvailability(query)) {
+            try (InputStream inputStream = getFixedAvailabilityStream(query)) {
                 streamingAvailabilityConversionService.convert(
                         inputStream,
                         outputStream,
@@ -299,6 +254,38 @@ public class AdapterRouterImpl implements AdapterRouter {
                 throw new IllegalArgumentException("Failed to convert availability data", e);
             }
         };
+    }
+
+    @Nullable
+    private static List<FixtureConfiguration<AvailabilityFixtureType>> getFixtureConfigurations(TranslatedAvailabilityQuery query) {
+        AvailabilityEndpointConfiguration endpointConfig = query.getVersionConfiguration().getAvailabilityEndpointConfig();
+        return endpointConfig != null ? endpointConfig.getFixtures() : null;
+    }
+
+    private InputStream getFixedAvailabilityStream(TranslatedAvailabilityQuery query) {
+        return availabilityFixtureService.applyFixtures(
+                genericRegistryAdapter.getAvailability(query),
+                query.getReturnFormat(),
+                getSdmxBeans(getStructureQuery(query)),
+                getFixtureConfigurations(query)
+        );
+    }
+
+    private void unwrapStarComponentId(TranslatedAvailabilityQuery query) {
+        SdmxBeans sdmxBeans = getSdmxBeans(getStructureQuery(query));
+        DataStructureBean dataStructureBean = sdmxBeans.getDataStructures().stream().findAny().get();
+        String unwrappedComponentId = dataStructureBean.getDimensionList().getDimensions()
+                .stream()
+                .filter(dimensionBean -> !dimensionBean.isTimeDimension())
+                .map(IdentifiableBean::getId)
+                .collect(Collectors.joining(","));
+        query.setComponentId(unwrappedComponentId);
+    }
+
+    private boolean shouldUnwrapStarComponentId(TranslatedAvailabilityQuery query, VersionSpecificRegistryConfiguration versionConfig) {
+        boolean isAllowedByConfig = versionConfig.getAvailabilityEndpointConfig().isUnwrapStarComponentId();
+        boolean isStarComponentId = "*".equals(query.getComponentId()) || query.getComponentId() == null;
+        return isAllowedByConfig && isStarComponentId;
     }
 
 

@@ -3,12 +3,6 @@
     {
       "name": "IMF",
       "description": "International Monetary Fund",
-      "supportedAgencies": [
-        "IMF",
-        "IMF.STA",
-        "IMF.FAD",
-        "IMF.RES"
-      ],
       "versions": {
         "SDMX_2_1": {
           "sdmxVersion": "SDMX_2_1",
@@ -61,6 +55,13 @@
           }
         }
       }
+    }
+  ],
+  "agencies": [
+    {
+      "name": "IMF",
+      "primaryRegistry": "IMF",
+      "allowSubAgencies": true
     }
   ]
 }

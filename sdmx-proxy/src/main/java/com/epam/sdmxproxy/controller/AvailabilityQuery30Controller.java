@@ -17,6 +17,7 @@ import org.apache.commons.lang3.Strings;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,7 +51,8 @@ public class AvailabilityQuery30Controller implements AvailabilityQuery30Api {
             @RequestParam(value = "mode", required = false, defaultValue = "exact") String mode,
             @RequestParam(value = "references", required = false, defaultValue = "none") String references,
             @RequestParam(value = "reportingYearStartDay", required = false) String reportingYearStartDay,
-            @RequestHeader(value = "Accept", required = false) @Nullable String accept
+            @RequestHeader(value = "Accept", required = false) @Nullable String accept,
+            @RequestHeader(value = "X-Source-Artefact-Urn", required = false) @Nullable String sourceArtefactUrn
     ) {
         logRequestUrl(accept, AVAILABILITY);
 
@@ -77,7 +79,8 @@ public class AvailabilityQuery30Controller implements AvailabilityQuery30Api {
                 null, // endPeriod - not in SDMX 3.0 API
                 reportingYearStartDay,
                 accept,
-                getSdmxBeans(agencyID, resourceID, version)
+                getSdmxBeans(agencyID, resourceID, version, sourceArtefactUrn),
+                sourceArtefactUrn
         );
 
         return ResponseEntity.ok()
@@ -91,8 +94,9 @@ public class AvailabilityQuery30Controller implements AvailabilityQuery30Api {
             @PathVariable(value = "agencyID") String agencyID,
             @PathVariable(value = "resourceID") String resourceID,
             @PathVariable(value = "version") String version,
-            @org.springframework.web.bind.annotation.RequestBody AvailabilityQueryRequestDto request,
-            @RequestHeader(value = "Accept", required = false) @Nullable String accept
+            @RequestBody AvailabilityQueryRequestDto request,
+            @RequestHeader(value = "Accept", required = false) @Nullable String accept,
+            @RequestHeader(value = "X-Source-Artefact-Urn", required = false) @Nullable String sourceArtefactUrn
     ) {
         if (!"dataflow".equals(context)) {
             throw new UnsupportedContextException("context = " + context + " not supported");
@@ -103,7 +107,7 @@ public class AvailabilityQuery30Controller implements AvailabilityQuery30Api {
         }
 
         // Convert DTO filters to MultiValueMap format
-        MultiValueMap<String, String> c = FilterUtils.convertFiltersToMultiValueMap(request.getFilter());
+        MultiValueMap<String, String> c = FilterUtils.convertFiltersToMultiValueMap(request.getFilters());
 
         TranslatedAvailabilityQuery translatedQuery = queryTranslator.translateAvailabilityQuery(
                 context,
@@ -120,7 +124,8 @@ public class AvailabilityQuery30Controller implements AvailabilityQuery30Api {
                 null, // endPeriod - not in SDMX 3.0 API
                 request.getReportingYearStartDay(),
                 accept,
-                getSdmxBeans(agencyID, resourceID, version)
+                getSdmxBeans(agencyID, resourceID, version, sourceArtefactUrn),
+                sourceArtefactUrn
         );
 
         return ResponseEntity.ok()
@@ -128,7 +133,7 @@ public class AvailabilityQuery30Controller implements AvailabilityQuery30Api {
                 .body(adapterRouter.getAvailability(translatedQuery));
     }
 
-    private SdmxBeans getSdmxBeans(String agencyID, String resourceID, String version) {
+    private SdmxBeans getSdmxBeans(String agencyID, String resourceID, String version, @Nullable String sourceArtefactUrn) {
         TranslatedStructureQuery structureQuery = queryTranslator.translateStructureQuery(
                 "dataflow",
                 agencyID,
@@ -136,7 +141,8 @@ public class AvailabilityQuery30Controller implements AvailabilityQuery30Api {
                 version,
                 "descendants",
                 "full",
-                null
+                null,
+                sourceArtefactUrn
         );
         return adapterRouter.getSdmxBeans(structureQuery);
     }

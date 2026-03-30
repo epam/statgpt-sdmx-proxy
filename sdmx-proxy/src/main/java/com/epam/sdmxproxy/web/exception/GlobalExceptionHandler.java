@@ -1,13 +1,18 @@
 package com.epam.sdmxproxy.web.exception;
 
 import com.epam.sdmxproxy.configuration.telemetry.TraceContextUtils;
+import com.epam.sdmxproxy.exception.AgencyRoutingException;
 import com.epam.sdmxproxy.exception.FilterValidationException;
 import com.epam.sdmxproxy.exception.IllegalRegistryConfigurationException;
 import com.epam.sdmxproxy.exception.RateLimitExceededException;
 import com.epam.sdmxproxy.exception.RegistryUnavailableException;
+import com.epam.sdmxproxy.exception.UnsupportedAgencyWildcardException;
 import com.epam.sdmxproxy.exception.UnsupportedContextException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +27,10 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
  */
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final ObjectMapper objectMapper;
 
     /**
      * Creates an ErrorResponse with trace information.
@@ -40,6 +48,30 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles unsupported agency wildcard/comma-separated requests.
+     * Returns 501 Not Implemented.
+     */
+    @ApiResponse(responseCode = "501", description = "Not Implemented - Wildcard and comma-separated agency queries are not supported")
+    @ExceptionHandler(UnsupportedAgencyWildcardException.class)
+    public ResponseEntity<ErrorResponse> handleUnsupportedAgencyWildcardException(UnsupportedAgencyWildcardException ex) {
+        log.warn("Unsupported agency wildcard: {}", ex.getMessage());
+        ErrorResponse response = createErrorResponse(ex.getMessage(), HttpStatus.NOT_IMPLEMENTED);
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(response);
+    }
+
+    /**
+     * Handles agency routing exceptions (unsupported agency).
+     * Returns 400 Bad Request with the error message.
+     */
+    @ApiResponse(responseCode = "400", description = "Bad Request - Agency routing failed")
+    @ExceptionHandler(AgencyRoutingException.class)
+    public ResponseEntity<ErrorResponse> handleAgencyRoutingException(AgencyRoutingException ex) {
+        log.warn("Agency routing failed: {}", ex.getMessage());
+        ErrorResponse response = createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
      * Handles filter validation exceptions.
      * Returns 400 Bad Request with the validation error message.
      */
@@ -54,15 +86,40 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles feign exceptions.
+     * Handles feign exceptions, propagating upstream registry error messages to the client.
      */
     @ApiResponse(description = "Feign exception.")
     @ExceptionHandler(FeignException.class)
     public ResponseEntity<ErrorResponse> handleFeignException(FeignException ex) {
         log.warn("Feign exception. Status: {}. Message: {}", ex.status(), ex.getMessage());
         HttpStatus status = HttpStatus.resolve(ex.status());
-        ErrorResponse response = createErrorResponse(status.getReasonPhrase(), status);
+        String message = extractUpstreamErrorMessage(ex, status);
+        ErrorResponse response = createErrorResponse(message, status);
         return ResponseEntity.status(status).body(response);
+    }
+
+    private String extractUpstreamErrorMessage(FeignException ex, HttpStatus status) {
+        String body = ex.contentUTF8();
+        if (body == null || body.isBlank()) {
+            return status.getReasonPhrase();
+        }
+        try {
+            JsonNode root = objectMapper.readTree(body);
+            JsonNode errors = root.path("errors");
+            if (errors.isArray() && !errors.isEmpty()) {
+                JsonNode firstMessage = errors.get(0).path("message");
+                if (!firstMessage.isMissingNode() && firstMessage.isTextual()) {
+                    return firstMessage.asText();
+                }
+            }
+            JsonNode message = root.path("message");
+            if (!message.isMissingNode() && message.isTextual()) {
+                return message.asText();
+            }
+        } catch (Exception ignored) {
+            // Not valid JSON — fall through to raw body
+        }
+        return body;
     }
 
     /**

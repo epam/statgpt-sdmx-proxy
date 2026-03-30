@@ -1,0 +1,71 @@
+{
+  "configs": [
+    {
+      "name": "BIS",
+      "description": "Bank for International Settlements",
+      "versions": {
+        "SDMX_3_0": {
+          "sdmxVersion": "SDMX_3_0",
+          "structureEndpointConfig": {
+            "url": "https://stats.bis.org/api/v2/structure/",
+            "supportedFormats": [
+              "JSON_STRUCTURE_2_0_0"
+            ],
+            "defaultFormat": "JSON_STRUCTURE_2_0_0",
+            "bypassEnabled": false,
+            "supportedStructures": [
+              "datastructure",
+              "conceptscheme",
+              "codelist",
+              "dataflow"
+            ]
+          },
+          "dataEndpointConfig": {
+            "url": "https://stats.bis.org/api/v2/data/",
+            "supportedFormats": [
+              "JSON_1_0_0"
+            ],
+            "defaultFormat": "JSON_1_0_0",
+            "bypassEnabled": false
+          },
+          "availabilityEndpointConfig": {
+            "url": "https://stats.bis.org/api/v2/availability/",
+            "supportedFormats": [
+              "JSON_STRUCTURE_2_0_0"
+            ],
+            "defaultFormat": "JSON_STRUCTURE_2_0_0",
+            "bypassEnabled": false,
+            "availabilityEnabled": true
+          },
+          "resilienceConfig": {
+            "connectionTimeout": 30000,
+            "readTimeout": 30000,
+            "circuitBreaker": {
+              "failureRateThreshold": 50.0,
+              "minimumNumberOfCalls": 10,
+              "waitDurationInOpenState": 60000,
+              "slidingWindowSize": 10
+            },
+            "retry": {
+              "maxAttempts": 5,
+              "initialIntervalMillis": 500,
+              "multiplier": 2.0,
+              "maxIntervalMillis": 2000
+            },
+            "rateLimit": {
+              "enabled": true,
+              "limitForPeriod": 100,
+              "limitRefreshPeriod": 60000
+            }
+          }
+        }
+      }
+    }
+  ],
+  "agencies": [
+    {
+      "name": "BIS",
+      "primaryRegistry": "BIS"
+    }
+  ]
+}

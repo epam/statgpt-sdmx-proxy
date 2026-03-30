@@ -4,9 +4,9 @@ import feign.Headers;
 import feign.Param;
 import feign.QueryMap;
 import feign.RequestLine;
+import org.springframework.util.MultiValueMap;
 
 import java.io.InputStream;
-import java.util.Map;
 
 public interface Sdmx30DataClient extends SdmxApiBase {
 
@@ -41,6 +41,6 @@ public interface Sdmx30DataClient extends SdmxApiBase {
             @Param("limit") Integer limit,
             @Param("asOf") String asOf, // Format as ISO string
             @Param("skipEmptySeries") Boolean skipEmptySeries,
-            @QueryMap Map<String, String> filters
+            @QueryMap MultiValueMap<String, String> filters
     );
 }

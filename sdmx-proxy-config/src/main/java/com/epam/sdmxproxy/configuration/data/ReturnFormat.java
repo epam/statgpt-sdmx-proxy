@@ -4,6 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum ReturnFormat {
+
     JSON_1_0_0("application/vnd.sdmx.data+json;version=1.0.0"),
     JSON_2_1_DRAFT("application/vnd.sdmx.draft-sdmx-json+json; version=2.1"),
     JSON_DATA_2_0_0("application/vnd.sdmx.data+json; version=2.0.0"),

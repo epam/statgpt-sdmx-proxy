@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.util.List;
-
 import static com.epam.sdmxproxy.controller.utils.ControllerUtils.ControllerType.STRUCTURE;
 import static com.epam.sdmxproxy.controller.utils.ControllerUtils.logRequestUrl;
 
@@ -30,8 +28,6 @@ public class SdmxStructure30Controller implements SdmxStructure30Api {
     private final AdapterRouter adapterRouter;
     private static final String ACCEPT_HEADER_FALLBACK = SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE;
 
-
-
     @Override
     public ResponseEntity<StreamingResponseBody> getResources(
             @PathVariable("structureType") String structureType,
@@ -40,7 +36,8 @@ public class SdmxStructure30Controller implements SdmxStructure30Api {
             @PathVariable("version") String version,
             @RequestParam(value = "references", required = false) @Nullable String references,
             @RequestParam(value = "detail", required = false, defaultValue = "full") String detail,
-            @RequestHeader(value = "Accept", required = false) @Nullable String accept
+            @RequestHeader(value = "Accept", required = false) @Nullable String accept,
+            @RequestHeader(value = "X-Source-Artefact-Urn", required = false) @Nullable String sourceArtefactUrn
     ) {
         logRequestUrl(accept, STRUCTURE);
 
@@ -48,30 +45,12 @@ public class SdmxStructure30Controller implements SdmxStructure30Api {
             accept = ACCEPT_HEADER_FALLBACK;
         }
 
-        if (queryTranslator.requiresFanOut(agencyId)) {
-            return getStructuresWithFanOut(structureType, agencyId, resourceId, version, references, detail, accept);
-        }
-
-        return getStructures(structureType, agencyId, resourceId, version, references, detail, accept);
-    }
-
-    private ResponseEntity<StreamingResponseBody> getStructures(String structureType, String agencyId, String resourceId, String version, @org.jetbrains.annotations.Nullable String references, String detail, @org.jetbrains.annotations.Nullable String accept) {
         TranslatedStructureQuery structureQuery = queryTranslator.translateStructureQuery(
-                structureType, agencyId, resourceId, version, references, detail, accept
+                structureType, agencyId, resourceId, version, references, detail, accept, sourceArtefactUrn
         );
 
         return ResponseEntity.ok()
                 .contentType(structureQuery.getContentType())
                 .body(adapterRouter.getStructures(structureQuery));
-    }
-
-    private ResponseEntity<StreamingResponseBody> getStructuresWithFanOut(String structureType, String agencyId, String resourceId, String version, @org.jetbrains.annotations.Nullable String references, String detail, @org.jetbrains.annotations.Nullable String accept) {
-        List<TranslatedStructureQuery> queries = queryTranslator.translateToFanOutStructures(
-                structureType, agencyId, resourceId, version, references, detail, accept
-        );
-
-        return ResponseEntity.ok()
-                .contentType(queries.getFirst().getContentType())
-                .body(adapterRouter.getStructuresWithFanOut(queries));
     }
 }

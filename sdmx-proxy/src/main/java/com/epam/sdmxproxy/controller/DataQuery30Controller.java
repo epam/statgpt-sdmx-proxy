@@ -53,7 +53,8 @@ public class DataQuery30Controller implements DataQuery30Api {
             @RequestParam(value = "asOf", required = false) Instant asOf,
             @RequestParam(value = "skipEmptySeries", required = false, defaultValue = "false") boolean skipEmptySeries,
             @RequestParam MultiValueMap<String, String> c,
-            @RequestHeader(value = "Accept", required = false) @Nullable String accept
+            @RequestHeader(value = "Accept", required = false) @Nullable String accept,
+            @RequestHeader(value = "X-Source-Artefact-Urn", required = false) @Nullable String sourceArtefactUrn
     ) {
         logRequestUrl(accept, DATA);
 
@@ -83,7 +84,8 @@ public class DataQuery30Controller implements DataQuery30Api {
                 asOf,
                 skipEmptySeries,
                 accept,
-                getSdmxBeans(agencyID, resourceID, version)
+                getSdmxBeans(agencyID, resourceID, version, sourceArtefactUrn),
+                sourceArtefactUrn
         );
 
         return ResponseEntity.ok()
@@ -91,7 +93,7 @@ public class DataQuery30Controller implements DataQuery30Api {
                 .body(adapterRouter.getData(translatedDataQuery));
     }
 
-    private SdmxBeans getSdmxBeans(String agencyID, String resourceID, String version) {
+    private SdmxBeans getSdmxBeans(String agencyID, String resourceID, String version, @Nullable String sourceArtefactUrn) {
         TranslatedStructureQuery structureQuery = queryTranslator.translateStructureQuery(
                 "dataflow",
                 agencyID,
@@ -99,7 +101,8 @@ public class DataQuery30Controller implements DataQuery30Api {
                 version,
                 "descendants",
                 "full",
-                null
+                null,
+                sourceArtefactUrn
         );
         return adapterRouter.getSdmxBeans(structureQuery);
     }

@@ -38,10 +38,4 @@ public class EndpointConfiguration {
      */
     private boolean bypassEnabled;
 
-    /**
-     * List of fixtures to apply to the raw response from the registry before conversion/bypass.
-     * Each fixture patches a specific known issue in the registry's response (e.g., invalid attributeRelationship).
-     * Applied as a chain of responsibility in the order they are listed.
-     */
-    private List<FixtureConfiguration> fixtures;
 }

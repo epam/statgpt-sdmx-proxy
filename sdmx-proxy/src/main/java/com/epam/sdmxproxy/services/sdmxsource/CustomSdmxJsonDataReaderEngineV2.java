@@ -1,5 +1,7 @@
 package com.epam.sdmxproxy.services.sdmxsource;
 
+import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxStructureIterator.AttraMapping;
+import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxStructureIterator.JsonDatasetStructuralMetadata;
 import com.fasterxml.jackson.core.JsonToken;
 import io.sdmx.api.collection.KeyValue;
 import io.sdmx.api.exception.SdmxSemmanticException;
@@ -31,10 +33,6 @@ import io.sdmx.core.sdmx.engine.data.AbstractDataReaderEngine;
 import io.sdmx.core.sdmx.error.DataReadException.SEVERITY;
 import io.sdmx.core.sdmx.error.DataReadException.TYPE;
 import io.sdmx.format.json.engine.data.reader.HeaderIterator;
-import io.sdmx.format.json.engine.data.reader.SdmxJsonMetadataIteratorV2;
-import io.sdmx.format.json.engine.data.reader.SdmxStructureIterator;
-import io.sdmx.format.json.engine.data.reader.SdmxStructureIterator.AttraMapping;
-import io.sdmx.format.json.engine.data.reader.SdmxStructureIterator.JsonDatasetStructuralMetadata;
 import io.sdmx.format.json.model.SdmxJsonDataFormat;
 import io.sdmx.im.beans.container.DatasetStructures;
 import io.sdmx.im.data.DatasetAttributes;
@@ -248,7 +246,7 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
             jReader.close();
         }
         jReader = new JsonReader(dataLocation);
-        SdmxJsonMetadataIteratorV2 metadataIterator = new SdmxJsonMetadataIteratorV2(jReader, this.exceptionHandler);
+        CustomSdmxJsonMetadataIteratorV2 metadataIterator = new CustomSdmxJsonMetadataIteratorV2(jReader, this.exceptionHandler);
 
         LOG.debug("Iterate JSON Data Message");
         jReader.iterate(metadataIterator);
@@ -257,7 +255,7 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
             headerBean = header.getHeader();
         }
 
-        List<SdmxStructureIterator> structureIterators = metadataIterator.getStructureIterators();
+        List<CustomSdmxStructureIterator> structureIterators = metadataIterator.getStructureIterators();
         if (structureIterators == null || structureIterators.isEmpty()) {
             throw new SdmxSemmanticException("Can not read JSON dataset, missing structure section");
         }

@@ -3,14 +3,6 @@
     {
       "name": "IMF",
       "description": "International Monetary Fund",
-      "supportedAgencies": [
-        "IMF",
-        "IMF.STA",
-        "IMF.FAD",
-        "IMF.RES",
-        "IMF.STA.DS",
-        "IMF.MCM"
-      ],
       "versions": {
         "SDMX_3_0": {
           "sdmxVersion": "SDMX_3_0",
@@ -53,7 +45,13 @@
             ],
             "defaultFormat": "JSON_STRUCTURE_2_0_0",
             "bypassEnabled": false,
-            "availabilityEnabled": true
+            "availabilityEnabled": true,
+            "fixtures": [
+              {
+                "type": "MOVE_CUBE_REGION_COMPONENTS_TO_KEY_VALUES",
+                "config": {}
+              }
+            ]
           },
           "resilienceConfig": {
             "connectionTimeout": 45000,
@@ -73,6 +71,13 @@
           }
         }
       }
+    }
+  ],
+  "agencies": [
+    {
+      "name": "IMF",
+      "primaryRegistry": "IMF",
+      "allowSubAgencies": true
     }
   ]
 }

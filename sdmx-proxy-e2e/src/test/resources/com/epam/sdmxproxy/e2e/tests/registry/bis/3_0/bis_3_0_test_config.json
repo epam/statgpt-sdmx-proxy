@@ -1,0 +1,247 @@
+{
+  "structuresTestSuitConfiguration": {
+    "artefacts": [
+      {
+        "type": "codelist",
+        "urn": "BIS:CL_ADJUST(1.0)"
+      },
+      {
+        "type": "codelist",
+        "urn": "BIS:CL_AREA(1.0)"
+      },
+      {
+        "type": "codelist",
+        "urn": "BIS:CL_AVAILABILITY(1.0)"
+      },
+      {
+        "type": "codelist",
+        "urn": "BIS:CL_BIS_GL_REF_AREA(1.0)"
+      },
+      {
+        "type": "codelist",
+        "urn": "BIS:CL_BIS_IF_REF_AREA(1.0)"
+      },
+      {
+        "type": "codelist",
+        "urn": "BIS:CL_BIS_SUFFIX(1.0)"
+      },
+      {
+        "type": "codelist",
+        "urn": "BIS:CL_BIS_TOPIC(1.0)"
+      },
+      {
+        "type": "codelist",
+        "urn": "BIS:CL_BIS_UNIT(1.0)"
+      },
+      {
+        "type": "codelist",
+        "urn": "BIS:CL_BSI_METHOD(1.0)"
+      },
+      {
+        "type": "codelist",
+        "urn": "BIS:CL_CARD_FCT(1.0)"
+      },
+      {
+        "type": "conceptscheme",
+        "urn": "BIS:BIS_REF_CONCEPTS(1.0)"
+      },
+      {
+        "type": "conceptscheme",
+        "urn": "BIS:DP_NEWS(1.0)"
+      },
+      {
+        "type": "conceptscheme",
+        "urn": "BIS:DP_STAT_TOPIC(1.0)"
+      },
+      {
+        "type": "conceptscheme",
+        "urn": "BIS:RELEASE_CALENDAR(1.0)"
+      },
+      {
+        "type": "conceptscheme",
+        "urn": "BIS:STANDALONE_CONCEPT_SCHEME(1.0)"
+      },
+      {
+        "type": "conceptscheme",
+        "urn": "BIS:TABLE_METADATA(1.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "BIS:WS_LBS_D_PUB(1.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "BIS:WS_NA_SEC_DSS(1.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "BIS:WS_EER(1.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "BIS:BIS_REL_CAL(1.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "BIS:WS_CBPOL(1.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "BIS:WS_CBS_PUB(1.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "BIS:WS_CBTA(1.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "BIS:WS_CPMI_CASHLESS(1.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "BIS:BIS_CBPOL(1.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "BIS:BIS_CBS(1.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "BIS:BIS_CREDIT_GAP(1.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "BIS:BIS_DEBT_SEC2(1.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "BIS:BIS_DER(1.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "BIS:BIS_DSR(1.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "BIS:BIS_EER(1.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "BIS:BIS_GLI(1.0)"
+      }
+    ],
+    "mediaTypes": [
+      "application/vnd.sdmx.structure+xml;version=2.1",
+      "application/vnd.sdmx.structure+json; version=2.0.0"
+    ],
+    "registryReturnFormats": [
+      "JSON_STRUCTURE_2_0_0"
+    ]
+  },
+  "dataTestSuitConfiguration": {
+    "dataflowConfigs": [
+      {
+        "urn": "BIS:WS_LBS_D_PUB(1.0)",
+        "keys": [
+          "Q.*.*.A.JPY.A.5J.A.5A.B.WS.N"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "BIS:WS_NA_SEC_DSS(1.0)",
+        "keys": [
+          "Q.*.*.*.*.S1.N.L.LE.F3.T._Z.CAD._T.M.V.N.C01"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "BIS:WS_EER(1.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "BIS:WS_CBPOL(1.0)",
+        "keys": [
+          "M.US.*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "BIS:WS_CBTA(1.0)",
+        "keys": [
+          "M.US.*.*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "BIS:WS_CPMI_CASHLESS(1.0)",
+        "keys": [
+          "A.US.*.*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "BIS:BIS_REL_CAL(1.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      }
+    ],
+    "mediaTypes": [
+      "application/vnd.sdmx.data+json;version=2.0.0",
+      "application/vnd.sdmx.data+xml;version=3.0.0",
+      "application/vnd.sdmx.data+csv;version=2.0.0"
+    ],
+    "registryReturnFormats": [
+      "JSON_1_0_0"
+    ]
+  },
+  "availabilityTestSuitConfiguration": {
+    "dataflowConfigs": [
+      {
+        "urn": "BIS:WS_CBPOL(1.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "BIS:WS_EER(1.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "BIS:WS_CBS_PUB(1.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "BIS:WS_CBTA(1.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "BIS:WS_CPMI_CASHLESS(1.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      }
+    ],
+    "mediaTypes": [
+      "application/vnd.sdmx.structure+json; version=2.0.0"
+    ],
+    "registryReturnFormats": [
+      "JSON_STRUCTURE_2_0_0"
+    ]
+  }
+}

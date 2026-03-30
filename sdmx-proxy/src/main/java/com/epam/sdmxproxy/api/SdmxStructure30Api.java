@@ -32,12 +32,12 @@ public interface SdmxStructure30Api {
                     - application/vnd.sdmx.structure+json;version=2.0.0 (default)
                     - */* (defaults to application/vnd.sdmx.structure+json;version=2.0.0)
                     
-                    **Fan-Out Support**: If the agencyId is "*" (wildcard) or contains comma-separated agencies that map to different registries, 
-                    the query will be executed against multiple registries and results will be merged.
+                    **Note**: Wildcard ("*") and comma-separated agency IDs are not supported (returns 501).
+                    Use the /structure/agencyscheme endpoint to discover available agencies.
                     
                     **Path Variables**:
                     - structureType: Type of structure (datastructure, dataflow, codelist, etc.)
-                    - agencyId: Maintenance agency ID (e.g., "BIS", "IMF", "*" for all, or comma-separated list)
+                    - agencyId: Maintenance agency ID (e.g., "BIS", "IMF", "IMF.STA")
                     - resourceId: Resource identifier
                     - version: Version identifier (e.g., "1.0", "latest")
                     
@@ -87,7 +87,7 @@ public interface SdmxStructure30Api {
             )
             @PathVariable("structureType") String structureType,
             @Parameter(
-                    description = "Maintenance agency ID (e.g., 'BIS', 'IMF', '*' for all agencies, or comma-separated list like 'BIS,IMF')",
+                    description = "Maintenance agency ID (e.g., 'BIS', 'IMF', 'IMF.STA'). Wildcard and comma-separated are not supported.",
                     required = true,
                     example = "BIS"
             )
@@ -117,6 +117,8 @@ public interface SdmxStructure30Api {
             @Parameter(
                     description = "Accept header for content negotiation. Supported: application/vnd.sdmx.structure+xml;version=2.1, application/vnd.sdmx.structure+json;version=2.0.0, */* (defaults to application/vnd.sdmx.structure+json;version=2.0.0)"
             )
-            @RequestHeader(value = "Accept", required = false) @Nullable String accept
+            @RequestHeader(value = "Accept", required = false) @Nullable String accept,
+            @Parameter(description = "URN of the source artefact that contained the cross-reference (for routing context)")
+            @RequestHeader(value = "X-Source-Artefact-Urn", required = false) @Nullable String sourceArtefactUrn
     );
 }

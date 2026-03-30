@@ -26,7 +26,15 @@ sdmxproxy:
   registry:
     config:
       source:
+        # One of: CLASSPATH_RESOURCE, FILESYSTEM, CONFIG_SERVER
         type: CLASSPATH_RESOURCE
+        # For FILESYSTEM:
+        # filename: /path/to/sdmx_registries_config.json
+        # For CONFIG_SERVER (production):
+        # config-server:
+        #   url: http://sdmx-config-server:8060
+        #   api-key: ${CONFIG_SERVER_API_KEY}
+        #   poll-interval: PT30S
     resilience:
       # Default connection timeout in milliseconds
       defaultConnectionTimeout: 30000
@@ -56,8 +64,16 @@ sdmxproxy:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:local_password}
-      ssl: false
+      password: ${REDIS_PASSWORD:}
+      ssl: ${REDIS_SSL:false}
+      provider: ${REDIS_AUTH_PROVIDER:NONE}
+      aws:
+        user-id: ${REDIS_AWS_USER_ID:}
+        region: ${REDIS_AWS_REGION:}
+        cluster-name: ${REDIS_AWS_CLUSTER_NAME:}
+        serverless: ${REDIS_AWS_SERVERLESS:false}
+      gcp:
+        service-account: ${REDIS_GCP_SERVICE_ACCOUNT:}
     ttl:
       parsedStructures:
         duration: PT24H

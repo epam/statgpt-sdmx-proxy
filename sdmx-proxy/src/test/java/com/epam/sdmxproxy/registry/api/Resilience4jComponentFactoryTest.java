@@ -113,7 +113,7 @@ class Resilience4jComponentFactoryTest {
         // Given
         RegistryConfiguration registryConfig = new RegistryConfiguration();
         registryConfig.setName("TestRegistry");
-        registryConfig.setSupportedAgencies(java.util.List.of("TEST"));
+
 
         VersionSpecificRegistryConfiguration versionConfig = new VersionSpecificRegistryConfiguration();
         versionConfig.setSdmxVersion(SdmxVersion.SDMX_2_1);
@@ -251,7 +251,7 @@ class Resilience4jComponentFactoryTest {
         // Given
         RegistryConfiguration registryConfig = new RegistryConfiguration();
         registryConfig.setName("TestRegistry");
-        registryConfig.setSupportedAgencies(java.util.List.of("TEST"));
+
 
         VersionSpecificRegistryConfiguration versionConfig = new VersionSpecificRegistryConfiguration();
         versionConfig.setSdmxVersion(SdmxVersion.SDMX_2_1);
@@ -356,7 +356,7 @@ class Resilience4jComponentFactoryTest {
     private RegistrySelectionResult createSelectedRegistry(String name, SdmxVersion version) {
         RegistryConfiguration registryConfig = new RegistryConfiguration();
         registryConfig.setName(name);
-        registryConfig.setSupportedAgencies(java.util.List.of("TEST"));
+
 
         VersionSpecificRegistryConfiguration versionConfig = new VersionSpecificRegistryConfiguration();
         versionConfig.setSdmxVersion(version);

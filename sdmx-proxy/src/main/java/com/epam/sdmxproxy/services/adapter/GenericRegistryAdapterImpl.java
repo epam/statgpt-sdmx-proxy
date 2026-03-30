@@ -15,15 +15,14 @@ import com.epam.sdmxproxy.registry.api.client.Sdmx30DataClient;
 import com.epam.sdmxproxy.registry.api.client.Sdmx30StructureClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import java.io.InputStream;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -135,11 +134,6 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
         return agencyId + "," + resourceId + "," + version;
     }
 
-    @NotNull
-    private static String wrapKeyIntoC(Map.Entry<String, List<String>> entry) {
-        return "c[" + entry.getKey() + "]";
-    }
-
     @Override
     public InputStream getAvailability(TranslatedAvailabilityQuery query) {
         RegistrySelectionResult selectedRegistry = RegistrySelectionResult.builder()
@@ -186,7 +180,6 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
         Sdmx30DataClient data30Client = sdmxApiClientProvider.getData30Client(selectedRegistry);
         String context = query.getContext() != null ? query.getContext() : "dataflow"; // Default to dataflow if not provided
         ReturnFormat dataReturnFormat = query.getReturnFormat();
-        Map<String, String> filters = convertFiltersToMap(query.getFilters());
 
         return data30Client.getData(
                 dataReturnFormat.getContentType(),
@@ -205,8 +198,14 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
                 query.getLimit(),
                 formatInstant(query.getAsOf()),
                 query.isSkipEmptySeries(),
-                filters
+                wrapIntoC(query.getFilters())
         );
+    }
+
+    private MultiValueMap<String, String> wrapIntoC(MultiValueMap<String, String> filters) {
+        MultiValueMap<String, String> wrapped = new LinkedMultiValueMap<>();
+        filters.forEach((key, values) -> wrapped.addAll("c[" + key + "]", values));
+        return wrapped;
     }
 
     private String formatInstant(Instant instant) {
@@ -219,8 +218,6 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
     private InputStream getAvailability30(TranslatedAvailabilityQuery query, RegistrySelectionResult selectedRegistry) {
         Sdmx30AvailabilityClient availability30Client = sdmxApiClientProvider.getAvailability30Client(selectedRegistry);
         String context = query.getContext() != null ? query.getContext() : "dataflow"; // Default to dataflow if not provided
-        Map<String, String> filters = convertFiltersToMap(query.getFilters());
-
         ReturnFormat availabilityReturnFormat = query.getReturnFormat();
         return availability30Client.getAvailability(
                 availabilityReturnFormat.getContentType(),
@@ -230,7 +227,7 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
                 query.getVersion(),
                 query.getKey() != null ? query.getKey() : "*",
                 query.getComponentId() != null ? query.getComponentId() : "*",
-                filters,
+                wrapIntoC(query.getFilters()),
                 formatInstant(query.getUpdatedAfter()),
                 query.getMode(),
                 query.getReferences(),
@@ -238,17 +235,4 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
         );
     }
 
-    private Map<String, String> convertFiltersToMap(MultiValueMap<String, String> filters) {
-        Map<String, String> result = new HashMap<>();
-        if (filters != null && !filters.isEmpty()) {
-            for (Map.Entry<String, List<String>> entry : filters.entrySet()) {
-                List<String> values = entry.getValue();
-                if (values != null && !values.isEmpty()) {
-                    String wrappedKey = wrapKeyIntoC(entry);
-                    result.put(wrappedKey, values.get(0));
-                }
-            }
-        }
-        return result;
-    }
 }

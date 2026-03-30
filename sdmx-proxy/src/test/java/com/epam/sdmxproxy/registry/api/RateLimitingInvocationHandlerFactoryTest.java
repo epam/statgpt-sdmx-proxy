@@ -50,7 +50,7 @@ class RateLimitingInvocationHandlerFactoryTest {
 
         RegistryConfiguration registryConfig = new RegistryConfiguration();
         registryConfig.setName("TestRegistry");
-        registryConfig.setSupportedAgencies(List.of("TEST"));
+
 
         VersionSpecificRegistryConfiguration versionConfig = new VersionSpecificRegistryConfiguration();
         versionConfig.setSdmxVersion(SdmxVersion.SDMX_2_1);

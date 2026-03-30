@@ -3,9 +3,6 @@
     {
       "description": "Bank for International Settlements",
       "name": "TEST_CONFIG",
-      "supportedAgencies": [
-        "BIS"
-      ],
       "versions": {
         "SDMX_2_1": {
           "sdmxVersion": "SDMX_2_1",
@@ -65,10 +62,6 @@
     {
       "name": "TEST_CONFIG",
       "description": "International Monetary Fund",
-      "supportedAgencies": [
-        "IMF",
-        "IMF.STA"
-      ],
       "versions": {
         "SDMX_2_1": {
           "sdmxVersion": "SDMX_2_1",
@@ -120,6 +113,17 @@
           }
         }
       }
+    }
+  ],
+  "agencies": [
+    {
+      "name": "BIS",
+      "primaryRegistry": "TEST_CONFIG"
+    },
+    {
+      "name": "IMF",
+      "primaryRegistry": "TEST_CONFIG",
+      "allowSubAgencies": true
     }
   ]
 }
