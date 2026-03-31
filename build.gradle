@@ -3,6 +3,9 @@
 var mavenProxy = findProperty('MAVEN_PROXY_CONFIG') ?: System.getenv('MAVEN_PROXY_CONFIG') ?: "Deltix"
 
 allprojects {
+    version = '0.1.0'
+    group = 'com.epam'
+
     apply from: "$rootDir/gradle/Common.gradle"
     apply from: "$rootDir/gradle/${mavenProxy}.gradle"
 }

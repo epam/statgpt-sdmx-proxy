@@ -2,8 +2,6 @@ plugins {
     id 'java'
 }
 
-group = 'com.epam'
-version = '0.0.1-SNAPSHOT'
 description = 'SDMX Proxy E2E Tests'
 
 java {
