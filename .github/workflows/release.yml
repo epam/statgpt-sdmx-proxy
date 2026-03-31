@@ -47,7 +47,7 @@ jobs:
         with:
           java-version: "25"
           java-distribution: "corretto"
-      - uses: gradle/actions/dependency-submission@f29f5a9d7b09a7c6b29859002d29d24e1674c884 # v5.0.1
+      - uses: gradle/actions/dependency-submission@39e147cb9de83bb9910b8ef8bd7fff0ee20fcd6f # v6.0.1
         with:
           dependency-graph: generate-and-submit # Default value is 'generate-submit-and-upload', but we do not want job artifacts
 
