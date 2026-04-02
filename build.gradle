@@ -10,6 +10,16 @@ allprojects {
     apply from: "$rootDir/gradle/${mavenProxy}.gradle"
 }
 
+// Apply Checkstyle to application modules (not E2E)
+configure(subprojects.findAll { it.name != 'sdmx-proxy-e2e' }) {
+    apply plugin: 'checkstyle'
+
+    checkstyle {
+        configFile = rootProject.file('checkstyle/checkstyle.xml')
+        ignoreFailures = true
+    }
+}
+
 ext {
     vendor = 'EPAM Systems, Inc.'
     publisherUser = findProperty('ARTIFACTORY_USER') ?: System.getenv('ARTIFACTORY_USER') ?: "FakeUser"
