@@ -1,0 +1,798 @@
+{
+  "meta": {
+    "id": "IDREF9ba6d491-a596-4101-ac12-970d74de2471",
+    "test": false,
+    "schema": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+    "prepared": "2026-04-02T10:03:25Z",
+    "contentLanguages": [
+      "en"
+    ],
+    "sender": {
+      "id": "UNKNOWN"
+    }
+  },
+  "data": {
+    "agencySchemes": [
+      {
+        "links": [
+          {
+            "rel": "self",
+            "type": "agencyscheme",
+            "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+            "urn": "urn:sdmx:org.sdmx.infomodel.base.AgencyScheme=BIS:AGENCIES(1.0)"
+          }
+        ],
+        "id": "AGENCIES",
+        "name": "AGENCIES",
+        "names": {
+          "en": "AGENCIES"
+        },
+        "version": "1.0",
+        "agencyID": "BIS",
+        "isExternalReference": false,
+        "isFinal": false,
+        "isPartial": true,
+        "agencies": [
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "agency",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.base.Agency=BIS:AGENCIES(1.0).LBS"
+              }
+            ],
+            "id": "LBS",
+            "annotations": [
+              {
+                "title": "cbmemcpa",
+                "type": "contact_uid"
+              }
+            ],
+            "name": "IBFS LBS unit",
+            "names": {
+              "en": "IBFS LBS unit"
+            },
+            "description": "MED unit responsible for the compilation of the locational banking statistics",
+            "descriptions": {
+              "en": "MED unit responsible for the compilation of the locational banking statistics"
+            },
+            "contacts": [
+              {
+                "id": "cbmemcpa",
+                "name": "Patrick McGuire",
+                "names": {
+                  "en": "Patrick McGuire"
+                },
+                "role": "Data Owner",
+                "roles": {
+                  "en": "Data Owner"
+                },
+                "emails": [
+                  "Patrick.McGuire@bis.org"
+                ]
+              },
+              {
+                "name": "Carlos Mallo",
+                "names": {
+                  "en": "Carlos Mallo"
+                },
+                "role": "Data Steward",
+                "roles": {
+                  "en": "Data Steward"
+                },
+                "emails": [
+                  "Carlos.Mallo@bis.org"
+                ]
+              },
+              {
+                "name": "Swapan-Kumar Pradhan",
+                "names": {
+                  "en": "Swapan-Kumar Pradhan"
+                },
+                "role": "Subject Matter Expert",
+                "roles": {
+                  "en": "Subject Matter Expert"
+                },
+                "emails": [
+                  "Swapan-Kumar.Pradhan@bis.org"
+                ]
+              },
+              {
+                "name": "Support",
+                "names": {
+                  "en": "Support"
+                },
+                "role": "Support",
+                "roles": {
+                  "en": "Support"
+                },
+                "emails": [
+                  "IBFS.Locational@bis.org"
+                ]
+              }
+            ]
+          },
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "agency",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.base.Agency=BIS:AGENCIES(1.0).CBS"
+              }
+            ],
+            "id": "CBS",
+            "annotations": [
+              {
+                "title": "cbmemcpa",
+                "type": "contact_uid"
+              }
+            ],
+            "name": "IBFS CBS unit",
+            "names": {
+              "en": "IBFS CBS unit"
+            },
+            "description": "MED unit responsible for the compilation of the consolidated banking statistics",
+            "descriptions": {
+              "en": "MED unit responsible for the compilation of the consolidated banking statistics"
+            },
+            "contacts": [
+              {
+                "id": "cbmemcpa",
+                "name": "Patrick McGuire",
+                "names": {
+                  "en": "Patrick McGuire"
+                },
+                "role": "Data Owner",
+                "roles": {
+                  "en": "Data Owner"
+                },
+                "emails": [
+                  "Patrick.McGuire@bis.org"
+                ]
+              },
+              {
+                "name": "Carlos Mallo",
+                "names": {
+                  "en": "Carlos Mallo"
+                },
+                "role": "Data Steward",
+                "roles": {
+                  "en": "Data Steward"
+                },
+                "emails": [
+                  "Carlos.Mallo@bis.org"
+                ]
+              },
+              {
+                "name": "Siew Koon Goh",
+                "names": {
+                  "en": "Siew Koon Goh"
+                },
+                "role": "Subject Matter Expert",
+                "roles": {
+                  "en": "Subject Matter Expert"
+                },
+                "emails": [
+                  "SiewKoon.Goh@bis.org"
+                ]
+              },
+              {
+                "name": "Swapan-Kumar Pradhan",
+                "names": {
+                  "en": "Swapan-Kumar Pradhan"
+                },
+                "role": "Subject Matter Expert",
+                "roles": {
+                  "en": "Subject Matter Expert"
+                },
+                "emails": [
+                  "Swapan-Kumar.Pradhan@bis.org"
+                ]
+              },
+              {
+                "name": "Support",
+                "names": {
+                  "en": "Support"
+                },
+                "role": "Support",
+                "roles": {
+                  "en": "Support"
+                },
+                "emails": [
+                  "IBFS.Consolidated@bis.org"
+                ]
+              }
+            ]
+          },
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "agency",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.base.Agency=BIS:AGENCIES(1.0).MEDIT"
+              }
+            ],
+            "id": "MEDIT",
+            "annotations": [
+              {
+                "title": "cbbashra",
+                "type": "contact_uid"
+              }
+            ],
+            "name": "BIS MED IT Unit",
+            "names": {
+              "en": "BIS MED IT Unit"
+            },
+            "description": "BIS MED IT Unit",
+            "descriptions": {
+              "en": "BIS MED IT Unit"
+            },
+            "contacts": [
+              {
+                "id": "cbbashra",
+                "name": "Rafael Schmidt",
+                "names": {
+                  "en": "Rafael Schmidt"
+                },
+                "role": "Data Owner",
+                "roles": {
+                  "en": "Data Owner"
+                },
+                "emails": [
+                  "Rafael.Schmidt@bis.org"
+                ]
+              },
+              {
+                "name": "Edward Lambe",
+                "names": {
+                  "en": "Edward Lambe"
+                },
+                "role": "Subject Matter Expert",
+                "roles": {
+                  "en": "Subject Matter Expert"
+                },
+                "emails": [
+                  "Edward.Lambe@bis.org"
+                ]
+              },
+              {
+                "name": "Support",
+                "names": {
+                  "en": "Support"
+                },
+                "role": "Support",
+                "roles": {
+                  "en": "Support"
+                },
+                "emails": [
+                  "Service.MED_IT@bis.org"
+                ]
+              }
+            ]
+          },
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "agency",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.base.Agency=BIS:AGENCIES(1.0).MDD"
+              }
+            ],
+            "id": "MDD",
+            "annotations": [
+              {
+                "title": "cemejuma",
+                "type": "contact_uid"
+              }
+            ],
+            "name": "MED Data Stewards",
+            "names": {
+              "en": "MED Data Stewards"
+            },
+            "description": "MED unit responsible for the maintenance of the MED data catalog",
+            "descriptions": {
+              "en": "MED unit responsible for the maintenance of the MED data catalog"
+            },
+            "contacts": [
+              {
+                "name": "Magdalena Erdem",
+                "names": {
+                  "en": "Magdalena Erdem"
+                },
+                "role": "Data Owner",
+                "roles": {
+                  "en": "Data Owner"
+                },
+                "emails": [
+                  "Magdalena.Erdem@bis.org"
+                ]
+              }
+            ]
+          },
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "agency",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.base.Agency=BIS:AGENCIES(1.0).ISO"
+              }
+            ],
+            "id": "ISO",
+            "name": "International Organization for Standardization",
+            "names": {
+              "en": "International Organization for Standardization"
+            },
+            "description": "Agency for ISO Artefacts maintained by the BIS",
+            "descriptions": {
+              "en": "Agency for ISO Artefacts maintained by the BIS"
+            }
+          }
+        ]
+      },
+      {
+        "links": [
+          {
+            "rel": "self",
+            "type": "agencyscheme",
+            "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+            "urn": "urn:sdmx:org.sdmx.infomodel.base.AgencyScheme=SDMX:AGENCIES(1.0)"
+          }
+        ],
+        "id": "AGENCIES",
+        "name": "SDMX Agency Scheme",
+        "names": {
+          "en": "SDMX Agency Scheme"
+        },
+        "version": "1.0",
+        "agencyID": "SDMX",
+        "isExternalReference": false,
+        "isFinal": false,
+        "isPartial": true,
+        "agencies": [
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "agency",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).SDMX"
+              }
+            ],
+            "id": "SDMX",
+            "name": "SDMX",
+            "names": {
+              "en": "SDMX"
+            },
+            "description": "SDMX is an initiative to foster standards for the exchange of statistical information. It is sponsored by the Bank for International Settlements (BIS), the European Central Bank (ECB), the Statistical Office of the European Union (Eurostat), the International Monetary Fund (IMF), the Organization for Economic Co-Operation and Development (OECD), the United Nations (UN) and the World Bank.",
+            "descriptions": {
+              "en": "SDMX is an initiative to foster standards for the exchange of statistical information. It is sponsored by the Bank for International Settlements (BIS), the European Central Bank (ECB), the Statistical Office of the European Union (Eurostat), the International Monetary Fund (IMF), the Organization for Economic Co-Operation and Development (OECD), the United Nations (UN) and the World Bank."
+            },
+            "contacts": [
+              {
+                "name": "SDMX Secretariat",
+                "names": {
+                  "en": "SDMX Secretariat"
+                },
+                "department": "SDMX Secretariat",
+                "departments": {
+                  "en": "SDMX Secretariat"
+                },
+                "role": "Single entry point for external inquiries",
+                "roles": {
+                  "en": "Single entry point for external inquiries"
+                },
+                "uris": [
+                  "http://sdmx.org"
+                ],
+                "emails": [
+                  "secretariat@sdmx.org"
+                ]
+              }
+            ]
+          },
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "agency",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).BIS"
+              },
+              {
+                "rel": "metadata",
+                "href": "https://stats.bis.org/sdmx/v2/metadata/metadataset/BIS/DP_NEWS_004/1.0",
+                "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataSet=BIS:DP_NEWS_004(1.0)"
+              },
+              {
+                "rel": "metadata",
+                "href": "https://stats.bis.org/sdmx/v2/metadata/metadataset/BIS/DP_NEWS_001/1.0",
+                "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataSet=BIS:DP_NEWS_001(1.0)"
+              },
+              {
+                "rel": "metadata",
+                "href": "https://stats.bis.org/sdmx/v2/metadata/metadataset/BIS/DP_NEWS_008/1.0",
+                "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataSet=BIS:DP_NEWS_008(1.0)"
+              },
+              {
+                "rel": "metadata",
+                "href": "https://stats.bis.org/sdmx/v2/metadata/metadataset/BIS/DP_NEWS_000/1.0",
+                "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataSet=BIS:DP_NEWS_000(1.0)"
+              },
+              {
+                "rel": "metadata",
+                "href": "https://stats.bis.org/sdmx/v2/metadata/metadataset/BIS/DP_NEWS_011/1.0",
+                "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataSet=BIS:DP_NEWS_011(1.0)"
+              },
+              {
+                "rel": "metadata",
+                "href": "https://stats.bis.org/sdmx/v2/metadata/metadataset/BIS/DP_NEWS_003/1.0",
+                "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataSet=BIS:DP_NEWS_003(1.0)"
+              },
+              {
+                "rel": "metadata",
+                "href": "https://stats.bis.org/sdmx/v2/metadata/metadataset/BIS/DP_NEWS_006/1.0",
+                "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataSet=BIS:DP_NEWS_006(1.0)"
+              },
+              {
+                "rel": "metadata",
+                "href": "https://stats.bis.org/sdmx/v2/metadata/metadataset/BIS/DP_NEWS_010/1.0",
+                "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataSet=BIS:DP_NEWS_010(1.0)"
+              },
+              {
+                "rel": "metadata",
+                "href": "https://stats.bis.org/sdmx/v2/metadata/metadataset/BIS/DP_NEWS_009/1.0",
+                "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataSet=BIS:DP_NEWS_009(1.0)"
+              },
+              {
+                "rel": "metadata",
+                "href": "https://stats.bis.org/sdmx/v2/metadata/metadataset/BIS/DP_NEWS_005/1.0",
+                "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataSet=BIS:DP_NEWS_005(1.0)"
+              },
+              {
+                "rel": "metadata",
+                "href": "https://stats.bis.org/sdmx/v2/metadata/metadataset/BIS/DP_NEWS_012/1.0",
+                "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataSet=BIS:DP_NEWS_012(1.0)"
+              },
+              {
+                "rel": "metadata",
+                "href": "https://stats.bis.org/sdmx/v2/metadata/metadataset/BIS/DP_NEWS_002/1.0",
+                "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataSet=BIS:DP_NEWS_002(1.0)"
+              },
+              {
+                "rel": "metadata",
+                "href": "https://stats.bis.org/sdmx/v2/metadata/metadataset/BIS/DP_NEWS_007/1.0",
+                "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataSet=BIS:DP_NEWS_007(1.0)"
+              }
+            ],
+            "id": "BIS",
+            "annotations": [
+              {
+                "title": "xx000000",
+                "type": "contact_uid"
+              }
+            ],
+            "name": "Bank for International Settlements",
+            "names": {
+              "en": "Bank for International Settlements"
+            },
+            "description": "Bank for International Settlements",
+            "descriptions": {
+              "en": "Bank for International Settlements"
+            },
+            "contacts": [
+              {
+                "name": "Support",
+                "names": {
+                  "en": "Support"
+                },
+                "role": "Support",
+                "roles": {
+                  "en": "Support"
+                },
+                "emails": [
+                  "statistics@bis.org"
+                ]
+              }
+            ]
+          },
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "agency",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).ESTAT"
+              }
+            ],
+            "id": "ESTAT",
+            "name": "Eurostat",
+            "names": {
+              "en": "Eurostat"
+            },
+            "description": "Statistical Office of the European Commission (Eurostat)",
+            "descriptions": {
+              "en": "Statistical Office of the European Commission (Eurostat)"
+            }
+          },
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "agency",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).IMF"
+              }
+            ],
+            "id": "IMF",
+            "name": "International Monetary Fund (IMF)",
+            "names": {
+              "en": "International Monetary Fund (IMF)"
+            },
+            "description": "The IMF works to foster global growth and economic stability. It provides policy advice and financing to members in economic difficulties and also works with developing nations to help them achieve macroeconomic stability and reduce poverty.",
+            "descriptions": {
+              "en": "The IMF works to foster global growth and economic stability. It provides policy advice and financing to members in economic difficulties and also works with developing nations to help them achieve macroeconomic stability and reduce poverty."
+            },
+            "contacts": [
+              {
+                "name": "Single point of contact for external inquiries",
+                "names": {
+                  "en": "Single point of contact for external inquiries"
+                },
+                "department": "Statistics Department",
+                "departments": {
+                  "en": "Statistics Department"
+                },
+                "role": "Single point of contact for external inquiries",
+                "roles": {
+                  "en": "Single point of contact for external inquiries"
+                },
+                "uris": [
+                  "http://www.imf.org"
+                ],
+                "emails": [
+                  "StatisticsQuery@imf.org"
+                ]
+              }
+            ]
+          },
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "agency",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).ISO"
+              }
+            ],
+            "id": "ISO",
+            "name": "International Organization for Standardization",
+            "names": {
+              "en": "International Organization for Standardization"
+            }
+          }
+        ]
+      }
+    ],
+    "codelists": [
+      {
+        "links": [
+          {
+            "rel": "self",
+            "type": "codelist",
+            "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=BIS:CL_L_BANK_TYPE(1.0)"
+          }
+        ],
+        "id": "CL_L_BANK_TYPE",
+        "name": "Reporting Bank Type",
+        "names": {
+          "en": "Reporting Bank Type"
+        },
+        "version": "1.0",
+        "agencyID": "BIS",
+        "isExternalReference": false,
+        "isFinal": false,
+        "isPartial": false,
+        "codes": [
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "code",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_L_BANK_TYPE(1.0).A"
+              }
+            ],
+            "id": "A",
+            "name": "All reporting banks/institutions (domestic, foreign, consortium and unclassified)",
+            "names": {
+              "en": "All reporting banks/institutions (domestic, foreign, consortium and unclassified)"
+            }
+          },
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "code",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_L_BANK_TYPE(1.0).B"
+              }
+            ],
+            "id": "B",
+            "name": "Foreign branches",
+            "names": {
+              "en": "Foreign branches"
+            },
+            "description": "Unincorporated entity wholly owned by another entity.",
+            "descriptions": {
+              "en": "Unincorporated entity wholly owned by another entity."
+            }
+          },
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "code",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_L_BANK_TYPE(1.0).D"
+              }
+            ],
+            "id": "D",
+            "name": "Domestic banks",
+            "names": {
+              "en": "Domestic banks"
+            },
+            "description": "Bank whose controlling parent is located in the respective BIS reporting country - for example, a bank with a controlling parent located in the United States is a US domestic bank.",
+            "descriptions": {
+              "en": "Bank whose controlling parent is located in the respective BIS reporting country - for example, a bank with a controlling parent located in the United States is a US domestic bank."
+            }
+          },
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "code",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_L_BANK_TYPE(1.0).S"
+              }
+            ],
+            "id": "S",
+            "name": "Foreign subsidiaries",
+            "names": {
+              "en": "Foreign subsidiaries"
+            },
+            "description": "A separately incorporated entity in which another entity has a majority or full participation.",
+            "descriptions": {
+              "en": "A separately incorporated entity in which another entity has a majority or full participation."
+            }
+          },
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "code",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_L_BANK_TYPE(1.0).U"
+              }
+            ],
+            "id": "U",
+            "name": "Consortium and unclassified",
+            "names": {
+              "en": "Consortium and unclassified"
+            },
+            "description": "A consortium bank is a bank owned by two or more entities, in which no single entity has a controlling interest.",
+            "descriptions": {
+              "en": "A consortium bank is a bank owned by two or more entities, in which no single entity has a controlling interest."
+            }
+          }
+        ]
+      }
+    ],
+    "hierarchies": [
+      {
+        "links": [
+          {
+            "rel": "self",
+            "type": "hierarchy",
+            "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=BIS.LBS:BANKTYPE@LBS_CLIENT_HIERARCHIES(1.0)"
+          }
+        ],
+        "id": "BANKTYPE@LBS_CLIENT_HIERARCHIES",
+        "annotations": [
+          {
+            "id": "DQS_DIMENSION",
+            "title": "L_REP_BANK_TYPE"
+          },
+          {
+            "id": "DQS_TYPE",
+            "title": "A",
+            "type": "Error",
+            "text": "U",
+            "texts": {
+              "en": "U"
+            }
+          }
+        ],
+        "name": "Bank Type",
+        "names": {
+          "en": "Bank Type"
+        },
+        "version": "1.0",
+        "agencyID": "BIS.LBS",
+        "isExternalReference": false,
+        "isFinal": false,
+        "hasFormalLevels": false,
+        "hierarchicalCodes": [
+          {
+            "links": [
+              {
+                "rel": "self",
+                "type": "hierarchicalcode",
+                "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=BIS.LBS:BANKTYPE@LBS_CLIENT_HIERARCHIES(1.0).A"
+              }
+            ],
+            "id": "A",
+            "code": "urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_L_BANK_TYPE(1.0).A",
+            "hierarchicalCodes": [
+              {
+                "links": [
+                  {
+                    "rel": "self",
+                    "type": "hierarchicalcode",
+                    "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=BIS.LBS:BANKTYPE@LBS_CLIENT_HIERARCHIES(1.0).A.D"
+                  }
+                ],
+                "id": "D",
+                "code": "urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_L_BANK_TYPE(1.0).D"
+              },
+              {
+                "links": [
+                  {
+                    "rel": "self",
+                    "type": "hierarchicalcode",
+                    "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=BIS.LBS:BANKTYPE@LBS_CLIENT_HIERARCHIES(1.0).A.B"
+                  }
+                ],
+                "id": "B",
+                "code": "urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_L_BANK_TYPE(1.0).B"
+              },
+              {
+                "links": [
+                  {
+                    "rel": "self",
+                    "type": "hierarchicalcode",
+                    "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=BIS.LBS:BANKTYPE@LBS_CLIENT_HIERARCHIES(1.0).A.S"
+                  }
+                ],
+                "id": "S",
+                "code": "urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_L_BANK_TYPE(1.0).S"
+              },
+              {
+                "links": [
+                  {
+                    "rel": "self",
+                    "type": "hierarchicalcode",
+                    "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=BIS.LBS:BANKTYPE@LBS_CLIENT_HIERARCHIES(1.0).A.U"
+                  }
+                ],
+                "id": "U",
+                "code": "urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_L_BANK_TYPE(1.0).U"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

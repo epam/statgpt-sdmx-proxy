@@ -3,6 +3,7 @@ package com.epam.sdmxproxy.services.adapter.conversion;
 import com.epam.sdmxproxy.common.data.SdmxMediaType;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
+import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxCsvDataReaderFactoryV2;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxJsonDataReaderFactory;
 import com.epam.sdmxproxy.services.sdmxsource.JsonDataWriterFactoryProducer;
 import io.sdmx.api.io.ReadableDataLocation;
@@ -20,6 +21,7 @@ import io.sdmx.core.sdmx.api.factory.data.DataReaderFactory;
 import io.sdmx.core.sdmx.manager.structure.InMemoryRetrievalManager;
 import io.sdmx.core.sdmx.manager.structure.SdmxSuperBeanRetrievalManagerImpl;
 import io.sdmx.format.csv.engine.v2.SdmxCsvDataWriterEngineV2;
+import io.sdmx.format.csv.factory.v1.SdmxCsvDataReaderFactoryV1;
 import io.sdmx.format.csv.format.SdmxCsvDataFormat;
 import io.sdmx.format.json.model.SdmxJsonDataFormat;
 import io.sdmx.format.ml.factory.data.SdmxMLDataReaderFactory;
@@ -49,6 +51,8 @@ public class StreamingDataConversionService {
     private final SdmxSourceReadableDataLocationFactory readableDataLocationFactory;
     private final CustomSdmxJsonDataReaderFactory sdmxJsonDataReaderFactory;
     private final SdmxMLDataReaderFactory sdmxMLDataReaderFactory;
+    private final SdmxCsvDataReaderFactoryV1 sdmxCsvDataReaderFactoryV1;
+    private final CustomSdmxCsvDataReaderFactoryV2 sdmxCsvDataReaderFactoryV2;
     private final JsonDataWriterFactoryProducer jsonDataWriterFactoryProducer;
 
     /**
@@ -120,25 +124,32 @@ public class StreamingDataConversionService {
     }
 
     private DataReaderEngine getDataReader(SdmxBeans sdmxBeans, InputStream inputStream, ReturnFormat sourceFormat) {
+        return getDataReader(sdmxBeans, inputStream, sourceFormat, null);
+    }
+
+    private DataReaderEngine getDataReader(SdmxBeans sdmxBeans, InputStream inputStream, ReturnFormat sourceFormat, MediaType sourceMediaType) {
         ReadableDataLocation dataLocation = readableDataLocationFactory.getReadableDataLocation(inputStream);
 
-        DataReaderFactory dataReaderFactory = isJsonReturnType(sourceFormat)
-                ? sdmxJsonDataReaderFactory
-                : sdmxMLDataReaderFactory;
+        DataReaderFactory dataReaderFactory = getDataReaderFactory(sourceFormat);
 
         return dataReaderFactory.getDataReaderEngine(
-                getSdmxDataFormat(sourceFormat),
+                getSdmxDataFormat(sourceFormat, sourceMediaType),
                 dataLocation,
                 new InMemoryRetrievalManager(sdmxBeans),
                 null
         );
     }
 
-    private boolean isJsonReturnType(ReturnFormat sourceFormat) {
-        return sourceFormat == ReturnFormat.JSON_1_0_0 || sourceFormat == ReturnFormat.JSON_DATA_2_0_0;
+    private DataReaderFactory getDataReaderFactory(ReturnFormat sourceFormat) {
+        return switch (sourceFormat) {
+            case JSON_1_0_0, JSON_DATA_2_0_0 -> sdmxJsonDataReaderFactory;
+            case CSV_DATA_1_0_0 -> sdmxCsvDataReaderFactoryV1;
+            case CSV_DATA_2_0_0 -> sdmxCsvDataReaderFactoryV2;
+            default -> sdmxMLDataReaderFactory;
+        };
     }
 
-    private DataFormat getSdmxDataFormat(ReturnFormat sourceFormat) {
+    private DataFormat getSdmxDataFormat(ReturnFormat sourceFormat, MediaType sourceMediaType) {
         switch (sourceFormat) {
             case JSON_1_0_0 -> {
                 return new SdmxJsonDataFormat(DATA_TYPE.SDMXJSON_1_0_0, null);
@@ -151,6 +162,12 @@ public class StreamingDataConversionService {
             }
             case XML_STRUCTURE_SPECIFIC_2_1 -> {
                 return SDMXMLDataFormat.COMPACT_2_1;
+            }
+            case CSV_DATA_1_0_0 -> {
+                return buildCsvDataFormat(sourceMediaType, DATA_TYPE.SDMX_CSV_1_0);
+            }
+            case CSV_DATA_2_0_0 -> {
+                return buildCsvDataFormat(sourceMediaType, DATA_TYPE.SDMX_CSV_2_0_0);
             }
             default -> throw new IllegalArgumentException("Cannot use this format for data");
         }
@@ -185,7 +202,7 @@ public class StreamingDataConversionService {
             MediaType targetMediaType,
             ReturnFormat sourceFormat
     ) {
-        DataReaderEngine reader = getDataReader(sdmxBeans, inputStream, sourceFormat);
+        DataReaderEngine reader = getDataReader(sdmxBeans, inputStream, sourceFormat, targetMediaType);
 
         SdmxCsvDataFormat csvFormat = buildCsvDataFormat(targetMediaType);
         SdmxSuperBeanRetrievalManager superBeanRetrievalManager = new SdmxSuperBeanRetrievalManagerImpl(new InMemoryRetrievalManager(sdmxBeans));
@@ -195,17 +212,21 @@ public class StreamingDataConversionService {
         DataTransformationUtil.copyData(reader, writer, true, true, true);
     }
 
-    private SdmxCsvDataFormat buildCsvDataFormat(MediaType targetMediaType) {
-        String labelsParam = targetMediaType.getParameter("labels");
-        String timeFormatParam = targetMediaType.getParameter("timeFormat");
-        String keysParam = targetMediaType.getParameter("keys");
+    private SdmxCsvDataFormat buildCsvDataFormat(MediaType mediaType) {
+        return buildCsvDataFormat(mediaType, DATA_TYPE.SDMX_CSV_2_0_0);
+    }
+
+    private SdmxCsvDataFormat buildCsvDataFormat(MediaType mediaType, DATA_TYPE dataType) {
+        String labelsParam = mediaType != null ? mediaType.getParameter("labels") : null;
+        String timeFormatParam = mediaType != null ? mediaType.getParameter("timeFormat") : null;
+        String keysParam = mediaType != null ? mediaType.getParameter("keys") : null;
 
         boolean normalizedTime = "normalized".equals(timeFormatParam);
         boolean includeSeriesKey = "series".equals(keysParam) || "both".equals(keysParam);
         boolean includeObsKey = "obs".equals(keysParam) || "both".equals(keysParam);
 
         // Locale.ENGLISH for deterministic output across container environments
-        return new SdmxCsvDataFormat(DATA_TYPE.SDMX_CSV_2_0_0, labelsParam, normalizedTime, false, Locale.ENGLISH, includeSeriesKey, includeObsKey, null, false);
+        return new SdmxCsvDataFormat(dataType, labelsParam, normalizedTime, false, Locale.ENGLISH, includeSeriesKey, includeObsKey, null, false);
     }
 
     private ISeriesObsDataWriterEngine getDataWriterEngine(SdmxBeans sdmxBeans, OutputStream outputStream, SdmxVersion sdmxVersion) {

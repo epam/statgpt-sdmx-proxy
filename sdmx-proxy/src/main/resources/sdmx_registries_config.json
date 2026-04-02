@@ -17,13 +17,16 @@
               "datastructure",
               "conceptscheme",
               "codelist",
-              "dataflow"
+              "dataflow",
+              "hierarchy",
+              "hierarchyassociation"
             ]
           },
           "dataEndpointConfig": {
             "url": "https://stats.bis.org/api/v2/data/",
             "supportedFormats": [
-              "JSON_1_0_0"
+              "JSON_1_0_0",
+              "CSV_DATA_2_0_0"
             ],
             "defaultFormat": "JSON_1_0_0",
             "bypassEnabled": false
@@ -79,7 +82,9 @@
               "datastructure",
               "conceptscheme",
               "codelist",
-              "dataflow"
+              "dataflow",
+              "hierarchy",
+              "hierarchyassociation"
             ],
             "fixtures": [
               {
@@ -95,7 +100,8 @@
           "dataEndpointConfig": {
             "url": "https://api.imf.org/external/sdmx/3.0/data/",
             "supportedFormats": [
-              "JSON_DATA_2_0_0"
+              "JSON_DATA_2_0_0",
+              "CSV_DATA_2_0_0"
             ],
             "defaultFormat": "JSON_DATA_2_0_0",
             "bypassEnabled": false

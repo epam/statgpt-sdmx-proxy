@@ -152,7 +152,7 @@ service as an external consumer would.
     - `docker.image.registry` (default: empty, uses image name as-is).
 - **Environment variables** (take precedence if set, provided by CI job):
     - `DOCKER_IMAGE_TAG` - Docker image tag.
-    - `DOCKER_IMAGE_REGISTRY` - Docker registry URL (e.g., `registry-dev.deltixhub.com`).
+  - `DOCKER_IMAGE_REGISTRY` - Docker registry URL
 - **Test configuration class**: `com.epam.sdmxproxy.e2e.container.DockerImageConfig` reads the tag and registry,
   constructs full image name, and provides it to container orchestration classes.
 

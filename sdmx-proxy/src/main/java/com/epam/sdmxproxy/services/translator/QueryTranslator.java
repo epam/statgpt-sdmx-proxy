@@ -41,6 +41,21 @@ public interface QueryTranslator {
             String sourceArtefactUrn
     );
 
+    /**
+     * Translates an agency ID into a minimal {@link TranslatedStructureQuery} for agency scheme discovery.
+     * <p>
+     * Used by {@link com.epam.sdmxproxy.services.agencyscheme.AgencySchemeService} to fetch dataflows
+     * from a registry and extract sub-agency IDs. Unlike {@link #translateStructureQuery}, this method
+     * does not accept cross-reference routing or client format parameters — it uses defaults suitable
+     * for internal consumption.
+     *
+     * @param agencyID agency ID used to resolve the target registry
+     * @return translated query with resolved registry and version configuration
+     */
+    TranslatedStructureQuery translateStructureQueryForAgencySchemaDiscovery(
+            String agencyID
+    );
+
     TranslatedDataQuery translateDataQuery(
             String context,
             String agencyID,

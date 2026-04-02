@@ -5,5 +5,5 @@ ext {
     repoUser = findProperty('NEXUS_USER') ?: System.getenv('NEXUS_USER') ?: "FakeUser"
     repoPassword = findProperty('NEXUS_PASS') ?: System.getenv('NEXUS_PASS') ?: "FakePass"
 
-    proxyRepository = findProperty('repositoryUrl') ?: findProperty('DELTIX_PROXY_REPOSITORY') ?: System.getenv('DELTIX_PROXY_REPOSITORY') ?: "https://nexus.deltixhub.com/repository/"
+    proxyRepository = findProperty('repositoryUrl') ?: findProperty('MAVEN_PROXY_REPOSITORY') ?: System.getenv('MAVEN_PROXY_REPOSITORY') ?: "https://repo.maven.apache.org/maven2/"
 }

@@ -36,8 +36,8 @@ public interface DataQuery30Api {
                     - application/vnd.sdmx.data+json;version=1.0.0
                     - application/vnd.sdmx.data+json;version=2.0.0
                     - application/vnd.sdmx.data+xml;version=3.0.0
-                    - application/vnd.sdmx.data+csv;version=2.0.0
-                    - text/csv, application/csv
+                    - application/vnd.sdmx.data+csv;version=2.0.0 (supports parameters: labels=[id|name|both], timeFormat=[original|normalized], keys=[none|obs|series|both])
+                    - text/csv, application/csv (same CSV parameters supported)
                     - application/xml
                     - */* (defaults to application/vnd.sdmx.data+json;version=2.0.0)
                     
@@ -201,7 +201,7 @@ public interface DataQuery30Api {
             )
             @RequestParam MultiValueMap<String, String> c,
             @Parameter(
-                    description = "Accept header for content negotiation. Supported: application/json, application/vnd.sdmx.data+json;version=1.0.0, application/vnd.sdmx.data+json;version=2.0.0, application/vnd.sdmx.data+xml;version=3.0.0, application/vnd.sdmx.data+csv;version=2.0.0, text/csv, application/csv, application/xml, */* (defaults to application/vnd.sdmx.data+json;version=2.0.0)"
+                    description = "Accept header for content negotiation. Supported: application/json, application/vnd.sdmx.data+json;version=1.0.0, application/vnd.sdmx.data+json;version=2.0.0, application/vnd.sdmx.data+xml;version=3.0.0, application/vnd.sdmx.data+csv;version=2.0.0, text/csv, application/csv, application/xml, */* (defaults to application/vnd.sdmx.data+json;version=2.0.0). CSV formats support parameters: labels=[id|name|both], timeFormat=[original|normalized], keys=[none|obs|series|both]. Example: application/csv;labels=both;keys=series"
             )
             @RequestHeader(value = "Accept", required = false) @Nullable String accept,
             @Parameter(description = "URN of the source artefact that contained the cross-reference (for routing context)")

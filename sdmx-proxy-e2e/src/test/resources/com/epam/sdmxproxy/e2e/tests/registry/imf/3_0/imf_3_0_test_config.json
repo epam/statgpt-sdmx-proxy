@@ -80,6 +80,10 @@
       {
         "type": "codelist",
         "urn": "IMF:CL_DERIVATION_TYPE(1.0.0)"
+      },
+      {
+        "type": "hierarchy",
+        "urn": "IMF.STA:H_BOP_BOP_AGG_ANALYTIC_PRESENTATION(1.13.0)"
       }
     ],
     "mediaTypes": [
@@ -138,7 +142,9 @@
     "mediaTypes": [
       "application/vnd.sdmx.data+json;version=2.0.0",
       "application/vnd.sdmx.data+xml;version=3.0.0",
-      "application/vnd.sdmx.data+csv;version=2.0.0"
+      "application/vnd.sdmx.data+csv;version=2.0.0",
+      "application/vnd.sdmx.data+csv;version=2.0.0;labels=id",
+      "application/vnd.sdmx.data+csv;version=2.0.0;labels=both"
     ],
     "registryReturnFormats": [
       "JSON_DATA_2_0_0"

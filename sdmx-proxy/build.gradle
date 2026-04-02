@@ -216,14 +216,16 @@ test {
     }
 }
 
-// Publishing
+// Publishing - configure publishUrl in gradle.properties or via environment to enable
 publishing {
     repositories {
-        maven {
-            url publishUrl
-            credentials {
-                username publisherUser
-                password publisherPassword
+        if (findProperty('publishUrl')) {
+            maven {
+                url publishUrl
+                credentials {
+                    username publisherUser
+                    password publisherPassword
+                }
             }
         }
     }

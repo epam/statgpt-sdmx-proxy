@@ -13,7 +13,8 @@ public enum ReturnFormat {
     XML_2_1("application/vnd.sdmx.structure+xml;version=2.1"),
     XML_GENERICDATA_2_1("application/vnd.sdmx.genericdata+xml;version=2.1"),
     XML_STRUCTURE_SPECIFIC_2_1("application/vnd.sdmx.structurespecificdata+xml;version=2.1"),
-    CSV("");
+    CSV_DATA_1_0_0("application/vnd.sdmx.data+csv;version=1.0.0"),
+    CSV_DATA_2_0_0("application/vnd.sdmx.data+csv;version=2.0.0");
 
     private final String contentType;
 

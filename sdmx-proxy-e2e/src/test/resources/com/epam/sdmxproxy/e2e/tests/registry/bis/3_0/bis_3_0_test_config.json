@@ -128,6 +128,10 @@
       {
         "type": "datastructure",
         "urn": "BIS:BIS_GLI(1.0)"
+      },
+      {
+        "type": "hierarchy",
+        "urn": "BIS.LBS:BANKTYPE@LBS_CLIENT_HIERARCHIES(1.0)"
       }
     ],
     "mediaTypes": [
@@ -193,7 +197,9 @@
     "mediaTypes": [
       "application/vnd.sdmx.data+json;version=2.0.0",
       "application/vnd.sdmx.data+xml;version=3.0.0",
-      "application/vnd.sdmx.data+csv;version=2.0.0"
+      "application/vnd.sdmx.data+csv;version=2.0.0",
+      "application/vnd.sdmx.data+csv;version=2.0.0;labels=id",
+      "application/vnd.sdmx.data+csv;version=2.0.0;labels=both"
     ],
     "registryReturnFormats": [
       "JSON_1_0_0"

@@ -101,12 +101,11 @@ public class FormatSupportChecker {
      * @return true if formats match
      */
     public static boolean formatMatches(ReturnFormat registryFormat, MediaType requestedMediaType) {
-        String contentType = registryFormat.getContentType();
-        if (contentType == null || contentType.isEmpty()) {
-            // CSV format has empty content type, match by type/subtype
-            return requestedMediaType.getType().equals("text") && requestedMediaType.getSubtype().equals("csv") ||
-                    requestedMediaType.getType().equals("application") && requestedMediaType.getSubtype().contains("csv");
+        if (registryFormat == ReturnFormat.CSV_DATA_1_0_0 || registryFormat == ReturnFormat.CSV_DATA_2_0_0) {
+            // CSV format matches any CSV media type (text/csv, application/csv, application/vnd.sdmx.data+csv)
+            return requestedMediaType.getSubtype().contains("csv");
         }
+        String contentType = registryFormat.getContentType();
         MediaType registryMediaType = MediaType.valueOf(contentType);
         // Compare type and subtype (ignoring parameters like version)
         return SdmxMediaType.isMatch(registryMediaType, requestedMediaType);

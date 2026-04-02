@@ -78,7 +78,7 @@ class AgencySchemeServiceTest {
         when(configurationProvider.getConfiguration()).thenReturn(config);
 
         TranslatedStructureQuery mockQuery = mock(TranslatedStructureQuery.class);
-        when(queryTranslator.translateStructureQuery(eq("dataflow"), eq("IMF"), eq("*"), eq("~"), eq("none"), eq("allstubs"), isNull(), isNull())).thenReturn(mockQuery);
+        when(queryTranslator.translateStructureQueryForAgencySchemaDiscovery(eq("IMF"))).thenReturn(mockQuery);
 
         SdmxBeans mockBeans = mock(SdmxBeans.class);
         DataflowBean df1 = mockDataflow("IMF.STA");

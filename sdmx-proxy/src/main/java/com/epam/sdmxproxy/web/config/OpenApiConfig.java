@@ -45,10 +45,10 @@ public class OpenApiConfig {
                         .version("0.0.3-SNAPSHOT")
                         .contact(new Contact()
                                 .name("EPAM Systems, Inc.")
-                                .email("support@epam.com"))
+                                .url("https://github.com/epam/statgpt-sdmx-proxy"))
                         .license(new License()
-                                .name("Proprietary")
-                                .url("https://www.epam.com")))
+                                .name("Apache License 2.0")
+                                .url("https://www.apache.org/licenses/LICENSE-2.0")))
                 .servers(List.of(
                         new Server()
                                 .url("/")

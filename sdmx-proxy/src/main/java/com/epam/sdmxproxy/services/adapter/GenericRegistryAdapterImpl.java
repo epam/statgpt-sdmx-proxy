@@ -15,8 +15,8 @@ import com.epam.sdmxproxy.registry.api.client.Sdmx30DataClient;
 import com.epam.sdmxproxy.registry.api.client.Sdmx30StructureClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.collections4.MapUtils;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -108,10 +108,9 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
         String flowRef = getFlowRef(query.getAgencyID(), query.getResourceID(), query.getVersion());
         String key = getKey(query);
         String providerRef = "all";
-        ReturnFormat dataReturnFormat = query.getReturnFormat();
+        String acceptHeader = resolveDataAcceptHeader(query);
 
         //TODO support other query params
-        // https://gitlab.deltixhub.com/Deltix/migapp/talk-to-your-data/sdmx-proxy/-/issues/95
         Map<String, Object> dataQueryParams = new HashMap<>();
         if (query.getStartPeriod() != null) {
             dataQueryParams.put("startPeriod", query.getStartPeriod());
@@ -120,7 +119,7 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
             dataQueryParams.put("endPeriod", query.getEndPeriod());
         }
         return data21Client.getData(
-                dataReturnFormat.getContentType(),
+                acceptHeader,
                 flowRef,
                 key,
                 providerRef,
@@ -134,6 +133,34 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
 
     private String getFlowRef(String agencyId, String resourceId, String version) {
         return agencyId + "," + resourceId + "," + version;
+    }
+
+    /**
+     * For CSV return format, builds the Accept header from the registry's base CSV content type
+     * with the client's CSV parameters (labels, keys, timeFormat) appended.
+     * For other formats, uses the static content type from ReturnFormat.
+     */
+    private String resolveDataAcceptHeader(TranslatedDataQuery query) {
+        ReturnFormat returnFormat = query.getReturnFormat();
+        if (returnFormat == ReturnFormat.CSV_DATA_1_0_0 || returnFormat == ReturnFormat.CSV_DATA_2_0_0) {
+            return buildCsvAcceptHeader(returnFormat, query.getContentType());
+        }
+        return returnFormat.getContentType();
+    }
+
+    private String buildCsvAcceptHeader(ReturnFormat returnFormat, MediaType clientMediaType) {
+        StringBuilder header = new StringBuilder(returnFormat.getContentType());
+        appendCsvParam(header, clientMediaType, "labels");
+        appendCsvParam(header, clientMediaType, "timeFormat");
+        appendCsvParam(header, clientMediaType, "keys");
+        return header.toString();
+    }
+
+    private void appendCsvParam(StringBuilder header, MediaType mediaType, String paramName) {
+        String value = mediaType.getParameter(paramName);
+        if (value != null) {
+            header.append(";").append(paramName).append("=").append(value);
+        }
     }
 
     @Override
@@ -181,10 +208,10 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
     private InputStream getData30(TranslatedDataQuery query, RegistrySelectionResult selectedRegistry) {
         Sdmx30DataClient data30Client = sdmxApiClientProvider.getData30Client(selectedRegistry);
         String context = query.getContext() != null ? query.getContext() : "dataflow"; // Default to dataflow if not provided
-        ReturnFormat dataReturnFormat = query.getReturnFormat();
+        String acceptHeader = resolveDataAcceptHeader(query);
 
         return data30Client.getData(
-                dataReturnFormat.getContentType(),
+                acceptHeader,
                 context,
                 query.getAgencyID(),
                 query.getResourceID(),

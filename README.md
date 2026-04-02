@@ -143,5 +143,6 @@ Other Dial Storage settings (base URL, path/filename) are configured in `applica
 
 ## Local Setup
 
-1. Copy epam jsdmx into src folder. -> will be obsolette after it will be opensource
-2. Put new (10.*.*) jsdmx libs into lib-repo/sdmxsource
+1. Clone the repository: `git clone https://github.com/epam/statgpt-sdmx-proxy.git`
+2. Build: `./gradlew clean build`
+3. Run: `./gradlew :sdmx-proxy:bootRun`

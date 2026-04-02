@@ -7,6 +7,8 @@ build/
 
 ### LOCAL DEVELOPMENT ###
 **/GITIGNORE/**
+docs/knowledge_transfer/
+#.gitlab-ci.yml
 
 ### STS ###
 .apt_generated
@@ -38,6 +40,9 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Cursor IDE ###
+.cursor/
 
 ### Claude Code ###
 .claude/

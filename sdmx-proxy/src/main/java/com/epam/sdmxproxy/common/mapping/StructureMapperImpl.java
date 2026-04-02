@@ -5,6 +5,7 @@ import com.epam.jsdmx.infomodel.sdmx30.ArtefactsImpl;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.categoryscheme.CategorySchemeBean;
 import io.sdmx.api.sdmx.model.beans.codelist.CodelistBean;
+import io.sdmx.api.sdmx.model.beans.codelist.HierarchyBean;
 import io.sdmx.api.sdmx.model.beans.conceptscheme.ConceptSchemeBean;
 import io.sdmx.api.sdmx.model.beans.datastructure.DataStructureBean;
 import io.sdmx.api.sdmx.model.beans.datastructure.DataflowBean;
@@ -20,6 +21,7 @@ public class StructureMapperImpl implements StructureMapper {
     private final Mapper<DataflowBean> dataflowMapper;
     private final Mapper<CategorySchemeBean> categorySchemesMapper;
     private final Mapper<ContentConstraintBean> contentConstraintMapper;
+    private final Mapper<HierarchyBean> hierarchyMapper;
 
     public StructureMapperImpl() {
         this(null);
@@ -37,6 +39,7 @@ public class StructureMapperImpl implements StructureMapper {
         dataflowMapper = new DataflowMapper(annotationMapper, referenceMapper, textMapper);
         categorySchemesMapper = new CategorySchemesMapper(annotationMapper, textMapper);
         contentConstraintMapper = new ContentConstraintMapper(annotationMapper, referenceMapper, textMapper);
+        hierarchyMapper = new HierarchyMapper(textMapper, annotationMapper);
     }
 
     @Override
@@ -48,6 +51,7 @@ public class StructureMapperImpl implements StructureMapper {
         artefacts.addMaintainables(dataflowMapper.map(beans.getDataflows()));
         artefacts.addMaintainables(categorySchemesMapper.map(beans.getCategorySchemes()));
         artefacts.addMaintainables(contentConstraintMapper.map(beans.getContentConstraintBeans()));
+        artefacts.addMaintainables(hierarchyMapper.map(beans.getHierarchies()));
         return artefacts;
     }
 

@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("smoke")
 class AvailabilitySmokeTests {
 
-    private static final String BASE_PATH = "/sdmx/proxy/api/v0";
+    private static final String BASE_PATH = "/statgpt/sdmx-proxy/api/v0";
     private RestClient restClient;
 
     @BeforeAll

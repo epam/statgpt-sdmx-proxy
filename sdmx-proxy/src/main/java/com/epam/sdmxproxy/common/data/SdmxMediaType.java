@@ -1,6 +1,7 @@
 package com.epam.sdmxproxy.common.data;
 
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
+import com.epam.sdmxproxy.exception.UnsupportedMediaTypeParameterException;
 import com.epam.sdmxproxy.exception.UnsupportedSdmxVersionException;
 import lombok.experimental.UtilityClass;
 import org.springframework.http.MediaType;
@@ -50,6 +51,8 @@ public class SdmxMediaType {
     );
 
 
+    private static final Set<String> CSV_ONLY_PARAMETERS = Set.of("labels", "timeformat", "keys");
+
     public static boolean isMatch(MediaType m1, MediaType m2) {
         return m1.getType().equals(m2.getType())
                 && m1.getSubtype().equals(m2.getSubtype());
@@ -93,11 +96,45 @@ public class SdmxMediaType {
     public static MediaTypeParseResult parseMediaType(String acceptHeader) {
         MediaType mediaType = mapMediaType(acceptHeader);
         SdmxVersion sdmxVersion = extractSdmxVersion(acceptHeader);
+        validateCsvParameters(mediaType);
 
         return MediaTypeParseResult.builder()
                 .mediaType(mediaType)
                 .sdmxVersion(sdmxVersion)
+                .containsCsvParameters(containsCsvParameters(mediaType))
                 .build();
+    }
+
+    private static boolean containsCsvParameters(MediaType mediaType) {
+        if (!isCsvMediaType(mediaType)) {
+            return false;
+        }
+
+        return mediaType.getParameters().keySet().stream().anyMatch(key -> CSV_ONLY_PARAMETERS.contains(key.toLowerCase()));
+    }
+
+    /**
+     * Validates that CSV-specific parameters (labels, timeFormat, keys) are only present
+     * on CSV media types. Throws UnsupportedMediaTypeParameterException if these parameters
+     * appear on JSON or XML media types.
+     */
+    public static void validateCsvParameters(MediaType mediaType) {
+        if (isCsvMediaType(mediaType)) {
+            return; // CSV type -- parameters are valid
+        }
+
+        List<String> invalidParams = mediaType.getParameters().keySet().stream()
+                .filter(key -> CSV_ONLY_PARAMETERS.contains(key.toLowerCase()))
+                .toList();
+
+        if (!invalidParams.isEmpty()) {
+            throw new UnsupportedMediaTypeParameterException(
+                    String.format("Parameters %s are only supported for CSV media types. Received media type: %s", invalidParams, mediaType));
+        }
+    }
+
+    private static boolean isCsvMediaType(MediaType mediaType) {
+        return CSV_MEDIA_TYPES.stream().anyMatch(csv -> isMatch(csv, mediaType));
     }
 
     /**
@@ -125,7 +162,11 @@ public class SdmxMediaType {
 
             // Check for generic media types (will default to 3.0 if no SDMX-specific type found)
             if (subtype != null && !subtype.contains("sdmx")) {
-                if (MediaType.APPLICATION_JSON.equals(accept) || MediaType.APPLICATION_XML.equals(accept)) {
+                // Only generic (non-SDMX) types from these sets can match here,
+                // since we already checked !subtype.contains("sdmx")
+                if (JSON_MEDIA_TYPES.stream().anyMatch(j -> isMatch(j, accept))
+                        || XML_MEDIA_TYPES.stream().anyMatch(x -> isMatch(x, accept))
+                        || CSV_MEDIA_TYPES.stream().anyMatch(c -> isMatch(c, accept))) {
                     hasGenericMediaType = true;
                 }
                 continue;
@@ -136,10 +177,6 @@ public class SdmxMediaType {
                 // SDMX 3.0 specific media types
                 // Check for explicit version 3.0.0
                 if ("3.0.0".equals(versionParam)) {
-                    return SdmxVersion.SDMX_3_0;
-                }
-                // SDMX XML 3.0.0
-                if (accept.equals(MediaType.valueOf(SDMX_XML_3_0_0_VALUE))) {
                     return SdmxVersion.SDMX_3_0;
                 }
                 // SDMX JSON 2.0.0 is used for SDMX 3.0 data format
@@ -160,20 +197,19 @@ public class SdmxMediaType {
                 if ("2.1".equals(versionParam)) {
                     return SdmxVersion.SDMX_2_1;
                 }
-                // Draft JSON 2.1
-                if (accept.equals(MediaType.valueOf(DRAFT_JSON_2_1_VALUE))) {
-                    return SdmxVersion.SDMX_2_1;
-                }
                 // SDMX CSV 1.0.0 is typically used for SDMX 2.1
                 if ("1.0.0".equals(versionParam) && subtype.contains("csv")) {
                     return SdmxVersion.SDMX_2_1;
                 }
 
-                // If we got here, it's an SDMX type but unsupported version
-                // Only add to unsupported list if version parameter is present but not recognized
-                if (versionParam != null) {
-                    unsupportedSdmxTypes.add(accept.toString());
+                // SDMX type without version parameter -- default to 3.0
+                // (consistent with mapMediaType() which defaults unversioned SDMX CSV to 2.0.0)
+                if (versionParam == null) {
+                    return SdmxVersion.SDMX_3_0;
                 }
+
+                // If we got here, it's an SDMX type with unsupported version
+                unsupportedSdmxTypes.add(accept.toString());
             }
         }
 

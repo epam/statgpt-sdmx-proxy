@@ -69,7 +69,7 @@ public class AgencySchemeService {
             if (agencyConfig.isAllowSubAgencies()) {
                 Set<String> subAgencies = discoverSubAgencies(agencyConfig);
                 for (String subAgency : subAgencies) {
-                    if (!subAgency.equals(agencyName)) {
+                    if (!subAgency.equals(agencyName) && subAgency.startsWith(agencyName)) {
                         allAgencies.add(new AgencyEntry(subAgency, subAgency));
                     }
                 }
@@ -81,8 +81,9 @@ public class AgencySchemeService {
 
     private Set<String> discoverSubAgencies(AgencyConfiguration agencyConfig) {
         Set<String> subAgencies = new LinkedHashSet<>();
+        String agencyId = agencyConfig.getName();
         try {
-            var structureQuery = queryTranslator.translateStructureQuery("dataflow", agencyConfig.getName(), "*", "~", "none", "allstubs", null, null);
+            var structureQuery = queryTranslator.translateStructureQueryForAgencySchemaDiscovery(agencyId);
             SdmxBeans beans = adapterRouter.getSdmxBeans(structureQuery);
             for (DataflowBean dataflow : beans.getDataflows()) {
                 String maintainerAgency = dataflow.getAgencyId();
@@ -90,9 +91,9 @@ public class AgencySchemeService {
                     subAgencies.add(maintainerAgency);
                 }
             }
-            log.debug("Discovered {} sub-agencies for {}: {}", subAgencies.size(), agencyConfig.getName(), subAgencies);
+            log.debug("Discovered {} sub-agencies for {}: {}", subAgencies.size(), agencyId, subAgencies);
         } catch (Exception e) {
-            log.warn("Failed to discover sub-agencies for {}: {}. Returning configured agencies only.", agencyConfig.getName(), e.getMessage());
+            log.warn("Failed to discover sub-agencies for {}: {}. Returning configured agencies only.", agencyId, e.getMessage());
         }
         return subAgencies;
     }

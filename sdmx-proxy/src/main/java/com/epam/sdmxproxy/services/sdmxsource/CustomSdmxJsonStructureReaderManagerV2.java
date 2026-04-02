@@ -15,7 +15,6 @@ import io.sdmx.format.json.engine.structure.reader.sdmx.v2.SdmxJsonDataProviderS
 import io.sdmx.format.json.engine.structure.reader.sdmx.v2.SdmxJsonDataflowReaderEngineV2;
 import io.sdmx.format.json.engine.structure.reader.sdmx.v2.SdmxJsonGeoGridCodelistReaderEngineV2;
 import io.sdmx.format.json.engine.structure.reader.sdmx.v2.SdmxJsonGeographicCodelistReaderEngineV2;
-import io.sdmx.format.json.engine.structure.reader.sdmx.v2.SdmxJsonHierarchicalCodelistReaderEngineV2;
 import io.sdmx.format.json.engine.structure.reader.sdmx.v2.SdmxJsonHierarchyAssociationReaderEngineV2;
 import io.sdmx.format.json.engine.structure.reader.sdmx.v2.SdmxJsonMetadataConstraintReaderEngineV2;
 import io.sdmx.format.json.engine.structure.reader.sdmx.v2.SdmxJsonMetadataProviderSchemeReaderEngineV2;
@@ -58,7 +57,7 @@ public class CustomSdmxJsonStructureReaderManagerV2 extends AbstractJsonStructur
         registerReader(SdmxJsonDataflowReaderEngineV2.getInstance());
         registerReader(SdmxJsonGeoGridCodelistReaderEngineV2.getInstance());
         registerReader(SdmxJsonGeographicCodelistReaderEngineV2.getInstance());
-        registerReader(SdmxJsonHierarchicalCodelistReaderEngineV2.getInstance());
+        registerReader(CustomSdmxJsonHierarchicalCodelistReaderEngineV2.getInstance());
         registerReader(SdmxJsonHierarchyAssociationReaderEngineV2.getInstance());
         registerReader(SdmxJsonMetadataConstraintReaderEngineV2.getInstance());
         registerReader(SdmxJsonMetadataProviderSchemeReaderEngineV2.getInstance());

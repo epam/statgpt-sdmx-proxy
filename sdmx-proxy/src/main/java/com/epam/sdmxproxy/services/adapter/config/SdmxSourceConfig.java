@@ -1,7 +1,9 @@
 package com.epam.sdmxproxy.services.adapter.config;
 
+import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxCsvDataReaderFactoryV2;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxJsonDataReaderFactory;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxJsonStructureReaderManagerV2;
+import io.sdmx.format.csv.factory.v1.SdmxCsvDataReaderFactoryV1;
 import io.sdmx.format.json.factory.data.SdmxJsonDataWriterFactory;
 import io.sdmx.format.json.manager.SdmxJsonStructureReaderManagerV1;
 import io.sdmx.format.ml.factory.data.SdmxMLDataReaderFactory;
@@ -42,6 +44,16 @@ public class SdmxSourceConfig {
     @Bean
     public SdmxMLDataReaderFactory sdmxMLDataReaderFactory() {
         return SdmxMLDataReaderFactory.getInstance();
+    }
+
+    @Bean
+    public SdmxCsvDataReaderFactoryV1 sdmxCsvDataReaderFactoryV1() {
+        return SdmxCsvDataReaderFactoryV1.getInstance();
+    }
+
+    @Bean
+    public CustomSdmxCsvDataReaderFactoryV2 sdmxCsvDataReaderFactoryV2() {
+        return CustomSdmxCsvDataReaderFactoryV2.getInstance();
     }
 
     @Bean

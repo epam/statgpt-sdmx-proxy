@@ -14,4 +14,5 @@ import org.springframework.http.MediaType;
 public class MediaTypeParseResult {
     private SdmxVersion sdmxVersion;
     private MediaType mediaType;
+    private boolean containsCsvParameters;
 }

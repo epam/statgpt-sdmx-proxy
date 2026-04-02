@@ -25,7 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @Tag("smoke")
 class DataSmokeTests {
 
-    private static final String BASE_PATH = "/sdmx/proxy/api/v0";
+    private static final String BASE_PATH = "/statgpt/sdmx-proxy/api/v0";
     private RestClient restClient;
     private ResponseValidator responseValidator;
 

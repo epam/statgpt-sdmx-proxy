@@ -49,6 +49,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
     private static final String OPERATOR_VALUE_SEPARATOR = ":";
     private static final Set<String> START_OPERATORS = Set.of("ge", "gt");
     private static final Set<String> END_OPERATORS = Set.of("le", "lt");
+    public static final String AGENCY_SCHEMA = "agencyschema";
     private final AgencyRoutingService agencyRoutingService;
     private final FilterValidator filterValidationService;
     private final FilterTranslator filterTranslator;
@@ -175,6 +176,30 @@ public class QueryTranslatorImpl implements QueryTranslator {
                 .structure(getStructure(versionConfig, structureType, agencyId, getVersionSpecificQueryId(resourceId, versionConfig), getVersionSpecificQueryId(version, versionConfig)))
                 .references(references)
                 .detail(detail)
+                .contentType(parsedMediaType.getMediaType())
+                .registryReturnFormat(returnFormat)
+                .build();
+
+    }
+
+    @Override
+    public TranslatedStructureQuery translateStructureQueryForAgencySchemaDiscovery(String agencyId) {
+        MediaTypeParseResult parsedMediaType = parseMediaType(null);
+
+        RegistrySelectionResult selectedRegistry = selectRegistryAndVersion(agencyId, parsedMediaType.getSdmxVersion(), null);
+
+        ReturnFormat returnFormat = determineStructureReturnFormat(
+                selectedRegistry,
+                parsedMediaType
+        );
+
+        VersionSpecificRegistryConfiguration versionConfig = selectedRegistry.getVersionConfiguration();
+        return TranslatedStructureQuery.builder()
+                .registryConfiguration(selectedRegistry.getRegistryConfiguration())
+                .versionConfiguration(versionConfig)
+                .structure(getStructure(versionConfig, "dataflow", "*", getVersionSpecificQueryId("*", versionConfig), getVersionSpecificQueryId("*", versionConfig)))
+                .references("children")
+                .detail("full")
                 .contentType(parsedMediaType.getMediaType())
                 .registryReturnFormat(returnFormat)
                 .build();
@@ -481,7 +506,6 @@ public class QueryTranslatorImpl implements QueryTranslator {
      * If bypass is enabled and requested format matches supportedFormats, uses matching format.
      * Otherwise, uses defaultFormat. Throws exception if defaultFormat is not configured.
      */
-    //TODO WRITE TESTS FOR IT
     private ReturnFormat determineDataReturnFormat(
             RegistrySelectionResult selectedRegistry,
             MediaTypeParseResult parsedMediaType
@@ -497,6 +521,14 @@ public class QueryTranslatorImpl implements QueryTranslator {
         }
 
         MediaType requestedMediaType = parsedMediaType.getMediaType();
+
+        // CSV hard override: if client requests CSV and registry supports it, use native CSV
+        if (requestedMediaType.getSubtype().contains("csv")) {
+            ReturnFormat csvFormat = findMatchingFormat(dataConfig.getSupportedFormats(), requestedMediaType);
+            if (csvFormat != null) {
+                return csvFormat;
+            }
+        }
 
         // Check if bypass is possible
         if (FormatSupportChecker.canBypassDataFormat(versionConfig, requestedMediaType)) {
