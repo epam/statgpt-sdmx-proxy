@@ -52,22 +52,32 @@ dependencies {
 
 }
 
+// Disable default test task so e2e tests don't run with `./gradlew test`
 tasks.named('test') {
-    maxHeapSize = '2g'
-    useJUnitPlatform()
-    testLogging {
-        events "passed", "skipped", "failed"
-        exceptionFormat "full"
-    }
+    enabled = false
 }
 
-test {
-    ignoreFailures Boolean.getBoolean("test.ignoreFailures")
+// Dedicated task for running e2e tests
+tasks.register('e2eTest', Test) {
+    description = 'Runs E2E tests against a live proxy in Docker'
+    group = 'verification'
+
+    maxHeapSize = '2g'
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+
+    ignoreFailures = Boolean.getBoolean("test.ignoreFailures")
     reports.junitXml.required = true
 
     // Container log reports directory
     def e2eLogsDir = "${buildDir}/reports/e2e-logs"
     systemProperty 'e2e.logs.dir', e2eLogsDir
+
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
 
     doLast {
         copy {
@@ -81,3 +91,6 @@ test {
         }
     }
 }
+
+// Disable check so this module is skipped in CI ./gradlew check
+check.enabled = false
