@@ -1,0 +1,198 @@
+{
+  "structuresTestSuitConfiguration": {
+    "artefacts": [
+      {
+        "type": "conceptscheme",
+        "urn": "IMF.STA.DS:IMF_STA_DS_CL_DGI_SURVEY_RECOMMENDATIONS_1_0_0_SUBJECT_ID_SCHEME(1.0.0)"
+      },
+      {
+        "type": "conceptscheme",
+        "urn": "IMF.STA:CS_CPI_VINTAGE(1.0.0)"
+      },
+      {
+        "type": "conceptscheme",
+        "urn": "IMF:CS_MASTER_DATA_VINTAGE(3.0.0)"
+      },
+      {
+        "type": "conceptscheme",
+        "urn": "IMF.STA:CS_ESG_FINANCE(3.0.1)"
+      },
+      {
+        "type": "conceptscheme",
+        "urn": "IMF:CS_MASTER_DOMAIN_VINTAGE(36.0.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "IMF.STA:QGFS(9.0.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "IMF.STA:GFS_COFOG(11.0.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "IMF.STA:IL(13.0.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "IMF.RES:ECFIE(2.0.1)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "IMF.STA:IRFCL(8.0.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "IMF.STA:DSD_FAS(4.0.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "IMF.MCM:DSD_FDI(1.0.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "IMF.STA:DSD_MFS_CBS(18.0.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "IMF.STA:DSD_IIPCC(14.0.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "IMF.STA:DSD_ESG_FINANCE_CURRENCY(3.0.0)"
+      },
+      {
+        "type": "codelist",
+        "urn": "IMF.STA:CL_GS_CGI_INDICATOR(1.0.0)"
+      },
+      {
+        "type": "codelist",
+        "urn": "IMF.RES:CL_EQ_INDICATOR(1.0.0)"
+      },
+      {
+        "type": "codelist",
+        "urn": "IMF.STA:CL_TEG_INDICATOR(3.0.2)"
+      },
+      {
+        "type": "codelist",
+        "urn": "IMF:CL_METHODOLOGY(2.6.0)"
+      },
+      {
+        "type": "codelist",
+        "urn": "IMF:CL_DERIVATION_TYPE(1.0.0)"
+      },
+      {
+        "type": "hierarchy",
+        "urn": "IMF.STA:H_BOP_BOP_AGG_ANALYTIC_PRESENTATION(1.13.0)"
+      }
+    ],
+    "mediaTypes": [
+      "application/vnd.sdmx.structure+xml;version=2.1",
+      "application/vnd.sdmx.structure+json; version=2.0.0"
+    ],
+    "registryReturnFormats": [
+      "JSON_STRUCTURE_2_0_0"
+    ]
+  },
+  "dataTestSuitConfiguration": {
+    "dataflowConfigs": [
+      {
+        "urn": "IMF.RES:WEO(9.0.0)",
+        "keys": [
+          "USA.NGDP_RPCH.*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "IMF.STA:QGFS(9.0.0)",
+        "keys": [
+          "AUS.BS.*.6M2_NETAL_SP_XDC.*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "IMF.STA:GFS_COFOG(11.0.0)",
+        "keys": [
+          "AFG.S1311B.G2MF.GF0240_T"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "IMF.STA:IL(13.0.0)",
+        "keys": [
+          "GEO.RGOLDMV_REVS.*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "IMF.RES:ECFIE(2.0.1)",
+        "keys": [
+          "THA.*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "IMF.STA:IRFCL(8.0.0)",
+        "keys": [
+          "URY.*.*"
+        ],
+        "filters": {}
+      }
+    ],
+    "mediaTypes": [
+      "application/vnd.sdmx.data+json;version=2.0.0",
+      "application/vnd.sdmx.data+xml;version=3.0.0",
+      "application/vnd.sdmx.data+csv;version=2.0.0",
+      "application/vnd.sdmx.data+csv;version=2.0.0;labels=id",
+      "application/vnd.sdmx.data+csv;version=2.0.0;labels=both"
+    ],
+    "registryReturnFormats": [
+      "JSON_DATA_2_0_0"
+    ]
+  },
+  "availabilityTestSuitConfiguration": {
+    "dataflowConfigs": [
+      {
+        "urn": "IMF.STA:QGFS(9.0.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "IMF.STA:GFS_COFOG(11.0.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "IMF.STA:IL(13.0.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "IMF.RES:ECFIE(2.0.1)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "IMF.STA:IRFCL(8.0.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      }
+    ],
+    "mediaTypes": [
+      "application/vnd.sdmx.structure+json; version=2.0.0"
+    ],
+    "registryReturnFormats": [
+      "JSON_STRUCTURE_2_0_0"
+    ]
+  }
+}

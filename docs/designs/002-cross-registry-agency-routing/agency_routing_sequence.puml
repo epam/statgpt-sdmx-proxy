@@ -1,0 +1,99 @@
+@startuml Cross-Reference Routing Sequence
+title Cross-Registry Agency Routing -- The Cross-Reference Problem
+
+actor Client
+participant "SDMX Proxy" as Proxy
+participant "AgencyRoutingService" as Router
+database "BIS Registry" as BIS
+database "IMF Registry" as IMF
+
+== Step 1: Client fetches BIS DSD with references ==
+
+Client -> Proxy: GET /structure/datastructure/BIS/BIS_DER/1.0\n?references=all\n(no X-Source-Artefact-Urn)
+
+Proxy -> Router: resolveRegistry("BIS", null)
+note right of Router
+  No URN -> skip cross-ref path
+  Standard routing:
+    "BIS" in agencies[]
+    -> primaryRegistry = "BIS"
+    -> found in configs[]
+    -> **return BIS**
+end note
+Router --> Proxy: BIS RegistryConfiguration
+
+Proxy -> BIS: GET /api/v2/structure/datastructure/BIS/BIS_DER/1.0?references=all
+BIS --> Proxy: DSD + referenced artefacts
+
+note over Proxy
+  Response includes referenced codelist:
+  **urn:sdmx:org.sdmx.infomodel.codelist.Codelist=IMF:CL_AREA(1.15)**
+  Agency is "IMF" but artefact lives in BIS
+end note
+
+Proxy --> Client: DSD + references (including IMF:CL_AREA)
+
+== Step 2: Client fetches the cross-referenced codelist (WITH header) ==
+
+Client -> Proxy: GET /structure/codelist/IMF/CL_AREA/1.15\nX-Source-Artefact-Urn: urn:sdmx:org.sdmx.infomodel\n  .datastructure.DataStructureDefinition=**BIS**:BIS_DER(1.0)
+
+Proxy -> Router: resolveRegistry("IMF",\n"...=BIS:BIS_DER(1.0)")
+note right of Router #palegreen
+  1. Parse URN -> sourceAgency = "BIS"
+  2. Resolve registry for "BIS":
+     primaryRegistry = "BIS" -> found
+     -> candidateRegistry = **BIS**
+  3. Cross-check: is BIS in "IMF"'s registries?
+     IMF config: primary="IMF", secondary=["BIS"]
+     -> **yes**, BIS is in secondaries
+  4. **Return BIS**
+end note
+Router --> Proxy: BIS RegistryConfiguration
+
+Proxy -> BIS: GET /api/v2/structure/codelist/IMF/CL_AREA/1.15
+BIS --> Proxy: Codelist IMF:CL_AREA(1.15)
+Proxy --> Client: Codelist (correct!)
+
+== Contrast: WITHOUT header (today's broken behavior) ==
+
+Client -> Proxy: GET /structure/codelist/IMF/CL_AREA/1.15\n(no header)
+
+Proxy -> Router: resolveRegistry("IMF", null)
+note right of Router #salmon
+  No URN -> skip cross-ref path
+  Standard routing:
+    "IMF" in agencies[]
+    -> primaryRegistry = "IMF"
+    -> found in configs[]
+    -> **return IMF**
+end note
+Router --> Proxy: IMF RegistryConfiguration
+
+Proxy -> IMF: GET /api/3.0/structure/codelist/IMF/CL_AREA/1.15
+IMF --> Proxy: 404 Not Found (or different version)
+Proxy --> Client: Error
+
+== Example: cross-check FAILS (candidate not in agency's registries) ==
+
+note over Client
+  Hypothetical: source URN points to ESTAT registry,
+  but the requested agency "BIS" is not hosted by ESTAT
+end note
+
+Client -> Proxy: GET /structure/codelist/BIS/CL_SOMETHING/1.0\nX-Source-Artefact-Urn: ...=ESTAT:SOME_DSD(1.0)
+
+Proxy -> Router: resolveRegistry("BIS",\n"...=ESTAT:SOME_DSD(1.0)")
+note right of Router #lightyellow
+  1. Parse URN -> sourceAgency = "ESTAT"
+  2. Resolve registry for "ESTAT":
+     primaryRegistry = null, secondary=["BIS"]
+     -> candidateRegistry = **BIS**
+  3. Cross-check: is BIS in "BIS"'s registries?
+     BIS config: primary="BIS"
+     -> **yes**, BIS is the primary
+  4. **Return BIS**
+  (Cross-check passes because BIS hosts BIS artefacts)
+end note
+Router --> Proxy: BIS RegistryConfiguration
+
+@enduml

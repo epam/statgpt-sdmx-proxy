@@ -1,0 +1,7 @@
+apply from: "$rootDir/gradle/Common.gradle"
+
+repositories.ext.mavenDeltixProxy = { name ->
+    repositories.maven {
+        url proxyRepository
+    }
+}

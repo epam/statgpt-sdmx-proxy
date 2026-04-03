@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: sdmx-proxy-config-server
+
+server:
+  port: 8060
+
+sdmxproxy:
+  configserver:
+    auth:
+      api-key: ${CONFIG_SERVER_API_KEY:}
+    source:
+      # One of: DIAL_STORAGE, FILESYSTEM
+      type: ${CONFIG_SERVER_SOURCE_TYPE:FILESYSTEM}
+      # Path to the config file (filesystem path for FILESYSTEM, object path for DIAL_STORAGE)
+      config-path: ${CONFIG_SERVER_SOURCE_CONFIG_PATH:config/sdmx_registries_config.json}
+    dial-storage:
+      base-url: ${DIAL_STORAGE_BASE_URL:http://localhost:9000}
+      api-key: ${DIAL_STORAGE_API_KEY:}
+      connect-timeout-ms: 10000
+      read-timeout-ms: 15000
+      write-timeout-ms: 30000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always

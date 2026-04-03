@@ -1,0 +1,70 @@
+{
+  "data": {
+    "dataConstraints": [
+      {
+        "id": "WEO",
+        "name": "Data Constraint",
+        "version": "9.0.0",
+        "agencyID": "IMF.RES",
+        "cubeRegions": [
+          {
+            "include": true,
+            "keyValues": [],
+            "components": [
+              {
+                "id": "COUNTRY",
+                "include": true,
+                "removePrefix": false,
+                "values": [
+                  {
+                    "value": "USA"
+                  },
+                  {
+                    "value": "GBR"
+                  }
+                ]
+              },
+              {
+                "id": "FREQUENCY",
+                "include": true,
+                "removePrefix": false,
+                "values": [
+                  {
+                    "value": "A"
+                  }
+                ]
+              },
+              {
+                "id": "INDICATOR",
+                "include": true,
+                "removePrefix": false,
+                "values": [
+                  {
+                    "value": "NGDP_RPCH"
+                  }
+                ]
+              },
+              {
+                "id": "SOME_ATTRIBUTE",
+                "include": true,
+                "removePrefix": false,
+                "values": [
+                  {
+                    "value": "attr_val"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "meta": {
+    "id": "test",
+    "prepared": "2026-03-09T12:00:00Z",
+    "sender": {
+      "id": "test"
+    }
+  }
+}

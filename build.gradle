@@ -1,0 +1,30 @@
+// Root build.gradle - shared configuration for all subprojects
+
+var mavenProxy = findProperty('MAVEN_PROXY_CONFIG') ?: System.getenv('MAVEN_PROXY_CONFIG') ?: "MavenCentral"
+
+allprojects {
+    version = '0.1.0'
+    group = 'com.epam'
+
+    apply from: "$rootDir/gradle/Common.gradle"
+    apply from: "$rootDir/gradle/${mavenProxy}.gradle"
+}
+
+// Apply Checkstyle to application modules (not E2E)
+configure(subprojects.findAll { it.name != 'sdmx-proxy-e2e' }) {
+    apply plugin: 'checkstyle'
+
+    checkstyle {
+        configFile = rootProject.file('checkstyle/checkstyle.xml')
+        ignoreFailures = true
+    }
+}
+
+ext {
+    vendor = 'EPAM Systems, Inc.'
+    publisherUser = findProperty('ARTIFACTORY_USER') ?: System.getenv('ARTIFACTORY_USER') ?: "FakeUser"
+    publisherPassword = findProperty('ARTIFACTORY_PASS') ?: System.getenv('ARTIFACTORY_PASS') ?: "FakePassword"
+    archivesBaseName = 'epam' + project.path.replaceAll(':', '-')
+}
+
+defaultTasks 'clean', 'build'

@@ -1,0 +1,155 @@
+{
+  "configs": [
+    {
+      "name": "BIS",
+      "description": "Bank for International Settlements",
+      "versions": {
+        "SDMX_3_0": {
+          "sdmxVersion": "SDMX_3_0",
+          "structureEndpointConfig": {
+            "url": "https://stats.bis.org/api/v2/structure/",
+            "supportedFormats": [
+              "JSON_STRUCTURE_2_0_0"
+            ],
+            "defaultFormat": "JSON_STRUCTURE_2_0_0",
+            "bypassEnabled": false,
+            "supportedStructures": [
+              "datastructure",
+              "conceptscheme",
+              "codelist",
+              "dataflow",
+              "hierarchy",
+              "hierarchyassociation"
+            ]
+          },
+          "dataEndpointConfig": {
+            "url": "https://stats.bis.org/api/v2/data/",
+            "supportedFormats": [
+              "JSON_1_0_0",
+              "CSV_DATA_2_0_0"
+            ],
+            "defaultFormat": "JSON_1_0_0",
+            "bypassEnabled": false
+          },
+          "availabilityEndpointConfig": {
+            "url": "https://stats.bis.org/api/v2/availability/",
+            "supportedFormats": [
+              "JSON_STRUCTURE_2_0_0"
+            ],
+            "defaultFormat": "JSON_STRUCTURE_2_0_0",
+            "bypassEnabled": false,
+            "availabilityEnabled": true,
+            "unwrapStarComponentId": true
+          },
+          "resilienceConfig": {
+            "connectionTimeout": 30000,
+            "readTimeout": 30000,
+            "circuitBreaker": {
+              "failureRateThreshold": 50.0,
+              "minimumNumberOfCalls": 10,
+              "waitDurationInOpenState": 60000,
+              "slidingWindowSize": 10
+            },
+            "retry": {
+              "maxAttempts": 5,
+              "initialIntervalMillis": 500,
+              "multiplier": 2.0,
+              "maxIntervalMillis": 2000
+            },
+            "rateLimit": {
+              "enabled": true,
+              "limitForPeriod": 100,
+              "limitRefreshPeriod": 60000
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "IMF",
+      "description": "International Monetary Fund",
+      "versions": {
+        "SDMX_3_0": {
+          "sdmxVersion": "SDMX_3_0",
+          "structureEndpointConfig": {
+            "url": "https://api.imf.org/external/sdmx/3.0/structure/",
+            "supportedFormats": [
+              "JSON_STRUCTURE_2_0_0"
+            ],
+            "defaultFormat": "JSON_STRUCTURE_2_0_0",
+            "bypassEnabled": false,
+            "supportedStructures": [
+              "datastructure",
+              "conceptscheme",
+              "codelist",
+              "dataflow",
+              "hierarchy",
+              "hierarchyassociation"
+            ],
+            "fixtures": [
+              {
+                "type": "METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE",
+                "config": {}
+              },
+              {
+                "type": "VERSION_WILDCARD",
+                "config": {}
+              }
+            ]
+          },
+          "dataEndpointConfig": {
+            "url": "https://api.imf.org/external/sdmx/3.0/data/",
+            "supportedFormats": [
+              "JSON_DATA_2_0_0",
+              "CSV_DATA_2_0_0"
+            ],
+            "defaultFormat": "JSON_DATA_2_0_0",
+            "bypassEnabled": false
+          },
+          "availabilityEndpointConfig": {
+            "url": "https://api.imf.org/external/sdmx/3.0/availability/",
+            "supportedFormats": [
+              "JSON_STRUCTURE_2_0_0"
+            ],
+            "defaultFormat": "JSON_STRUCTURE_2_0_0",
+            "bypassEnabled": false,
+            "availabilityEnabled": true,
+            "fixtures": [
+              {
+                "type": "MOVE_CUBE_REGION_COMPONENTS_TO_KEY_VALUES",
+                "config": {}
+              }
+            ]
+          },
+          "resilienceConfig": {
+            "connectionTimeout": 45000,
+            "readTimeout": 60000,
+            "circuitBreaker": {
+              "failureRateThreshold": 40.0,
+              "minimumNumberOfCalls": 5,
+              "waitDurationInOpenState": 120000,
+              "slidingWindowSize": 20
+            },
+            "retry": {
+              "maxAttempts": 3,
+              "initialIntervalMillis": 1000,
+              "multiplier": 2.0,
+              "maxIntervalMillis": 4000
+            }
+          }
+        }
+      }
+    }
+  ],
+  "agencies": [
+    {
+      "name": "BIS",
+      "primaryRegistry": "BIS"
+    },
+    {
+      "name": "IMF",
+      "primaryRegistry": "IMF",
+      "allowSubAgencies": true
+    }
+  ]
+}

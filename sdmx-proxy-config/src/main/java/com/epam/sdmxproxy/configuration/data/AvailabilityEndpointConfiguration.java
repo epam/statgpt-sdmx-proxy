@@ -1,0 +1,25 @@
+package com.epam.sdmxproxy.configuration.data;
+
+import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
+import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.util.List;
+
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class AvailabilityEndpointConfiguration extends EndpointConfiguration {
+
+    private boolean availabilityEnabled;
+
+    private boolean unwrapStarComponentId;
+
+    /**
+     * List of fixtures to apply to the raw response from the registry before conversion/bypass.
+     * Each fixture patches a specific known issue in the registry's response (e.g., invalid attributeRelationship).
+     * Applied as a chain of responsibility in the order they are listed.
+     */
+    private List<FixtureConfiguration<AvailabilityFixtureType>> fixtures;
+}

@@ -1,0 +1,79 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+description = 'SDMX Proxy Config Server'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+    // Exclude default Logback to use Log4j2
+    all {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':sdmx-proxy-config')
+
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    implementation "org.slf4j:slf4j-api:${slf4j_version}"
+
+    implementation "io.github.openfeign:feign-core:${feign_version}"
+    implementation "io.github.openfeign:feign-jackson:${feign_version}"
+    implementation "io.github.openfeign:feign-okhttp:${feign_version}"
+    implementation "io.github.openfeign:feign-slf4j:${feign_version}"
+    implementation "com.squareup.okhttp3:okhttp:${okhttp_version}"
+
+    // OpenAPI/Swagger documentation
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+def dockerDir = getRootProject().layout.buildDirectory.dir("docker/config-server")
+
+tasks.register('prepareFilesForDocker', Copy) {
+    dependsOn bootJar
+    from bootJar.getArchiveFile().get(), layout.projectDirectory.file('src/main/docker/Dockerfile')
+    into dockerDir
+    // Ensure docker directory exists
+    doFirst {
+        dockerDir.get().asFile.mkdirs()
+    }
+}
+
+// Configure bootJar to merge Log4j2Plugins.dat files
+tasks.named('bootJar') {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+build.dependsOn bootJar, prepareFilesForDocker
