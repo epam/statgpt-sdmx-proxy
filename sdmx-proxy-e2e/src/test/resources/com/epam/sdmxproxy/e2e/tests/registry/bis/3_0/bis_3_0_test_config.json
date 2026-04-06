@@ -215,6 +215,15 @@
         "filters": {}
       },
       {
+        "urn": "BIS:WS_CBPOL(1.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {
+          "FREQ": "M"
+        }
+      },
+      {
         "urn": "BIS:WS_EER(1.0)",
         "keys": [
           "*"

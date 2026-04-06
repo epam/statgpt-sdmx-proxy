@@ -39,7 +39,8 @@
             "defaultFormat": "JSON_STRUCTURE_2_0_0",
             "bypassEnabled": false,
             "availabilityEnabled": true,
-            "unwrapStarComponentId": true
+            "unwrapStarComponentId": true,
+            "unwrapFilterParameters": true
           },
           "resilienceConfig": {
             "connectionTimeout": 30000,
