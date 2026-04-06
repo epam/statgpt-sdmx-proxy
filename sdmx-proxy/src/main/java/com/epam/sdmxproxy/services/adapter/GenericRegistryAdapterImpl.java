@@ -4,6 +4,7 @@ import com.epam.sdmxproxy.common.data.Structure;
 import com.epam.sdmxproxy.common.data.TranslatedAvailabilityQuery;
 import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
+import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistrySelectionResult;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.registry.api.SdmxApiClientProvider;
@@ -259,12 +260,21 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
                 query.getVersion(),
                 query.getKey() != null ? query.getKey() : "*",
                 query.getComponentId() != null ? query.getComponentId() : "*",
-                wrapIntoC(query.getFilters()),
+                resolveAvailabilityFilters(query.getFilters(), selectedRegistry),
                 formatInstant(query.getUpdatedAfter()),
                 query.getMode(),
                 query.getReferences(),
                 query.getReportingYearStartDay()
         );
+    }
+
+    private MultiValueMap<String, String> resolveAvailabilityFilters(MultiValueMap<String, String> filters,
+                                                                      RegistrySelectionResult selectedRegistry) {
+        AvailabilityEndpointConfiguration availabilityConfig = selectedRegistry.getVersionConfiguration().getAvailabilityEndpointConfig();
+        if (availabilityConfig != null && availabilityConfig.isUnwrapFilterParameters()) {
+            return filters != null ? filters : new LinkedMultiValueMap<>();
+        }
+        return wrapIntoC(filters);
     }
 
 }
