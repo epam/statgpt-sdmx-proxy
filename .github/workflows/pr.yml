@@ -63,9 +63,9 @@ jobs:
       matrix:
         include:
           - image-name: "epam/statgpt-sdmx-proxy"
-            dockerfile: "sdmx-proxy/src/main/docker/Dockerfile"
+            dockerfile: "docker/sdmx-proxy.Dockerfile"
           - image-name: "epam/statgpt-sdmx-proxy-config-server"
-            dockerfile: "sdmx-proxy-config-server/src/main/docker/Dockerfile"
+            dockerfile: "docker/config-server.Dockerfile"
 
     steps:
       - name: Maximize build space
