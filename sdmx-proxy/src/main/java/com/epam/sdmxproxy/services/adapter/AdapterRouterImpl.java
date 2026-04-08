@@ -1,5 +1,14 @@
 package com.epam.sdmxproxy.services.adapter;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import com.epam.sdmxproxy.common.data.TranslatedAvailabilityQuery;
 import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
@@ -29,15 +38,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -51,6 +51,12 @@ public class AdapterRouterImpl implements AdapterRouter {
     private final CacheService cacheService;
     private final StructureFixtureService fixtureService;
     private final AvailabilityFixtureService availabilityFixtureService;
+
+    @Nullable
+    private static List<FixtureConfiguration<AvailabilityFixtureType>> getFixtureConfigurations(TranslatedAvailabilityQuery query) {
+        AvailabilityEndpointConfiguration endpointConfig = query.getVersionConfiguration().getAvailabilityEndpointConfig();
+        return endpointConfig != null ? endpointConfig.getFixtures() : null;
+    }
 
     @Override
     public StreamingResponseBody getStructures(TranslatedStructureQuery query) {
@@ -106,6 +112,9 @@ public class AdapterRouterImpl implements AdapterRouter {
                 byte[] convertedBytes = buffer.toByteArray();
                 outputStream.write(convertedBytes);
                 cacheService.putReadyResponse(responseKey, convertedBytes);
+            } catch (FeignException e) {
+                log.warn("Failure on registry side.", e);
+                throw e;
             } catch (Exception e) {
                 log.error("Failed to convert structures from {} to {}", returnFormat, requestedMediaType, e);
                 throw new IllegalArgumentException("Failed to convert structures", e);
@@ -182,13 +191,15 @@ public class AdapterRouterImpl implements AdapterRouter {
                         returnFormat,
                         requestedMediaType
                 );
+            } catch (FeignException e) {
+                log.warn("Failure on registry side.", e);
+                throw e;
             } catch (Exception e) {
                 log.error("Failed to convert data from {} to {}", returnFormat, requestedMediaType, e);
                 throw new IllegalArgumentException("Failed to convert data", e);
             }
         };
     }
-
 
     private TranslatedStructureQuery getStructureQuery(TranslatedDataQuery query) {
         return queryTranslator.translateStructureQuery(
@@ -254,12 +265,6 @@ public class AdapterRouterImpl implements AdapterRouter {
                 throw new IllegalArgumentException("Failed to convert availability data", e);
             }
         };
-    }
-
-    @Nullable
-    private static List<FixtureConfiguration<AvailabilityFixtureType>> getFixtureConfigurations(TranslatedAvailabilityQuery query) {
-        AvailabilityEndpointConfiguration endpointConfig = query.getVersionConfiguration().getAvailabilityEndpointConfig();
-        return endpointConfig != null ? endpointConfig.getFixtures() : null;
     }
 
     private InputStream getFixedAvailabilityStream(TranslatedAvailabilityQuery query) {
