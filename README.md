@@ -67,7 +67,6 @@ The application is written in Java 25 and uses the following main technologies:
 | [Resilience4j](https://resilience4j.readme.io/)                    | Circuit breaker, retry, rate limiting            |
 | [Caffeine](https://github.com/ben-manes/caffeine)                  | High-performance local caching                   |
 | [Spring Data Redis](https://spring.io/projects/spring-data-redis)  | Distributed caching                              |
-| [sdmx-core (fusion v2.3.9)](lib-repo/sdmxsource)                   | SDMX parsing and format conversion               |
 | [OpenTelemetry](https://opentelemetry.io/)                          | Observability (traces, metrics, logs)            |
 | [SpringDoc OpenAPI](https://springdoc.org/)                         | API documentation (Swagger UI)                   |
 | [OkHttp](https://square.github.io/okhttp/)                         | HTTP transport for Feign clients                 |
@@ -82,7 +81,6 @@ statgpt-sdmx-proxy/
 ├── sdmx-proxy-config/          # Pure data classes (no Spring dependency), shared with config server and E2E tests
 ├── sdmx-proxy-config-server/   # Configuration server module
 ├── sdmx-proxy-e2e/             # End-to-end tests (Testcontainers + RestAssured)
-├── lib-repo/sdmxsource/        # Local JARs of sdmx-core (fusion v2.3.9)
 ├── compose/                    # Docker Compose configurations (Redis, OpenTelemetry)
 ├── config/                     # Checkstyle configuration
 ├── docs/                       # Design documents and technical documentation
@@ -96,7 +94,6 @@ statgpt-sdmx-proxy/
 * `sdmx-proxy-config-server/` -- configuration server for managing registry configurations.
 * `sdmx-proxy-e2e/` -- end-to-end tests that spin up the proxy in a Docker container via Testcontainers and test against
   real upstream registries.
-* `lib-repo/sdmxsource/` -- local JAR files for the sdmx-core library (fusion v2.3.9)
 * `compose/` -- Docker Compose files for local development (Redis, OpenTelemetry Collector).
 * `docs/` -- design documents, resilience documentation, and technical references.
 
@@ -117,8 +114,8 @@ The following environment variables are used by the Gradle build system and are 
 
 | Variable                 | Required | Description                        | Default values                            |
 |--------------------------|:--------:|------------------------------------|-------------------------------------------|
-| `GPR_USERNAME`           | No       | GitHub Packages username            |                                          |
-| `GPR_PASSWORD`           | No       | GitHub Packages token               |                                          |
+| `GPR_USERNAME`           | Yes      | GitHub Packages username            | `FakeUser` (build will fail to resolve BIS deps) |
+| `GPR_PASSWORD`           | Yes      | GitHub Packages token (`read:packages` scope) | `FakePass` (build will fail to resolve BIS deps) |
 | `MAVEN_PROXY_REPOSITORY` | No       | Maven proxy repository URL          | `https://repo.maven.apache.org/maven2/` |
 
 ## Local setup
@@ -154,7 +151,16 @@ git clone https://github.com/epam/statgpt-sdmx-proxy.git
 cd statgpt-sdmx-proxy
 ```
 
-#### 2. Build the project
+#### 2. Set GitHub Packages credentials
+
+The build resolves sdmx-core dependencies from BIS's GitHub Packages. You need a GitHub PAT with `read:packages` scope 
+
+```bash
+export GPR_USERNAME=<your-github-username>
+export GPR_PASSWORD=<pat-from-with-read:packages-scope>
+```
+
+#### 3. Build the project
 
 ```bash
 ./gradlew clean build
@@ -168,7 +174,7 @@ To build without running tests:
 ./gradlew clean build -x test
 ```
 
-#### 3. (Optional) Start infrastructure services
+#### 4. (Optional) Start infrastructure services
 
 If you need Redis or the OpenTelemetry Collector for local development:
 
@@ -181,6 +187,8 @@ This starts:
 * **OpenTelemetry Collector** on ports 4317 (gRPC) and 4318 (HTTP)
 
 ## Run the proxy locally
+
+Make sure `GPR_USERNAME` and `GPR_PASSWORD` environment variables are set (see [step 2](#2-set-github-packages-credentials) above), then:
 
 ```bash
 ./gradlew :sdmx-proxy:bootRun

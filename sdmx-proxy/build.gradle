@@ -28,6 +28,14 @@ configurations {
 
 repositories {
     mavenCentral()
+    maven {
+        name = "BIS GitHub Packages"
+        url = uri("https://maven.pkg.github.com/bis-med-it/sdmx-core")
+        credentials {
+            username = repoUser
+            password = repoPassword
+        }
+    }
 }
 
 ext['jackson-bom.version'] = '3.1.1'
@@ -64,19 +72,21 @@ dependencies {
         }
     }
 
-    implementation(files([
-            "../lib-repo/sdmxsource/fusion-api-2.3.9.jar",
-            "../lib-repo/sdmxsource/fusion-api-sdmx-2.3.9.jar",
-            "../lib-repo/sdmxsource/fusion-core-data-2.3.9.jar",
-            "../lib-repo/sdmxsource/fusion-core-sdmx-2.3.9.jar",
-            "../lib-repo/sdmxsource/fusion-sdmx-csv-2.3.9.jar",
-            "../lib-repo/sdmxsource/fusion-sdmx-im-2.3.9.jar",
-            "../lib-repo/sdmxsource/fusion-sdmx-json-2.3.9.jar",
-            "../lib-repo/sdmxsource/fusion-sdmx-ml-2.3.9.jar",
-            "../lib-repo/sdmxsource/fusion-utils-2.3.9.jar",
-            "../lib-repo/sdmxsource/fusion-utils-json-2.3.9.jar",
-            "../lib-repo/sdmxsource/fusion-utils-sdmx-2.3.9.jar",
-    ]))
+    [
+            "fusion-api",
+            "fusion-api-sdmx",
+            "fusion-core-data",
+            "fusion-core-sdmx",
+            "fusion-sdmx-csv",
+            "fusion-sdmx-im",
+            "fusion-sdmx-json",
+            "fusion-sdmx-ml",
+            "fusion-utils",
+            "fusion-utils-json",
+            "fusion-utils-sdmx",
+    ].each { module ->
+        implementation("io.sdmx:${module}:${sdmx_core_version}")
+    }
 
     //------SDMX CORE dependencies start----
     implementation("org.codehaus.jettison:jettison:1.5.4")
@@ -197,20 +207,3 @@ tasks.named('bootJar') {
 build.dependsOn bootJar, prepareFilesForDocker
 
 defaultTasks 'clean', 'build'
-
-// Debug task to check repository resolution
-tasks.register('debugRepositories') {
-    doLast {
-        println "Configured repositories:"
-        repositories.each { repo ->
-            println "  - ${repo.name}: ${repo.url}"
-        }
-        println "\nTrying to resolve io.sdmx:fusion-sdmx-json:2.3.9..."
-        try {
-            def deps = configurations.compileClasspath.incoming.resolutionResult.allDependencies
-            println "Dependencies: ${deps.size()}"
-        } catch (Exception e) {
-            println "Error: ${e.message}"
-        }
-    }
-}
