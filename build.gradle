@@ -22,8 +22,6 @@ configure(subprojects.findAll { it.name != 'sdmx-proxy-e2e' }) {
 
 ext {
     vendor = 'EPAM Systems, Inc.'
-    publisherUser = findProperty('ARTIFACTORY_USER') ?: System.getenv('ARTIFACTORY_USER') ?: "FakeUser"
-    publisherPassword = findProperty('ARTIFACTORY_PASS') ?: System.getenv('ARTIFACTORY_PASS') ?: "FakePassword"
     archivesBaseName = 'epam' + project.path.replaceAll(':', '-')
 }
 

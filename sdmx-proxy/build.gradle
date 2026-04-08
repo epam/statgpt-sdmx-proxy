@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'maven-publish'
+
     id 'org.springframework.boot' version '4.0.5'
     id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -23,11 +23,6 @@ configurations {
     }
 }
 
-
-ext {
-    publisherUser = findProperty('ARTIFACTORY_USER') ?: System.getenv('ARTIFACTORY_USER') ?: "FakeUser"
-    publisherPassword = findProperty('ARTIFACTORY_PASS') ?: System.getenv('ARTIFACTORY_PASS') ?: "FakePassword"
-}
 
 // allprojects block is now in root build.gradle
 
@@ -154,24 +149,6 @@ jar {
     }
 }
 
-tasks.register('sourcesJar', Jar) {
-    dependsOn classes, jar
-    archiveClassifier.set('sources')
-    archiveBaseName.set(jar.getArchiveBaseName())
-    from sourceSets.main.allSource
-}
-
-tasks.register('javadocJar', Jar) {
-    dependsOn jar, javadoc
-    archiveClassifier.set('javadoc')
-    archiveBaseName.set(jar.getArchiveBaseName())
-    from javadoc.destinationDir
-}
-
-artifacts {
-    archives sourcesJar
-    archives javadocJar
-}
 
 compileJava {
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
@@ -193,38 +170,6 @@ test {
     }
 }
 
-// Publishing - configure publishUrl in gradle.properties or via environment to enable
-publishing {
-    repositories {
-        if (findProperty('publishUrl')) {
-            maven {
-                url publishUrl
-                credentials {
-                    username publisherUser
-                    password publisherPassword
-                }
-            }
-        }
-    }
-
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            artifact javadocJar
-            artifact sourcesJar
-            artifactId = archivesBaseName
-
-            versionMapping {
-                usage('java-api') {
-                    fromResolutionOf('runtimeClasspath')
-                }
-                usage('java-runtime') {
-                    fromResolutionResult()
-                }
-            }
-        }
-    }
-}
 
 def dockerDir = getRootProject().layout.buildDirectory.dir("docker/sdmx-proxy")
 

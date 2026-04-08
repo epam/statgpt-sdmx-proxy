@@ -133,7 +133,7 @@ cd sdmx-proxy-e2e
    ```
 
 3. **Check registry URL**: Ensure `DOCKER_IMAGE_REGISTRY` does not include `https://` prefix (it should be like
-   `nexus.example.com:8083`)
+   `ghcr.io`)
 
 4. **Verify network access**: Ensure you can reach the registry from your machine
 
