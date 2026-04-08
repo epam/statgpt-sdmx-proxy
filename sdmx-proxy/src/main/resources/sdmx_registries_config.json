@@ -40,7 +40,7 @@
             "bypassEnabled": false,
             "availabilityEnabled": true,
             "unwrapStarComponentId": true,
-            "unwrapFilterParameters": true
+            "unwrapFilterParameters": false
           },
           "resilienceConfig": {
             "connectionTimeout": 30000,
