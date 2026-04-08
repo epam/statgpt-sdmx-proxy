@@ -12,7 +12,7 @@ java {
 
 repositories {
     mavenCentral()
-    mavenDeltixProxy('external-quanthub')
+    mavenProxyRepo('maven')
 }
 
 dependencies {

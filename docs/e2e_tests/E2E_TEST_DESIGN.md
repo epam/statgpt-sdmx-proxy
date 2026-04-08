@@ -164,7 +164,7 @@ service as an external consumer would.
   image: ${GRADLE_IMAGE}
   variables:
     DOCKER_IMAGE_TAG: ${CI_COMMIT_TAG:-latest}
-    DOCKER_IMAGE_REGISTRY: ${ARTIFACTORY_DOCKER_DEV_REPOSITORY}  # Provided by CI
+    DOCKER_IMAGE_REGISTRY: ${DOCKER_IMAGE_REGISTRY}  # Provided by CI
   script:
     - ./gradlew :sdmx-proxy-e2e:test -Ddocker.image.tag=${DOCKER_IMAGE_TAG} -Ddocker.image.registry=${DOCKER_IMAGE_REGISTRY}
   artifacts:

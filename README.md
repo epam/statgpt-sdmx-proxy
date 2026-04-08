@@ -117,10 +117,8 @@ The following environment variables are used by the Gradle build system and are 
 
 | Variable                 | Required | Description                        | Default values                            |
 |--------------------------|:--------:|------------------------------------|-------------------------------------------|
-| `ARTIFACTORY_USER`       | No       | Artifactory username for publishing |                                          |
-| `ARTIFACTORY_PASS`       | No       | Artifactory password for publishing |                                          |
-| `NEXUS_USER`             | No       | Nexus repository username           |                                          |
-| `NEXUS_PASS`             | No       | Nexus repository password           |                                          |
+| `GPR_USERNAME`           | No       | GitHub Packages username            |                                          |
+| `GPR_PASSWORD`           | No       | GitHub Packages token               |                                          |
 | `MAVEN_PROXY_REPOSITORY` | No       | Maven proxy repository URL          | `https://repo.maven.apache.org/maven2/` |
 
 ## Local setup
