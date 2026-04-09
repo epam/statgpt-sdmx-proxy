@@ -27,6 +27,10 @@ public class DialStorageConfigExtractor implements ConfigExtractor {
         log.debug("Loading configuration from DIAL Storage: {}", configPath);
         String bucketName = dialStorageClient.getBucketName();
         byte[] content = dialStorageClient.getObjectContent(bucketName, configPath);
+        if (content == null) {
+            log.info("Configuration not found in DIAL Storage at path: {}", configPath);
+            return null;
+        }
         try {
             return objectMapper.readValue(content, ProxyConfiguration.class);
         } catch (Exception e) {

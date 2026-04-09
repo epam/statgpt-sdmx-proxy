@@ -26,6 +26,8 @@ repositories {
     mavenCentral()
 }
 
+ext['jackson-bom.version'] = '3.1.1'
+
 dependencies {
     implementation project(':sdmx-proxy-config')
 
@@ -45,6 +47,17 @@ dependencies {
     implementation "io.github.openfeign:feign-okhttp:${feign_version}"
     implementation "io.github.openfeign:feign-slf4j:${feign_version}"
     implementation "com.squareup.okhttp3:okhttp:${okhttp_version}"
+
+    // OpenTelemetry dependencies
+    implementation platform('io.grpc:grpc-bom:1.75.0')
+    implementation platform('io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.26.1')
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:2.26.1'
+    implementation 'io.opentelemetry:opentelemetry-sdk'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-log4j-appender-2.17:2.26.1-alpha'
+    // Required for automatic trace_id/span_id injection into Log4j2 MDC
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-log4j-context-data-2.17-autoconfigure:2.26.1-alpha'
+
 
     // OpenAPI/Swagger documentation
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1'

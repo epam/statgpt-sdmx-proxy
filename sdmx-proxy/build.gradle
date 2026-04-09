@@ -30,6 +30,8 @@ repositories {
     mavenCentral()
 }
 
+ext['jackson-bom.version'] = '3.1.1'
+
 dependencies {
     implementation project(':sdmx-proxy-config')
 
@@ -154,6 +156,10 @@ compileJava {
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
+processResources {
+    from project(':sdmx-proxy-config').file('src/main/resources/sdmx_registries_config.json')
+}
+
 clean.doLast {
     file('out').deleteDir()
 }
@@ -176,8 +182,6 @@ def dockerDir = getRootProject().layout.buildDirectory.dir("docker/sdmx-proxy")
 tasks.register('prepareFilesForDocker', Copy) {
     dependsOn bootJar
     from bootJar.getArchiveFile().get(), layout.projectDirectory.file('src/main/docker/Dockerfile')
-    into dockerDir
-    from bootJar.getArchiveFile().get(), layout.projectDirectory.file('src/main/resources/sdmx_registries_config.json')
     into dockerDir
     // Ensure docker directory exists
     doFirst {

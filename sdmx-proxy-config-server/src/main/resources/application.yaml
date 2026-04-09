@@ -21,6 +21,32 @@ sdmxproxy:
       read-timeout-ms: 15000
       write-timeout-ms: 30000
 
+# OpenTelemetry configuration
+otel:
+  sdk:
+    disabled: ${OTEL_SDK_DISABLED:true}
+  service:
+    name: statgpt-sdmx-proxy-config-server
+  exporter:
+    otlp:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+      protocol: ${OTEL_EXPORTER_OTLP_PROTOCOL:grpc}
+      traces:
+        endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+        protocol: ${OTEL_EXPORTER_OTLP_PROTOCOL:grpc}
+      metrics:
+        endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+        protocol: ${OTEL_EXPORTER_OTLP_PROTOCOL:grpc}
+      logs:
+        endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+        protocol: ${OTEL_EXPORTER_OTLP_PROTOCOL:grpc}
+  logs:
+    exporter: ${OTEL_LOGS_EXPORTER:otlp}
+  traces:
+    exporter: ${OTEL_TRACES_EXPORTER:otlp}
+  metrics:
+    exporter: ${OTEL_METRICS_EXPORTER:otlp}
+
 management:
   endpoints:
     web:
