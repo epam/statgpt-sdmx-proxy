@@ -3,6 +3,7 @@ package com.epam.sdmxproxy.configserver.dialstorage;
 import com.epam.sdmxproxy.configserver.config.ConfigSourceType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -49,6 +50,9 @@ public class FeignDialStorageClient implements DialStorageClient {
         try {
             String encodedPath = encodeFilePath(objectPath);
             return dialStorageFeignApi.getFile(properties.getApiKey(), bucketName, encodedPath);
+        } catch (FeignException.NotFound e) {
+            log.debug("Object not found in Dial Storage: {}/{}", bucketName, objectPath);
+            return null;
         } catch (Exception e) {
             log.error("Dial Storage get object failed: {}", e.getMessage());
             throw new IllegalStateException("Failed to get Dial Storage object: " + e.getMessage(), e);
