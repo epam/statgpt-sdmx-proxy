@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Tag(name = "Config Server", description = "SDMX Proxy configuration management")
-@RequestMapping("/api/config")
+@RequestMapping("/statgpt/sdmx-proxy/api/v0/config")
 public interface ConfigServerApi {
 
     @Operation(summary = "Get current proxy configuration")
