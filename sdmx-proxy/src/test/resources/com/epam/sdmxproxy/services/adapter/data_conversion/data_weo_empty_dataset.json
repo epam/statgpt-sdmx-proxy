@@ -1,0 +1,94 @@
+{
+  "meta": {},
+  "data": {
+    "dataSets": [
+      {
+        "structure": 0,
+        "action": "Replace"
+      }
+    ],
+    "structures": [
+      {
+        "dataSets": [
+          0
+        ],
+        "links": [
+          {
+            "urn": "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=IMF.RES:WEO(9.0.0)",
+            "title": "Dataflow"
+          },
+          {
+            "urn": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=IMF.RES:DSD_WEO(9.0.0)",
+            "title": "DataStructureDefinition"
+          }
+        ],
+        "dimensions": {
+          "series": [
+            {
+              "id": "COUNTRY",
+              "keyPosition": 0,
+              "roles": [],
+              "values": []
+            },
+            {
+              "id": "INDICATOR",
+              "keyPosition": 1,
+              "roles": [],
+              "values": []
+            },
+            {
+              "id": "FREQUENCY",
+              "keyPosition": 2,
+              "roles": [
+                "FREQ"
+              ],
+              "values": []
+            }
+          ],
+          "observation": [
+            {
+              "id": "TIME_PERIOD",
+              "keyPosition": 3,
+              "values": []
+            }
+          ]
+        },
+        "measures": {
+          "observation": [
+            {
+              "id": "OBS_VALUE",
+              "roles": []
+            }
+          ]
+        },
+        "attributes": {
+          "series": [
+            {
+              "id": "SCALE",
+              "roles": [],
+              "isMandatory": false,
+              "relationship": {
+                "dimensions": [
+                  "COUNTRY",
+                  "INDICATOR",
+                  "FREQUENCY"
+                ]
+              }
+            }
+          ],
+          "observation": [
+            {
+              "id": "STATUS",
+              "roles": [],
+              "isMandatory": false,
+              "relationship": {
+                "observation": {}
+              }
+            }
+          ]
+        },
+        "annotations": []
+      }
+    ]
+  }
+}
