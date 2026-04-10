@@ -18,7 +18,7 @@ public class ConfigServerController implements ConfigServerApi {
 
     @Override
     public ResponseEntity<ProxyConfiguration> getConfig() {
-        log.debug("GET /statgpt/sdmx-proxy/api/v0/config");
+        log.debug("GET /statgpt/sdmx-proxy-config-server/api/v0/config");
         if (!configService.isStorageAvailable()) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
@@ -31,7 +31,7 @@ public class ConfigServerController implements ConfigServerApi {
 
     @Override
     public ResponseEntity<ProxyConfiguration> updateConfig(ProxyConfiguration configuration) {
-        log.info("POST /statgpt/sdmx-proxy/api/v0/config - updating configuration");
+        log.info("POST /statgpt/sdmx-proxy-config-server/api/v0/config - updating configuration");
         configService.updateConfiguration(configuration);
         return ResponseEntity.ok(configuration);
     }

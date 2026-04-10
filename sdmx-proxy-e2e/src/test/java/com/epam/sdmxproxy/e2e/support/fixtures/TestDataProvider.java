@@ -10,7 +10,7 @@ import java.util.stream.Stream;
  */
 public class TestDataProvider {
     //ENDPOINTS
-    public static final String CONFIG_ENDPOINT = "/statgpt/sdmx-proxy/api/v0/config";
+    public static final String CONFIG_ENDPOINT = "/statgpt/sdmx-proxy-config-server/api/v0/config";
 
     // Common test agency IDs
     public static final String TEST_AGENCY_1 = "TEST_AGENCY";

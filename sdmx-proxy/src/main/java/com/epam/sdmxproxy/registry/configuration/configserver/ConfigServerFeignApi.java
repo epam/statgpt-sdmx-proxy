@@ -7,7 +7,7 @@ import feign.RequestLine;
 
 public interface ConfigServerFeignApi {
 
-    @RequestLine("GET /statgpt/sdmx-proxy/api/v0/config")
+    @RequestLine("GET /statgpt/sdmx-proxy-config-server/api/v0/config")
     @Headers("X-API-Key: {apiKey}")
     ProxyConfiguration getConfig(@Param("apiKey") String apiKey);
 }
