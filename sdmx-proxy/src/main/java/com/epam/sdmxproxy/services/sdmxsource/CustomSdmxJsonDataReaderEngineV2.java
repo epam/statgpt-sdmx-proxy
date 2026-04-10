@@ -312,7 +312,12 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
     public boolean moveNextDataset() {
         boolean result = super.moveNextDataset();
 
-        currentStructureIndex = structureIndexes.get(getDatasetPosition());
+        if (!result) {
+            return false;
+        }
+
+        int dsPos = getDatasetPosition();
+        currentStructureIndex = dsPos >= 0 && dsPos < structureIndexes.size() ? structureIndexes.get(dsPos) : currentStructureIndex;
         currentDsStructuralMetadata = dsStructuralMetadata.get(currentStructureIndex);
         currentDsAttributeValues = dsAttributeValues.size() > getDatasetPosition()
                 ? dsAttributeValues.get(getDatasetPosition())
@@ -364,15 +369,21 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
                 String publicationPeriod = null;
                 String reportingYearStartDate = null;
                 DatasetStructureReferenceBean dsRef = currentDsStructuralMetadata.getDatasetStructureReference();
+                boolean hasData = false;
                 outer:
                 while (jReader.moveNext()) {
+                    if (jReader.isEndObject() && jReader.getCurrentStackItem() != null && "dataSets".equals(jReader.getCurrentStackItem().getFieldName())) {
+                        break;
+                    }
                     String fieldName = jReader.getCurrentFieldName();
                     switch (fieldName) {
                         case "observations":
                             isFlat = true;
+                            hasData = true;
                             break outer;
                         case "series":
                             isFlat = false;
+                            hasData = true;
                             break outer;
                         case "annotations":
                             annotations = jReader.readIntegerArray();
@@ -406,6 +417,10 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
                         default:
                             break;
                     }
+                }
+                if (!hasData) {
+                    LOG.debug("Skipping dataset with no series or observations");
+                    continue;
                 }
                 super.datasetHeaderBean = new DatasetHeaderBeanImpl(datasetId, action, dsRef, dataProviderRef,
                         reportingBeginDate, reportingEndDate, validFrom, validTo, publicationYear, publicationPeriod,

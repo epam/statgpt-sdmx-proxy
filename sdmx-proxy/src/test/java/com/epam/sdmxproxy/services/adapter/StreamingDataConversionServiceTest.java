@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -288,5 +289,27 @@ public class StreamingDataConversionServiceTest {
         String xml = outputStream.toString(StandardCharsets.UTF_8);
         assertFalse(xml.isEmpty(), "Output should not be empty");
         assertTrue(xml.contains("DataSet"), "Output should contain DataSet element");
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldConvertDataWithEmptyDataset_noSeriesOrObservations() {
+        //GIVEN
+        InputStream input = getClass().getResourceAsStream("data_conversion/data_weo_empty_dataset.json");
+        InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
+
+        FixtureConfiguration metadataUsageFixture = new FixtureConfiguration();
+        metadataUsageFixture.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
+        metadataUsageFixture.setConfig(new HashMap<>());
+
+        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(metadataUsageFixture);
+        InputStream fixedStructures = fixtureService.applyFixtures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
+
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(fixedStructures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        //WHEN + THEN — should not throw NPE or any other exception for empty dataset
+        assertDoesNotThrow(() -> streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE)));
     }
 }
