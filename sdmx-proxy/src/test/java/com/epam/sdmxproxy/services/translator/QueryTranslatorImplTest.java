@@ -996,4 +996,112 @@ class QueryTranslatorImplTest {
 
         return registryConfig;
     }
+
+    // ========== replaceEmptyDimensionsWithWildcard — static helper tests ==========
+
+    @Test
+    void testReplaceEmptyDimensions_leadingEmpty() {
+        assertEquals("*.L_T.P_F3_FEF_S12R", QueryTranslatorImpl.replaceEmptyDimensionsWithWildcard(".L_T.P_F3_FEF_S12R"));
+    }
+
+    @Test
+    void testReplaceEmptyDimensions_multipleEmpties() {
+        assertEquals("*.CD_T+DB_T.D9A_S1W.*.*", QueryTranslatorImpl.replaceEmptyDimensionsWithWildcard(".CD_T+DB_T.D9A_S1W.."));
+    }
+
+    @Test
+    void testReplaceEmptyDimensions_noEmpties() {
+        assertEquals("USA.NGDP_RPCH.*", QueryTranslatorImpl.replaceEmptyDimensionsWithWildcard("USA.NGDP_RPCH.*"));
+    }
+
+    @Test
+    void testReplaceEmptyDimensions_allEmpty() {
+        assertEquals("*.*.*", QueryTranslatorImpl.replaceEmptyDimensionsWithWildcard(".."));
+    }
+
+    @Test
+    void testReplaceEmptyDimensions_null() {
+        assertNull(QueryTranslatorImpl.replaceEmptyDimensionsWithWildcard(null));
+    }
+
+    @Test
+    void testReplaceEmptyDimensions_emptyString() {
+        assertEquals("", QueryTranslatorImpl.replaceEmptyDimensionsWithWildcard(""));
+    }
+
+    @Test
+    void testReplaceEmptyDimensions_singleDot() {
+        assertEquals("*.*", QueryTranslatorImpl.replaceEmptyDimensionsWithWildcard("."));
+    }
+
+    // ========== replaceEmptyDimensionsWithWildcard — integration with translateDataQuery ==========
+
+    @Test
+    void testTranslateDataQuery_replaceEmptyDimensions_flagEnabled() {
+        RegistryConfiguration registryConfig = createRegistryWithSingleVersion("IMF", SdmxVersion.SDMX_3_0);
+        registryConfig.getVersions().get(SdmxVersion.SDMX_3_0).getDataEndpointConfig().setReplaceEmptyDimensionsWithWildcard(true);
+
+        when(agencyRoutingService.resolveRegistry(eq("IMF"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        TranslatedDataQuery query = queryTranslator.translateDataQuery(
+                "dataflow", "IMF", "BOP", "21.0.0", ".L_T.P_F3_FEF_S12R",
+                null, null, null, null, null, null, null, null, null, null, false,
+                "application/vnd.sdmx.data+json;version=2.0.0", sdmxBeans, null
+        );
+
+        assertEquals("*.L_T.P_F3_FEF_S12R", query.getKey());
+    }
+
+    @Test
+    void testTranslateDataQuery_replaceEmptyDimensions_complexKey() {
+        RegistryConfiguration registryConfig = createRegistryWithSingleVersion("IMF", SdmxVersion.SDMX_3_0);
+        registryConfig.getVersions().get(SdmxVersion.SDMX_3_0).getDataEndpointConfig().setReplaceEmptyDimensionsWithWildcard(true);
+
+        when(agencyRoutingService.resolveRegistry(eq("IMF"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        TranslatedDataQuery query = queryTranslator.translateDataQuery(
+                "dataflow", "IMF", "BOP", "21.0.0",
+                ".CD_T+DB_T+NETCD_T+L_T+L_NIL_T+A_NFA_T.D9A_S1W+P_F3_S1V_S+D72_S1W..",
+                null, null, null, null, null, null, null, null, null, null, false,
+                "application/vnd.sdmx.data+json;version=2.0.0", sdmxBeans, null
+        );
+
+        assertEquals("*.CD_T+DB_T+NETCD_T+L_T+L_NIL_T+A_NFA_T.D9A_S1W+P_F3_S1V_S+D72_S1W.*.*", query.getKey());
+    }
+
+    @Test
+    void testTranslateDataQuery_replaceEmptyDimensions_flagDisabled() {
+        RegistryConfiguration registryConfig = createRegistryWithSingleVersion("BIS", SdmxVersion.SDMX_3_0);
+        // flag is false by default
+
+        when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        TranslatedDataQuery query = queryTranslator.translateDataQuery(
+                "dataflow", "BIS", "TEST", "1.0", ".L_T.P_F3",
+                null, null, null, null, null, null, null, null, null, null, false,
+                "application/vnd.sdmx.data+json;version=2.0.0", sdmxBeans, null
+        );
+
+        assertEquals(".L_T.P_F3", query.getKey());
+    }
+
+    @Test
+    void testTranslateDataQuery_replaceEmptyDimensions_noEmptyPositions() {
+        RegistryConfiguration registryConfig = createRegistryWithSingleVersion("IMF", SdmxVersion.SDMX_3_0);
+        registryConfig.getVersions().get(SdmxVersion.SDMX_3_0).getDataEndpointConfig().setReplaceEmptyDimensionsWithWildcard(true);
+
+        when(agencyRoutingService.resolveRegistry(eq("IMF"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        TranslatedDataQuery query = queryTranslator.translateDataQuery(
+                "dataflow", "IMF", "WEO", "9.0.0", "USA.NGDP_RPCH.*",
+                null, null, null, null, null, null, null, null, null, null, false,
+                "application/vnd.sdmx.data+json;version=2.0.0", sdmxBeans, null
+        );
+
+        assertEquals("USA.NGDP_RPCH.*", query.getKey());
+    }
 }
