@@ -105,7 +105,8 @@
               "CSV_DATA_2_0_0"
             ],
             "defaultFormat": "JSON_DATA_2_0_0",
-            "bypassEnabled": false
+            "bypassEnabled": false,
+            "replaceEmptyDimensionsWithWildcard": true
           },
           "availabilityEndpointConfig": {
             "url": "https://api.imf.org/external/sdmx/3.0/availability/",

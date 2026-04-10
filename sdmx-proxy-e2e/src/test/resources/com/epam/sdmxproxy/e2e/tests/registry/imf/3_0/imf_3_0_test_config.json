@@ -137,6 +137,14 @@
           "URY.*.*"
         ],
         "filters": {}
+      },
+      {
+        "urn": "IMF.STA:BOP(21.0.0)",
+        "keys": [
+          ".L_T.P_F3_FEF_S12R+O_FLA1_FEF_S12R",
+          ".CD_T+DB_T+NETCD_T+L_T+L_NIL_T+A_NFA_T.D9A_S1W+P_F3_S1V_S+D72_S1W+O_F81_S1V_L+O_F4_S1V_L+O_F8AR_S1V_S+O_F8AP_S1V+O_FLA1_FEF42_S1V+D61_S1W+O_F81_S1V+P_F3_FEF71_S12R+O_F8AR_S1V_L+F_F7_S1V+P_F3_FEF72_S12R+O_F6_S1V+P_F3_S1V_L+IN2_S1W+R1_S1W+D752W_S1W+O_F2_S1V_L+O_F2_S1V_S+O_F4_S1V+O_F2_S1V+D62_S1W+P_F3_FEF3_S1V+P_F5_S1V+O_FLA1_FEF_S1V+P_F3_FEF7_S12R+P_F3_S1V+O_F4_S1V_S.."
+        ],
+        "filters": {}
       }
     ],
     "mediaTypes": [

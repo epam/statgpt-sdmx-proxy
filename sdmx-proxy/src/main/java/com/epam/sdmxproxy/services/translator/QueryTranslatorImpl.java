@@ -407,6 +407,11 @@ public class QueryTranslatorImpl implements QueryTranslator {
             processedKey = key;
         }
 
+        DataEndpointConfiguration dataEndpointConfig = versionConfig.getDataEndpointConfig();
+        if (dataEndpointConfig != null && dataEndpointConfig.isReplaceEmptyDimensionsWithWildcard()) {
+            processedKey = replaceEmptyDimensionsWithWildcard(processedKey);
+        }
+
         ReturnFormat returnFormat = determineDataReturnFormat(
                 selectedRegistry,
                 mediaTypeResult
@@ -626,5 +631,21 @@ public class QueryTranslatorImpl implements QueryTranslator {
                 .orElse(null);
     }
 
+    /**
+     * Replaces empty dimension positions in a key with '*'.
+     * Empty positions arise when the key contains consecutive dots (e.g., ".A..B" -> "*.A.*.B").
+     */
+    static String replaceEmptyDimensionsWithWildcard(String key) {
+        if (key == null || key.isEmpty()) {
+            return key;
+        }
+        String[] parts = key.split("\\.", -1);
+        for (int i = 0; i < parts.length; i++) {
+            if (parts[i].isEmpty()) {
+                parts[i] = "*";
+            }
+        }
+        return String.join(".", parts);
+    }
 
 }
