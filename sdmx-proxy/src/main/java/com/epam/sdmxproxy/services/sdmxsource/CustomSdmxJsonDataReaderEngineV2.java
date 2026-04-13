@@ -389,7 +389,13 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
                             annotations = jReader.readIntegerArray();
                             break;
                         case "attributes":
-                            if (jReader.moveNext() && jReader.isStartArray()) {
+                            // Dataset attributes were already pre-parsed by preParseForDatasetAttributes;
+                            // skip the array. JsonReader.moveNext() advances past FIELD_NAME directly to
+                            // its value token, so we are already positioned at START_ARRAY here -- calling
+                            // moveNext() again would step into the array body and break moveToEndArray's
+                            // depth tracking, causing the iteration to fall through into the series and
+                            // misread an inner `observations` field as the dataset-level one.
+                            if (jReader.isStartArray()) {
                                 jReader.moveToEndArray();
                             }
                             break;
