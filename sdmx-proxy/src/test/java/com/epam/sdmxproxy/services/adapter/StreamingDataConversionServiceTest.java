@@ -312,4 +312,53 @@ public class StreamingDataConversionServiceTest {
         //WHEN + THEN — should not throw NPE or any other exception for empty dataset
         assertDoesNotThrow(() -> streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE)));
     }
+
+    @Test
+    @SneakyThrows
+    void shouldConvertData_imf_fsic_seriesKeyed_withInlineDatasetAttributes() {
+        //GIVEN
+        // Series-keyed SDMX-JSON 2.0 response from IMF FSIC dataflow whose dataset-level
+        // `attributes` array contains inline values (e.g. ["datahelp@imf.org"], ISO timestamps)
+        // alongside indices. This previously crashed CustomSdmxJsonDataReaderEngineV2 with
+        // StringIndexOutOfBoundsException because the dataset-level attributes array was
+        // not skipped, causing the reader to misread an `observations` field inside the first
+        // series and incorrectly set isFlat=true.
+        InputStream input = getClass().getResourceAsStream("data_conversion/imf_fsic_data.json");
+        InputStream structures = getClass().getResourceAsStream("data_conversion/imf_fsic_structures.json");
+
+        FixtureConfiguration metadataUsageFixture = new FixtureConfiguration();
+        metadataUsageFixture.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
+        metadataUsageFixture.setConfig(new HashMap<>());
+
+        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(metadataUsageFixture);
+        InputStream fixedStructures = fixtureService.applyFixtures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
+
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(fixedStructures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        //WHEN
+        assertDoesNotThrow(() -> streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE)));
+
+        //THEN
+        JsonNode jsonNode = new ObjectMapper().readTree(outputStream.toByteArray());
+        JsonNode firstDataSet = jsonNode.path("data").path("dataSets").get(0);
+        assertFalse(firstDataSet.isMissingNode(), "data.dataSets[0] should be present");
+
+        JsonNode series = firstDataSet.path("series");
+        assertTrue(series.isObject() && !series.isEmpty(), "series should be a non-empty object (series-keyed format)");
+
+        JsonNode firstSeries = series.path("0:0:0:0");
+        assertFalse(firstSeries.isMissingNode(), "series '0:0:0:0' should be present");
+        JsonNode observations = firstSeries.path("observations");
+        assertTrue(observations.isObject() && !observations.isEmpty(), "first series should have observations");
+        // First observation's primary measure must not be null (sanity-check we actually read values, not just key shape).
+        assertFalse(observations.get("0").get(0).isNull(), "first observation's primary measure should not be null");
+
+        int totalObs = 0;
+        for (JsonNode s : series) {
+            totalObs += s.path("observations").size();
+        }
+        assertTrue(totalObs > 0, "total observations across series should be > 0");
+    }
 }
