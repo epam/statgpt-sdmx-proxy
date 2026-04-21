@@ -24,6 +24,14 @@ public class AvailabilityEndpointConfiguration extends EndpointConfiguration {
     private boolean unwrapFilterParameters;
 
     /**
+     * When true, a key whose every dimension position is '*' is collapsed to a single '*'.
+     * Required for registries (e.g., BIS) that accept only one '*' as the match-all form
+     * on availability queries.
+     * For example, "*.*.*.*" becomes "*".
+     */
+    private boolean mergeAllWildcardKey;
+
+    /**
      * List of fixtures to apply to the raw response from the registry before conversion/bypass.
      * Each fixture patches a specific known issue in the registry's response (e.g., invalid attributeRelationship).
      * Applied as a chain of responsibility in the order they are listed.
