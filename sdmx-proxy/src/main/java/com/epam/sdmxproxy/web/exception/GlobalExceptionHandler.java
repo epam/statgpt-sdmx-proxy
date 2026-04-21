@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,18 +34,20 @@ public class GlobalExceptionHandler {
     private final ObjectMapper objectMapper;
 
     /**
-     * Creates an ErrorResponse with trace information.
-     *
-     * @param message error message
-     * @param status  HTTP status code
-     * @return ErrorResponse with traceparent
+     * Builds a JSON ResponseEntity carrying an ErrorResponse.
+     * Content-Type is forced to application/json so that errors can still be rendered
+     * when the client's Accept header only admits a non-JSON SDMX media type
+     * (otherwise Spring's content negotiation throws HttpMediaTypeNotAcceptableException
+     * while trying to write the ErrorResponse).
      */
-    private ErrorResponse createErrorResponse(String message, HttpStatus status) {
+    private ResponseEntity<ErrorResponse> buildErrorResponse(String message, HttpStatus status) {
         ErrorResponse response = new ErrorResponse();
         response.setMessage(message);
         response.setStatus(status.value());
         response.setTraceparent(TraceContextUtils.formatTraceParent());
-        return response;
+        return ResponseEntity.status(status)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(response);
     }
 
     /**
@@ -55,8 +58,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnsupportedAgencyWildcardException.class)
     public ResponseEntity<ErrorResponse> handleUnsupportedAgencyWildcardException(UnsupportedAgencyWildcardException ex) {
         log.warn("Unsupported agency wildcard: {}", ex.getMessage());
-        ErrorResponse response = createErrorResponse(ex.getMessage(), HttpStatus.NOT_IMPLEMENTED);
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(response);
+        return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_IMPLEMENTED);
     }
 
     /**
@@ -67,8 +69,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AgencyRoutingException.class)
     public ResponseEntity<ErrorResponse> handleAgencyRoutingException(AgencyRoutingException ex) {
         log.warn("Agency routing failed: {}", ex.getMessage());
-        ErrorResponse response = createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -81,8 +82,7 @@ public class GlobalExceptionHandler {
         log.warn("Filter validation failed: {}", ex.getMessage());
         String errorMessage = ex.getMessage() +
                 " The registry does not support these filters. Please use another API endpoint or remove them.";
-        ErrorResponse response = createErrorResponse(errorMessage, HttpStatus.BAD_REQUEST);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return buildErrorResponse(errorMessage, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -94,8 +94,7 @@ public class GlobalExceptionHandler {
         log.warn("Feign exception. Status: {}. Message: {}", ex.status(), ex.getMessage());
         HttpStatus status = HttpStatus.resolve(ex.status());
         String message = extractUpstreamErrorMessage(ex, status);
-        ErrorResponse response = createErrorResponse(message, status);
-        return ResponseEntity.status(status).body(response);
+        return buildErrorResponse(message, status);
     }
 
     private String extractUpstreamErrorMessage(FeignException ex, HttpStatus status) {
@@ -130,8 +129,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnsupportedContextException.class)
     public ResponseEntity<ErrorResponse> handleUnsupportedContextException(UnsupportedContextException ex) {
         log.warn("Unsupported context: {}", ex.getMessage());
-        ErrorResponse response = createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -142,8 +140,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
         log.warn("Invalid argument: {}", ex.getMessage(), ex);
-        ErrorResponse response = createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -154,8 +151,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalRegistryConfigurationException.class)
     public ResponseEntity<ErrorResponse> handleIllegalRegistryConfigurationException(IllegalRegistryConfigurationException ex) {
         log.warn("Illegal registry configuration: {}", ex.getMessage(), ex);
-        ErrorResponse response = createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -166,8 +162,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RegistryUnavailableException.class)
     public ResponseEntity<ErrorResponse> handleRegistryUnavailableException(RegistryUnavailableException ex) {
         log.warn("Registry unavailable: {}", ex.getMessage(), ex);
-        ErrorResponse response = createErrorResponse(ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
+        return buildErrorResponse(ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     /**
@@ -178,19 +173,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<ErrorResponse> handleRateLimitExceededException(RateLimitExceededException ex) {
         log.warn("Rate limit exceeded: {}", ex.getMessage(), ex);
-        ErrorResponse response = createErrorResponse(ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS);
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+        return buildErrorResponse(ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS);
     }
 
     @ApiResponse(responseCode = "404", description = "Not found - No resource found")
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ErrorResponse> handleGenericException(NoResourceFoundException ex) {
         log.error("NoResourceFoundException", ex);
-        ErrorResponse response = createErrorResponse(
-                ex.getMessage(),
-                HttpStatus.NOT_FOUND
-        );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
 
@@ -198,11 +188,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     public ResponseEntity<ErrorResponse> handleGenericException(HttpMediaTypeNotAcceptableException ex) {
         log.error("HttpMediaTypeNotAcceptableException ", ex);
-        ErrorResponse response = createErrorResponse(
-                ex.getMessage(),
-                HttpStatus.BAD_REQUEST
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
 
@@ -214,10 +200,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         log.error("Unexpected error occurred", ex);
-        ErrorResponse response = createErrorResponse(
+        return buildErrorResponse(
                 "An unexpected error occurred. Please try again later.",
                 HttpStatus.INTERNAL_SERVER_ERROR
         );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }

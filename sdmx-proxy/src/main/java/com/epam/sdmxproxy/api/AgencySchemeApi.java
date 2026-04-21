@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Nullable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -36,7 +37,8 @@ public interface AgencySchemeApi {
             produces = {
                     SdmxMediaType.STRUCTURE_SDMX_XML_2_1_VALUE,
                     SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE,
-                    SdmxMediaType.ANY
+                    SdmxMediaType.ANY,
+                    MediaType.APPLICATION_JSON_VALUE
             }
     )
     ResponseEntity<StreamingResponseBody> getAgencyScheme(
