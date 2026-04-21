@@ -1104,4 +1104,156 @@ class QueryTranslatorImplTest {
 
         assertEquals("USA.NGDP_RPCH.*", query.getKey());
     }
+
+    // ========== mergeAllWildcardKey — static helper tests ==========
+
+    @Test
+    void testMergeAllWildcardKey_singleStar() {
+        assertEquals("*", QueryTranslatorImpl.mergeAllWildcardKey("*"));
+    }
+
+    @Test
+    void testMergeAllWildcardKey_twoStars() {
+        assertEquals("*", QueryTranslatorImpl.mergeAllWildcardKey("*.*"));
+    }
+
+    @Test
+    void testMergeAllWildcardKey_fourStars() {
+        assertEquals("*", QueryTranslatorImpl.mergeAllWildcardKey("*.*.*.*"));
+    }
+
+    @Test
+    void testMergeAllWildcardKey_partialFilter() {
+        assertEquals("M.*.*.*", QueryTranslatorImpl.mergeAllWildcardKey("M.*.*.*"));
+    }
+
+    @Test
+    void testMergeAllWildcardKey_starThenLiteral() {
+        assertEquals("*.M", QueryTranslatorImpl.mergeAllWildcardKey("*.M"));
+    }
+
+    @Test
+    void testMergeAllWildcardKey_null() {
+        assertNull(QueryTranslatorImpl.mergeAllWildcardKey(null));
+    }
+
+    @Test
+    void testMergeAllWildcardKey_empty() {
+        assertEquals("", QueryTranslatorImpl.mergeAllWildcardKey(""));
+    }
+
+    @Test
+    void testMergeAllWildcardKey_emptyPosition() {
+        // An empty position is not '*' so the key is returned unchanged;
+        // empty-position normalisation is the job of replaceEmptyDimensionsWithWildcard.
+        assertEquals("*..*", QueryTranslatorImpl.mergeAllWildcardKey("*..*"));
+    }
+
+    // ========== mergeAllWildcardKey — integration with translateDataQuery ==========
+
+    @Test
+    void testTranslateDataQuery_mergeAllWildcardKey_flagEnabled() {
+        RegistryConfiguration registryConfig = createRegistryWithSingleVersion("BIS", SdmxVersion.SDMX_3_0);
+        registryConfig.getVersions().get(SdmxVersion.SDMX_3_0).getDataEndpointConfig().setMergeAllWildcardKey(true);
+
+        when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        TranslatedDataQuery query = queryTranslator.translateDataQuery(
+                "dataflow", "BIS", "WS_EER", "1.0", "*.*.*.*",
+                null, null, null, null, null, null, null, null, null, null, false,
+                "application/vnd.sdmx.data+json;version=2.0.0", sdmxBeans, null
+        );
+
+        assertEquals("*", query.getKey());
+    }
+
+    @Test
+    void testTranslateDataQuery_mergeAllWildcardKey_flagDisabled() {
+        RegistryConfiguration registryConfig = createRegistryWithSingleVersion("IMF", SdmxVersion.SDMX_3_0);
+        // flag is false by default
+
+        when(agencyRoutingService.resolveRegistry(eq("IMF"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        TranslatedDataQuery query = queryTranslator.translateDataQuery(
+                "dataflow", "IMF", "BOP", "21.0.0", "*.*.*.*",
+                null, null, null, null, null, null, null, null, null, null, false,
+                "application/vnd.sdmx.data+json;version=2.0.0", sdmxBeans, null
+        );
+
+        assertEquals("*.*.*.*", query.getKey());
+    }
+
+    @Test
+    void testTranslateDataQuery_mergeAllWildcardKey_partialUnchanged() {
+        RegistryConfiguration registryConfig = createRegistryWithSingleVersion("BIS", SdmxVersion.SDMX_3_0);
+        registryConfig.getVersions().get(SdmxVersion.SDMX_3_0).getDataEndpointConfig().setMergeAllWildcardKey(true);
+
+        when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        TranslatedDataQuery query = queryTranslator.translateDataQuery(
+                "dataflow", "BIS", "WS_EER", "1.0", "M.*.*.*",
+                null, null, null, null, null, null, null, null, null, null, false,
+                "application/vnd.sdmx.data+json;version=2.0.0", sdmxBeans, null
+        );
+
+        assertEquals("M.*.*.*", query.getKey());
+    }
+
+    @Test
+    void testTranslateDataQuery_mergeAllWildcardKey_composesWithEmptyDims() {
+        RegistryConfiguration registryConfig = createRegistryWithSingleVersion("BIS", SdmxVersion.SDMX_3_0);
+        DataEndpointConfiguration dataConfig = registryConfig.getVersions().get(SdmxVersion.SDMX_3_0).getDataEndpointConfig();
+        dataConfig.setReplaceEmptyDimensionsWithWildcard(true);
+        dataConfig.setMergeAllWildcardKey(true);
+
+        when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        TranslatedDataQuery query = queryTranslator.translateDataQuery(
+                "dataflow", "BIS", "WS_EER", "1.0", ".*.*.*",
+                null, null, null, null, null, null, null, null, null, null, false,
+                "application/vnd.sdmx.data+json;version=2.0.0", sdmxBeans, null
+        );
+
+        assertEquals("*", query.getKey());
+    }
+
+    // ========== mergeAllWildcardKey — integration with translateAvailabilityQuery ==========
+
+    @Test
+    void testTranslateAvailabilityQuery_mergeAllWildcardKey_flagEnabled() {
+        RegistryConfiguration registryConfig = createRegistryWithSingleVersion("BIS", SdmxVersion.SDMX_3_0);
+        registryConfig.getVersions().get(SdmxVersion.SDMX_3_0).getAvailabilityEndpointConfig().setMergeAllWildcardKey(true);
+
+        when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        TranslatedAvailabilityQuery query = queryTranslator.translateAvailabilityQuery(
+                "dataflow", "BIS", "WS_CBPOL", "1.0", "*.*.*", null,
+                null, null, "exact", "all", null, null, null,
+                "application/vnd.sdmx.data+json;version=2.0.0", sdmxBeans, null
+        );
+
+        assertEquals("*", query.getKey());
+    }
+
+    @Test
+    void testTranslateAvailabilityQuery_mergeAllWildcardKey_flagDisabled() {
+        RegistryConfiguration registryConfig = createRegistryWithSingleVersion("IMF", SdmxVersion.SDMX_3_0);
+        // flag is false by default
+
+        when(agencyRoutingService.resolveRegistry(eq("IMF"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        TranslatedAvailabilityQuery query = queryTranslator.translateAvailabilityQuery(
+                "dataflow", "IMF", "BOP", "21.0.0", "*.*.*", null,
+                null, null, "exact", "all", null, null, null,
+                "application/vnd.sdmx.data+json;version=2.0.0", sdmxBeans, null
+        );
+
+        assertEquals("*.*.*", query.getKey());
+    }
 }

@@ -15,4 +15,12 @@ public class DataEndpointConfiguration extends EndpointConfiguration {
      */
     private boolean replaceEmptyDimensionsWithWildcard;
 
+    /**
+     * When true, a key whose every dimension position is '*' is collapsed to a single '*'.
+     * Required for registries (e.g., BIS) that accept only one '*' as the match-all form
+     * and return no data for a per-dimension expansion.
+     * For example, "*.*.*.*" becomes "*".
+     */
+    private boolean mergeAllWildcardKey;
+
 }

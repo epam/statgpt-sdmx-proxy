@@ -28,7 +28,8 @@
               "JSON_1_0_0"
             ],
             "defaultFormat": "JSON_1_0_0",
-            "bypassEnabled": false
+            "bypassEnabled": false,
+            "mergeAllWildcardKey": true
           },
           "availabilityEndpointConfig": {
             "url": "https://stats.bis.org/api/v2/availability/",
@@ -39,7 +40,8 @@
             "bypassEnabled": false,
             "availabilityEnabled": true,
             "unwrapStarComponentId": true,
-            "unwrapFilterParameters": true
+            "unwrapFilterParameters": true,
+            "mergeAllWildcardKey": true
           },
           "resilienceConfig": {
             "connectionTimeout": 30000,

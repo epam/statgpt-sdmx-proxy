@@ -257,6 +257,12 @@ public class QueryTranslatorImpl implements QueryTranslator {
                 version
         );
 
+        AvailabilityEndpointConfiguration availabilityEndpointConfig =
+                selectedRegistry.getVersionConfiguration().getAvailabilityEndpointConfig();
+        if (availabilityEndpointConfig != null && availabilityEndpointConfig.isMergeAllWildcardKey()) {
+            processedKey = mergeAllWildcardKey(processedKey);
+        }
+
         ReturnFormat returnFormat = determineAvailabilityReturnFormat(
                 selectedRegistry,
                 mediaTypeResult
@@ -410,6 +416,9 @@ public class QueryTranslatorImpl implements QueryTranslator {
         DataEndpointConfiguration dataEndpointConfig = versionConfig.getDataEndpointConfig();
         if (dataEndpointConfig != null && dataEndpointConfig.isReplaceEmptyDimensionsWithWildcard()) {
             processedKey = replaceEmptyDimensionsWithWildcard(processedKey);
+        }
+        if (dataEndpointConfig != null && dataEndpointConfig.isMergeAllWildcardKey()) {
+            processedKey = mergeAllWildcardKey(processedKey);
         }
 
         ReturnFormat returnFormat = determineDataReturnFormat(
@@ -646,6 +655,23 @@ public class QueryTranslatorImpl implements QueryTranslator {
             }
         }
         return String.join(".", parts);
+    }
+
+    /**
+     * Collapses a key whose every dimension position is '*' to a single '*'.
+     * Leaves all other keys (including single '*', null, empty, and keys with any literal value) unchanged.
+     */
+    static String mergeAllWildcardKey(String key) {
+        if (key == null || key.isEmpty()) {
+            return key;
+        }
+        String[] parts = key.split("\\.", -1);
+        for (String part : parts) {
+            if (!"*".equals(part)) {
+                return key;
+            }
+        }
+        return "*";
     }
 
 }
