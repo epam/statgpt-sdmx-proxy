@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Nullable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -77,7 +78,8 @@ public interface AvailabilityQuery30Api {
             value = "/{context:datastructure|dataflow|provisionagreement}/{agencyID}/{resourceID}/{version}/{key}/{componentId}",
             produces = {
                     SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE,
-                    SdmxMediaType.ANY
+                    SdmxMediaType.ANY,
+                    MediaType.APPLICATION_JSON_VALUE
             }
     )
     ResponseEntity<StreamingResponseBody> availabilityQuery(
@@ -204,7 +206,8 @@ public interface AvailabilityQuery30Api {
             consumes = "application/json",
             produces = {
                     SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE,
-                    SdmxMediaType.ANY
+                    SdmxMediaType.ANY,
+                    MediaType.APPLICATION_JSON_VALUE
             }
     )
     ResponseEntity<StreamingResponseBody> availabilityQueryPost(
