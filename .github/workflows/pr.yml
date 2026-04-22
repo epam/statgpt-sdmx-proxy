@@ -53,8 +53,9 @@ jobs:
           dependency-graph: generate-and-upload
           artifact-retention-days: 1
         env:
-          GPR_USERNAME: ${{ github.actor }}
-          GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          # PAT is used temporarily
+          GPR_USERNAME: ${{ secrets.GPR_USERNAME }}
+          GPR_PASSWORD: ${{ secrets.GPR_PASSWORD }}
 
   build:
     runs-on: ubuntu-24.04
@@ -72,8 +73,9 @@ jobs:
           build-scan-publish: true
       - run: ./gradlew build -x test
         env:
-          GPR_USERNAME: ${{ github.actor }}
-          GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          # PAT is used temporarily
+          GPR_USERNAME: ${{ secrets.GPR_USERNAME }}
+          GPR_PASSWORD: ${{ secrets.GPR_PASSWORD }}
 
   docker_build:
     runs-on: ubuntu-24.04
