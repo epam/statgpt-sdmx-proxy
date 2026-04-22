@@ -1,7 +1,11 @@
 package com.epam.sdmxproxy.configuration.data;
 
+import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
+import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -23,4 +27,11 @@ public class DataEndpointConfiguration extends EndpointConfiguration {
      */
     private boolean mergeAllWildcardKey;
 
+    /**
+     * List of fixtures to apply to the raw registry data response before conversion.
+     * Each fixture patches a specific known issue (e.g., non-canonical TIME_PERIOD values).
+     * Applied as a chain of responsibility in the order they are listed.
+     * Data fixtures must be streaming -- see {@code DataFixture}.
+     */
+    private List<FixtureConfiguration<DataFixtureType>> fixtures;
 }

@@ -69,10 +69,11 @@ Shared by every `*EndpointConfig` block below.
 
 ### `DataEndpointConfiguration` (extends `EndpointConfiguration`)
 
-| Field                                | Required | Description                                                                                                                        | Available Values | Default |
-|--------------------------------------|:--------:|------------------------------------------------------------------------------------------------------------------------------------|------------------|---------|
-| `replaceEmptyDimensionsWithWildcard` | No       | Replace empty dot-separated key positions with `*` (e.g. `.L_T.P_F3` → `*.L_T.P_F3`). Required for IMF and similar registries      | `true`, `false`  | `false` |
-| `mergeAllWildcardKey`                | No       | Collapse a key whose every position is `*` to a single `*` (e.g. `*.*.*.*` → `*`). Required for BIS and similar registries          | `true`, `false`  | `false` |
+| Field                                | Required | Description                                                                                                                        | Available Values                                | Default |
+|--------------------------------------|:--------:|------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------|---------|
+| `replaceEmptyDimensionsWithWildcard` | No       | Replace empty dot-separated key positions with `*` (e.g. `.L_T.P_F3` → `*.L_T.P_F3`). Required for IMF and similar registries      | `true`, `false`                                 | `false` |
+| `mergeAllWildcardKey`                | No       | Collapse a key whose every position is `*` to a single `*` (e.g. `*.*.*.*` → `*`). Required for BIS and similar registries          | `true`, `false`                                 | `false` |
+| `fixtures`                           | No       | Streaming response patches applied to the raw registry response before conversion, in the order listed                             | Array of `FixtureConfiguration<DataFixtureType>`| (empty) |
 
 ### `AvailabilityEndpointConfiguration` (extends `EndpointConfiguration`)
 
@@ -156,6 +157,12 @@ Fixtures are applied as a chain of responsibility in the order listed.
 | Value                                         | Description                                                            |
 |-----------------------------------------------|------------------------------------------------------------------------|
 | `MOVE_CUBE_REGION_COMPONENTS_TO_KEY_VALUES`   | Move misplaced `components` entries under `keyValues` on cube regions  |
+
+#### `DataFixtureType`
+
+| Value                               | Description                                                                                                                                                                                                                                 |
+|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `TIME_PERIOD_MONTHLY_NORMALIZATION` | Rewrite monthly `TIME_PERIOD` values to canonical `YYYY-Mmm` (e.g. `2024-03` → `2024-M03`). Supported for `JSON_1_0_0`, `JSON_DATA_2_0_0`, `XML_GENERICDATA_2_1`, `XML_STRUCTURE_SPECIFIC_2_1`, `CSV_DATA_1_0_0`, and `CSV_DATA_2_0_0`. |
 
 ### Enum: `SdmxVersion`
 

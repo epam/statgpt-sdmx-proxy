@@ -1,0 +1,3028 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<message:GenericData xmlns:footer="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message/footer" xmlns:generic="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/data/generic" xmlns:common="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common" xmlns:message="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message https://registry.sdmx.org/schemas/v2_1/SDMXMessage.xsd">
+    <message:Header>
+        <message:ID>IDREFfee3a92f-6daa-4bdf-997f-0d404b4a7625</message:ID>
+        <message:Test>false</message:Test>
+        <message:Prepared>2026-04-22T08:02:03Z</message:Prepared>
+        <message:Sender id="UNKNOWN"></message:Sender>
+        <message:Receiver id="guest"></message:Receiver>
+        <message:Structure structureID="BIS_WS_EER_1_0" dimensionAtObservation="TIME_PERIOD">
+            <common:StructureUsage>
+                <Ref agencyID="BIS" id="WS_EER" version="1.0"></Ref>
+            </common:StructureUsage>
+        </message:Structure>
+        <message:DataSetAction>Information</message:DataSetAction>
+        <message:DataSetID>00796bc8-1d6a-4ab5-9662-5fbfc500294e</message:DataSetID>
+        <message:Extracted>2026-04-22T08:02:03</message:Extracted>
+        <message:ReportingBegin>1994-01-01T00:00:00</message:ReportingBegin>
+        <message:ReportingEnd>2025-01-01T23:59:59</message:ReportingEnd>
+    </message:Header>
+    <message:DataSet structureRef="BIS_WS_EER_1_0">
+        <generic:Group type="Sibling">
+            <generic:GroupKey>
+                <generic:Value id="EER_TYPE" value="N"></generic:Value>
+                <generic:Value id="EER_BASKET" value="B"></generic:Value>
+                <generic:Value id="REF_AREA" value="DE"></generic:Value>
+            </generic:GroupKey>
+            <generic:Attributes>
+                <generic:Value id="UNIT_MEASURE" value="882"></generic:Value>
+            </generic:Attributes>
+        </generic:Group>
+        <generic:Series>
+            <generic:SeriesKey>
+                <generic:Value id="FREQ" value="M"></generic:Value>
+                <generic:Value id="EER_TYPE" value="N"></generic:Value>
+                <generic:Value id="EER_BASKET" value="B"></generic:Value>
+                <generic:Value id="REF_AREA" value="DE"></generic:Value>
+            </generic:SeriesKey>
+            <generic:Attributes>
+                <generic:Value id="COLLECTION" value="A"></generic:Value>
+                <generic:Value id="TITLE_TS" value="Germany - Nominal - Broad (64 economies)"></generic:Value>
+            </generic:Attributes>
+            <generic:Obs>
+                <generic:ObsDimension value="1994-01"></generic:ObsDimension>
+                <generic:ObsValue value="79.97"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1994-02"></generic:ObsDimension>
+                <generic:ObsValue value="80.31"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1994-03"></generic:ObsDimension>
+                <generic:ObsValue value="81.89"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1994-04"></generic:ObsDimension>
+                <generic:ObsValue value="82.25"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1994-05"></generic:ObsDimension>
+                <generic:ObsValue value="83.38"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1994-06"></generic:ObsDimension>
+                <generic:ObsValue value="84.21"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1994-07"></generic:ObsDimension>
+                <generic:ObsValue value="85.49"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1994-08"></generic:ObsDimension>
+                <generic:ObsValue value="85.92"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1994-09"></generic:ObsDimension>
+                <generic:ObsValue value="86.04"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1994-10"></generic:ObsDimension>
+                <generic:ObsValue value="86.82"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1994-11"></generic:ObsDimension>
+                <generic:ObsValue value="86.68"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1994-12"></generic:ObsDimension>
+                <generic:ObsValue value="86.57"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1995-01"></generic:ObsDimension>
+                <generic:ObsValue value="88.01"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1995-02"></generic:ObsDimension>
+                <generic:ObsValue value="89.18"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1995-03"></generic:ObsDimension>
+                <generic:ObsValue value="92.72"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1995-04"></generic:ObsDimension>
+                <generic:ObsValue value="93"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1995-05"></generic:ObsDimension>
+                <generic:ObsValue value="91.85"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1995-06"></generic:ObsDimension>
+                <generic:ObsValue value="91.81"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1995-07"></generic:ObsDimension>
+                <generic:ObsValue value="92.13"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1995-08"></generic:ObsDimension>
+                <generic:ObsValue value="90.74"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1995-09"></generic:ObsDimension>
+                <generic:ObsValue value="90.75"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1995-10"></generic:ObsDimension>
+                <generic:ObsValue value="92.45"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1995-11"></generic:ObsDimension>
+                <generic:ObsValue value="92.41"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1995-12"></generic:ObsDimension>
+                <generic:ObsValue value="91.92"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1996-01"></generic:ObsDimension>
+                <generic:ObsValue value="91.49"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1996-02"></generic:ObsDimension>
+                <generic:ObsValue value="91.59"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1996-03"></generic:ObsDimension>
+                <generic:ObsValue value="91.2"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1996-04"></generic:ObsDimension>
+                <generic:ObsValue value="90.38"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1996-05"></generic:ObsDimension>
+                <generic:ObsValue value="89.63"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1996-06"></generic:ObsDimension>
+                <generic:ObsValue value="89.95"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1996-07"></generic:ObsDimension>
+                <generic:ObsValue value="90.67"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1996-08"></generic:ObsDimension>
+                <generic:ObsValue value="91.43"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1996-09"></generic:ObsDimension>
+                <generic:ObsValue value="90.81"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1996-10"></generic:ObsDimension>
+                <generic:ObsValue value="90.2"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1996-11"></generic:ObsDimension>
+                <generic:ObsValue value="90.57"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1996-12"></generic:ObsDimension>
+                <generic:ObsValue value="89.77"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1997-01"></generic:ObsDimension>
+                <generic:ObsValue value="88.9"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1997-02"></generic:ObsDimension>
+                <generic:ObsValue value="88.17"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1997-03"></generic:ObsDimension>
+                <generic:ObsValue value="88.09"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1997-04"></generic:ObsDimension>
+                <generic:ObsValue value="87.82"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1997-05"></generic:ObsDimension>
+                <generic:ObsValue value="87.87"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1997-06"></generic:ObsDimension>
+                <generic:ObsValue value="87.22"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1997-07"></generic:ObsDimension>
+                <generic:ObsValue value="86"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1997-08"></generic:ObsDimension>
+                <generic:ObsValue value="85.76"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1997-09"></generic:ObsDimension>
+                <generic:ObsValue value="87.13"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1997-10"></generic:ObsDimension>
+                <generic:ObsValue value="88.06"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1997-11"></generic:ObsDimension>
+                <generic:ObsValue value="88.93"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1997-12"></generic:ObsDimension>
+                <generic:ObsValue value="89.28"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1998-01"></generic:ObsDimension>
+                <generic:ObsValue value="89.57"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1998-02"></generic:ObsDimension>
+                <generic:ObsValue value="89.24"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1998-03"></generic:ObsDimension>
+                <generic:ObsValue value="88.89"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1998-04"></generic:ObsDimension>
+                <generic:ObsValue value="89.24"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1998-05"></generic:ObsDimension>
+                <generic:ObsValue value="90.53"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1998-06"></generic:ObsDimension>
+                <generic:ObsValue value="90.82"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1998-07"></generic:ObsDimension>
+                <generic:ObsValue value="90.79"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1998-08"></generic:ObsDimension>
+                <generic:ObsValue value="91.57"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1998-09"></generic:ObsDimension>
+                <generic:ObsValue value="93.63"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1998-10"></generic:ObsDimension>
+                <generic:ObsValue value="94.32"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1998-11"></generic:ObsDimension>
+                <generic:ObsValue value="93.33"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1998-12"></generic:ObsDimension>
+                <generic:ObsValue value="93.7"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1999-01"></generic:ObsDimension>
+                <generic:ObsValue value="93.58"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1999-02"></generic:ObsDimension>
+                <generic:ObsValue value="92.95"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1999-03"></generic:ObsDimension>
+                <generic:ObsValue value="92.32"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1999-04"></generic:ObsDimension>
+                <generic:ObsValue value="91.69"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1999-05"></generic:ObsDimension>
+                <generic:ObsValue value="91.41"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1999-06"></generic:ObsDimension>
+                <generic:ObsValue value="90.47"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1999-07"></generic:ObsDimension>
+                <generic:ObsValue value="90.39"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1999-08"></generic:ObsDimension>
+                <generic:ObsValue value="91.11"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1999-09"></generic:ObsDimension>
+                <generic:ObsValue value="90.59"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1999-10"></generic:ObsDimension>
+                <generic:ObsValue value="91.26"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1999-11"></generic:ObsDimension>
+                <generic:ObsValue value="90.04"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="1999-12"></generic:ObsDimension>
+                <generic:ObsValue value="89.08"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2000-01"></generic:ObsDimension>
+                <generic:ObsValue value="89.18"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2000-02"></generic:ObsDimension>
+                <generic:ObsValue value="88.47"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2000-03"></generic:ObsDimension>
+                <generic:ObsValue value="87.66"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2000-04"></generic:ObsDimension>
+                <generic:ObsValue value="87.04"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2000-05"></generic:ObsDimension>
+                <generic:ObsValue value="86.18"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2000-06"></generic:ObsDimension>
+                <generic:ObsValue value="87.76"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2000-07"></generic:ObsDimension>
+                <generic:ObsValue value="87.45"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2000-08"></generic:ObsDimension>
+                <generic:ObsValue value="86.16"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2000-09"></generic:ObsDimension>
+                <generic:ObsValue value="85.19"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2000-10"></generic:ObsDimension>
+                <generic:ObsValue value="84.74"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2000-11"></generic:ObsDimension>
+                <generic:ObsValue value="85.03"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2000-12"></generic:ObsDimension>
+                <generic:ObsValue value="86.72"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2001-01"></generic:ObsDimension>
+                <generic:ObsValue value="88.59"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2001-02"></generic:ObsDimension>
+                <generic:ObsValue value="88.17"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2001-03"></generic:ObsDimension>
+                <generic:ObsValue value="88.32"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2001-04"></generic:ObsDimension>
+                <generic:ObsValue value="88.1"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2001-05"></generic:ObsDimension>
+                <generic:ObsValue value="87.14"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2001-06"></generic:ObsDimension>
+                <generic:ObsValue value="86.41"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2001-07"></generic:ObsDimension>
+                <generic:ObsValue value="87.03"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2001-08"></generic:ObsDimension>
+                <generic:ObsValue value="88.52"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2001-09"></generic:ObsDimension>
+                <generic:ObsValue value="88.98"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2001-10"></generic:ObsDimension>
+                <generic:ObsValue value="89.01"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2001-11"></generic:ObsDimension>
+                <generic:ObsValue value="88.16"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2001-12"></generic:ObsDimension>
+                <generic:ObsValue value="88.4"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2002-01"></generic:ObsDimension>
+                <generic:ObsValue value="88.14"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2002-02"></generic:ObsDimension>
+                <generic:ObsValue value="87.77"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2002-03"></generic:ObsDimension>
+                <generic:ObsValue value="87.82"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2002-04"></generic:ObsDimension>
+                <generic:ObsValue value="87.94"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2002-05"></generic:ObsDimension>
+                <generic:ObsValue value="89.02"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2002-06"></generic:ObsDimension>
+                <generic:ObsValue value="90.45"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2002-07"></generic:ObsDimension>
+                <generic:ObsValue value="91.56"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2002-08"></generic:ObsDimension>
+                <generic:ObsValue value="91.32"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2002-09"></generic:ObsDimension>
+                <generic:ObsValue value="91.43"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2002-10"></generic:ObsDimension>
+                <generic:ObsValue value="91.66"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2002-11"></generic:ObsDimension>
+                <generic:ObsValue value="92"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2002-12"></generic:ObsDimension>
+                <generic:ObsValue value="92.55"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2003-01"></generic:ObsDimension>
+                <generic:ObsValue value="93.92"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2003-02"></generic:ObsDimension>
+                <generic:ObsValue value="94.62"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2003-03"></generic:ObsDimension>
+                <generic:ObsValue value="94.97"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2003-04"></generic:ObsDimension>
+                <generic:ObsValue value="95.01"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2003-05"></generic:ObsDimension>
+                <generic:ObsValue value="96.84"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2003-06"></generic:ObsDimension>
+                <generic:ObsValue value="97.16"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2003-07"></generic:ObsDimension>
+                <generic:ObsValue value="96.42"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2003-08"></generic:ObsDimension>
+                <generic:ObsValue value="95.79"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2003-09"></generic:ObsDimension>
+                <generic:ObsValue value="95.76"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2003-10"></generic:ObsDimension>
+                <generic:ObsValue value="96.84"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2003-11"></generic:ObsDimension>
+                <generic:ObsValue value="96.89"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2003-12"></generic:ObsDimension>
+                <generic:ObsValue value="98.45"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2004-01"></generic:ObsDimension>
+                <generic:ObsValue value="99.09"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2004-02"></generic:ObsDimension>
+                <generic:ObsValue value="99.11"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2004-03"></generic:ObsDimension>
+                <generic:ObsValue value="98.02"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2004-04"></generic:ObsDimension>
+                <generic:ObsValue value="97.13"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2004-05"></generic:ObsDimension>
+                <generic:ObsValue value="97.69"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2004-06"></generic:ObsDimension>
+                <generic:ObsValue value="97.68"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2004-07"></generic:ObsDimension>
+                <generic:ObsValue value="97.85"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2004-08"></generic:ObsDimension>
+                <generic:ObsValue value="97.77"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2004-09"></generic:ObsDimension>
+                <generic:ObsValue value="97.9"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2004-10"></generic:ObsDimension>
+                <generic:ObsValue value="98.44"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2004-11"></generic:ObsDimension>
+                <generic:ObsValue value="99.11"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2004-12"></generic:ObsDimension>
+                <generic:ObsValue value="99.7"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2005-01"></generic:ObsDimension>
+                <generic:ObsValue value="98.9"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2005-02"></generic:ObsDimension>
+                <generic:ObsValue value="98.35"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2005-03"></generic:ObsDimension>
+                <generic:ObsValue value="98.81"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2005-04"></generic:ObsDimension>
+                <generic:ObsValue value="98.45"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2005-05"></generic:ObsDimension>
+                <generic:ObsValue value="97.81"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2005-06"></generic:ObsDimension>
+                <generic:ObsValue value="96.32"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2005-07"></generic:ObsDimension>
+                <generic:ObsValue value="96.34"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2005-08"></generic:ObsDimension>
+                <generic:ObsValue value="96.61"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2005-09"></generic:ObsDimension>
+                <generic:ObsValue value="96.33"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2005-10"></generic:ObsDimension>
+                <generic:ObsValue value="96.09"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2005-11"></generic:ObsDimension>
+                <generic:ObsValue value="95.6"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2005-12"></generic:ObsDimension>
+                <generic:ObsValue value="95.56"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2006-01"></generic:ObsDimension>
+                <generic:ObsValue value="95.83"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2006-02"></generic:ObsDimension>
+                <generic:ObsValue value="95.3"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2006-03"></generic:ObsDimension>
+                <generic:ObsValue value="95.76"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2006-04"></generic:ObsDimension>
+                <generic:ObsValue value="96.36"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2006-05"></generic:ObsDimension>
+                <generic:ObsValue value="97.31"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2006-06"></generic:ObsDimension>
+                <generic:ObsValue value="97.68"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2006-07"></generic:ObsDimension>
+                <generic:ObsValue value="97.75"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2006-08"></generic:ObsDimension>
+                <generic:ObsValue value="97.73"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2006-09"></generic:ObsDimension>
+                <generic:ObsValue value="97.65"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2006-10"></generic:ObsDimension>
+                <generic:ObsValue value="97.25"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2006-11"></generic:ObsDimension>
+                <generic:ObsValue value="97.51"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2006-12"></generic:ObsDimension>
+                <generic:ObsValue value="98.02"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2007-01"></generic:ObsDimension>
+                <generic:ObsValue value="97.64"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2007-02"></generic:ObsDimension>
+                <generic:ObsValue value="97.81"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2007-03"></generic:ObsDimension>
+                <generic:ObsValue value="98.15"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2007-04"></generic:ObsDimension>
+                <generic:ObsValue value="98.55"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2007-05"></generic:ObsDimension>
+                <generic:ObsValue value="98.46"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2007-06"></generic:ObsDimension>
+                <generic:ObsValue value="98.25"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2007-07"></generic:ObsDimension>
+                <generic:ObsValue value="98.53"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2007-08"></generic:ObsDimension>
+                <generic:ObsValue value="98.48"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2007-09"></generic:ObsDimension>
+                <generic:ObsValue value="98.92"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2007-10"></generic:ObsDimension>
+                <generic:ObsValue value="99.29"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2007-11"></generic:ObsDimension>
+                <generic:ObsValue value="100.05"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2007-12"></generic:ObsDimension>
+                <generic:ObsValue value="99.92"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2008-01"></generic:ObsDimension>
+                <generic:ObsValue value="100.06"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2008-02"></generic:ObsDimension>
+                <generic:ObsValue value="99.89"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2008-03"></generic:ObsDimension>
+                <generic:ObsValue value="101.39"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2008-04"></generic:ObsDimension>
+                <generic:ObsValue value="101.89"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2008-05"></generic:ObsDimension>
+                <generic:ObsValue value="101.46"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2008-06"></generic:ObsDimension>
+                <generic:ObsValue value="101.23"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2008-07"></generic:ObsDimension>
+                <generic:ObsValue value="101.23"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2008-08"></generic:ObsDimension>
+                <generic:ObsValue value="99.84"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2008-09"></generic:ObsDimension>
+                <generic:ObsValue value="99.12"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2008-10"></generic:ObsDimension>
+                <generic:ObsValue value="97.83"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2008-11"></generic:ObsDimension>
+                <generic:ObsValue value="97.28"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2008-12"></generic:ObsDimension>
+                <generic:ObsValue value="99.91"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2009-01"></generic:ObsDimension>
+                <generic:ObsValue value="100.02"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2009-02"></generic:ObsDimension>
+                <generic:ObsValue value="99.82"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2009-03"></generic:ObsDimension>
+                <generic:ObsValue value="100.93"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2009-04"></generic:ObsDimension>
+                <generic:ObsValue value="100.33"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2009-05"></generic:ObsDimension>
+                <generic:ObsValue value="100.64"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2009-06"></generic:ObsDimension>
+                <generic:ObsValue value="101.36"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2009-07"></generic:ObsDimension>
+                <generic:ObsValue value="101.18"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2009-08"></generic:ObsDimension>
+                <generic:ObsValue value="101.21"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2009-09"></generic:ObsDimension>
+                <generic:ObsValue value="101.78"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2009-10"></generic:ObsDimension>
+                <generic:ObsValue value="102.22"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2009-11"></generic:ObsDimension>
+                <generic:ObsValue value="102.25"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2009-12"></generic:ObsDimension>
+                <generic:ObsValue value="101.62"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2010-01"></generic:ObsDimension>
+                <generic:ObsValue value="100.38"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2010-02"></generic:ObsDimension>
+                <generic:ObsValue value="98.91"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2010-03"></generic:ObsDimension>
+                <generic:ObsValue value="98.25"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2010-04"></generic:ObsDimension>
+                <generic:ObsValue value="97.46"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2010-05"></generic:ObsDimension>
+                <generic:ObsValue value="95.73"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2010-06"></generic:ObsDimension>
+                <generic:ObsValue value="94.7"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2010-07"></generic:ObsDimension>
+                <generic:ObsValue value="95.8"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2010-08"></generic:ObsDimension>
+                <generic:ObsValue value="95.63"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2010-09"></generic:ObsDimension>
+                <generic:ObsValue value="95.76"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2010-10"></generic:ObsDimension>
+                <generic:ObsValue value="97.59"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2010-11"></generic:ObsDimension>
+                <generic:ObsValue value="96.98"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2010-12"></generic:ObsDimension>
+                <generic:ObsValue value="95.8"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2011-01"></generic:ObsDimension>
+                <generic:ObsValue value="95.72"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2011-02"></generic:ObsDimension>
+                <generic:ObsValue value="96.47"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2011-03"></generic:ObsDimension>
+                <generic:ObsValue value="97.38"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2011-04"></generic:ObsDimension>
+                <generic:ObsValue value="98.25"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2011-05"></generic:ObsDimension>
+                <generic:ObsValue value="97.78"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2011-06"></generic:ObsDimension>
+                <generic:ObsValue value="97.83"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2011-07"></generic:ObsDimension>
+                <generic:ObsValue value="97.29"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2011-08"></generic:ObsDimension>
+                <generic:ObsValue value="97.53"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2011-09"></generic:ObsDimension>
+                <generic:ObsValue value="97.07"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2011-10"></generic:ObsDimension>
+                <generic:ObsValue value="97.35"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2011-11"></generic:ObsDimension>
+                <generic:ObsValue value="97.14"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2011-12"></generic:ObsDimension>
+                <generic:ObsValue value="96.18"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2012-01"></generic:ObsDimension>
+                <generic:ObsValue value="94.95"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2012-02"></generic:ObsDimension>
+                <generic:ObsValue value="95.15"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2012-03"></generic:ObsDimension>
+                <generic:ObsValue value="95.29"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2012-04"></generic:ObsDimension>
+                <generic:ObsValue value="95.21"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2012-05"></generic:ObsDimension>
+                <generic:ObsValue value="94.58"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2012-06"></generic:ObsDimension>
+                <generic:ObsValue value="94.22"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2012-07"></generic:ObsDimension>
+                <generic:ObsValue value="93.08"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2012-08"></generic:ObsDimension>
+                <generic:ObsValue value="93.05"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2012-09"></generic:ObsDimension>
+                <generic:ObsValue value="94.28"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2012-10"></generic:ObsDimension>
+                <generic:ObsValue value="94.57"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2012-11"></generic:ObsDimension>
+                <generic:ObsValue value="94.26"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2012-12"></generic:ObsDimension>
+                <generic:ObsValue value="95.1"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2013-01"></generic:ObsDimension>
+                <generic:ObsValue value="95.93"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2013-02"></generic:ObsDimension>
+                <generic:ObsValue value="96.51"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2013-03"></generic:ObsDimension>
+                <generic:ObsValue value="95.59"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2013-04"></generic:ObsDimension>
+                <generic:ObsValue value="95.73"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2013-05"></generic:ObsDimension>
+                <generic:ObsValue value="95.82"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2013-06"></generic:ObsDimension>
+                <generic:ObsValue value="96.88"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2013-07"></generic:ObsDimension>
+                <generic:ObsValue value="96.85"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2013-08"></generic:ObsDimension>
+                <generic:ObsValue value="97.59"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2013-09"></generic:ObsDimension>
+                <generic:ObsValue value="97.61"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2013-10"></generic:ObsDimension>
+                <generic:ObsValue value="98.07"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2013-11"></generic:ObsDimension>
+                <generic:ObsValue value="98.08"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2013-12"></generic:ObsDimension>
+                <generic:ObsValue value="98.94"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2014-01"></generic:ObsDimension>
+                <generic:ObsValue value="98.97"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2014-02"></generic:ObsDimension>
+                <generic:ObsValue value="99.17"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2014-03"></generic:ObsDimension>
+                <generic:ObsValue value="99.83"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2014-04"></generic:ObsDimension>
+                <generic:ObsValue value="99.63"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2014-05"></generic:ObsDimension>
+                <generic:ObsValue value="99.19"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2014-06"></generic:ObsDimension>
+                <generic:ObsValue value="98.69"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2014-07"></generic:ObsDimension>
+                <generic:ObsValue value="98.43"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2014-08"></generic:ObsDimension>
+                <generic:ObsValue value="98.04"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2014-09"></generic:ObsDimension>
+                <generic:ObsValue value="97.07"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2014-10"></generic:ObsDimension>
+                <generic:ObsValue value="96.68"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2014-11"></generic:ObsDimension>
+                <generic:ObsValue value="96.63"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2014-12"></generic:ObsDimension>
+                <generic:ObsValue value="97.01"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2015-01"></generic:ObsDimension>
+                <generic:ObsValue value="94.83"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2015-02"></generic:ObsDimension>
+                <generic:ObsValue value="93.71"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2015-03"></generic:ObsDimension>
+                <generic:ObsValue value="91.99"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2015-04"></generic:ObsDimension>
+                <generic:ObsValue value="91.36"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2015-05"></generic:ObsDimension>
+                <generic:ObsValue value="92.58"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2015-06"></generic:ObsDimension>
+                <generic:ObsValue value="93.24"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2015-07"></generic:ObsDimension>
+                <generic:ObsValue value="92.7"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2015-08"></generic:ObsDimension>
+                <generic:ObsValue value="94.19"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2015-09"></generic:ObsDimension>
+                <generic:ObsValue value="95"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2015-10"></generic:ObsDimension>
+                <generic:ObsValue value="94.73"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2015-11"></generic:ObsDimension>
+                <generic:ObsValue value="93.08"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2015-12"></generic:ObsDimension>
+                <generic:ObsValue value="94.16"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2016-01"></generic:ObsDimension>
+                <generic:ObsValue value="95.02"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2016-02"></generic:ObsDimension>
+                <generic:ObsValue value="95.74"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2016-03"></generic:ObsDimension>
+                <generic:ObsValue value="95.1"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2016-04"></generic:ObsDimension>
+                <generic:ObsValue value="95.49"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2016-05"></generic:ObsDimension>
+                <generic:ObsValue value="95.76"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2016-06"></generic:ObsDimension>
+                <generic:ObsValue value="95.51"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2016-07"></generic:ObsDimension>
+                <generic:ObsValue value="95.29"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2016-08"></generic:ObsDimension>
+                <generic:ObsValue value="95.49"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2016-09"></generic:ObsDimension>
+                <generic:ObsValue value="95.64"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2016-10"></generic:ObsDimension>
+                <generic:ObsValue value="95.46"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2016-11"></generic:ObsDimension>
+                <generic:ObsValue value="95.31"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2016-12"></generic:ObsDimension>
+                <generic:ObsValue value="94.81"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2017-01"></generic:ObsDimension>
+                <generic:ObsValue value="94.98"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2017-02"></generic:ObsDimension>
+                <generic:ObsValue value="94.55"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2017-03"></generic:ObsDimension>
+                <generic:ObsValue value="94.74"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2017-04"></generic:ObsDimension>
+                <generic:ObsValue value="94.53"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2017-05"></generic:ObsDimension>
+                <generic:ObsValue value="95.73"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2017-06"></generic:ObsDimension>
+                <generic:ObsValue value="96.17"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2017-07"></generic:ObsDimension>
+                <generic:ObsValue value="97.14"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2017-08"></generic:ObsDimension>
+                <generic:ObsValue value="98.01"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2017-09"></generic:ObsDimension>
+                <generic:ObsValue value="98.05"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2017-10"></generic:ObsDimension>
+                <generic:ObsValue value="97.93"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2017-11"></generic:ObsDimension>
+                <generic:ObsValue value="97.97"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2017-12"></generic:ObsDimension>
+                <generic:ObsValue value="98.14"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2018-01"></generic:ObsDimension>
+                <generic:ObsValue value="98.5"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2018-02"></generic:ObsDimension>
+                <generic:ObsValue value="98.68"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2018-03"></generic:ObsDimension>
+                <generic:ObsValue value="98.8"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2018-04"></generic:ObsDimension>
+                <generic:ObsValue value="98.8"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2018-05"></generic:ObsDimension>
+                <generic:ObsValue value="98.16"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2018-06"></generic:ObsDimension>
+                <generic:ObsValue value="98.17"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2018-07"></generic:ObsDimension>
+                <generic:ObsValue value="98.96"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2018-08"></generic:ObsDimension>
+                <generic:ObsValue value="99.17"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2018-09"></generic:ObsDimension>
+                <generic:ObsValue value="99.83"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2018-10"></generic:ObsDimension>
+                <generic:ObsValue value="99.25"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2018-11"></generic:ObsDimension>
+                <generic:ObsValue value="98.74"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2018-12"></generic:ObsDimension>
+                <generic:ObsValue value="98.73"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2019-01"></generic:ObsDimension>
+                <generic:ObsValue value="98.36"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2019-02"></generic:ObsDimension>
+                <generic:ObsValue value="98"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2019-03"></generic:ObsDimension>
+                <generic:ObsValue value="97.79"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2019-04"></generic:ObsDimension>
+                <generic:ObsValue value="97.72"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2019-05"></generic:ObsDimension>
+                <generic:ObsValue value="98.14"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2019-06"></generic:ObsDimension>
+                <generic:ObsValue value="98.36"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2019-07"></generic:ObsDimension>
+                <generic:ObsValue value="97.89"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2019-08"></generic:ObsDimension>
+                <generic:ObsValue value="98.41"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2019-09"></generic:ObsDimension>
+                <generic:ObsValue value="98.01"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2019-10"></generic:ObsDimension>
+                <generic:ObsValue value="98.01"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2019-11"></generic:ObsDimension>
+                <generic:ObsValue value="97.7"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2019-12"></generic:ObsDimension>
+                <generic:ObsValue value="97.74"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2020-01"></generic:ObsDimension>
+                <generic:ObsValue value="97.42"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2020-02"></generic:ObsDimension>
+                <generic:ObsValue value="97.09"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2020-03"></generic:ObsDimension>
+                <generic:ObsValue value="99.26"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2020-04"></generic:ObsDimension>
+                <generic:ObsValue value="99.24"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2020-05"></generic:ObsDimension>
+                <generic:ObsValue value="99.28"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2020-06"></generic:ObsDimension>
+                <generic:ObsValue value="99.99"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2020-07"></generic:ObsDimension>
+                <generic:ObsValue value="100.56"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2020-08"></generic:ObsDimension>
+                <generic:ObsValue value="101.59"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2020-09"></generic:ObsDimension>
+                <generic:ObsValue value="101.55"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2020-10"></generic:ObsDimension>
+                <generic:ObsValue value="101.47"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2020-11"></generic:ObsDimension>
+                <generic:ObsValue value="100.95"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2020-12"></generic:ObsDimension>
+                <generic:ObsValue value="101.59"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2021-01"></generic:ObsDimension>
+                <generic:ObsValue value="101.32"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2021-02"></generic:ObsDimension>
+                <generic:ObsValue value="100.9"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2021-03"></generic:ObsDimension>
+                <generic:ObsValue value="100.93"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2021-04"></generic:ObsDimension>
+                <generic:ObsValue value="101.15"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2021-05"></generic:ObsDimension>
+                <generic:ObsValue value="101.31"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2021-06"></generic:ObsDimension>
+                <generic:ObsValue value="100.91"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2021-07"></generic:ObsDimension>
+                <generic:ObsValue value="100.61"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2021-08"></generic:ObsDimension>
+                <generic:ObsValue value="100.38"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2021-09"></generic:ObsDimension>
+                <generic:ObsValue value="100.36"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2021-10"></generic:ObsDimension>
+                <generic:ObsValue value="99.94"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2021-11"></generic:ObsDimension>
+                <generic:ObsValue value="99.59"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2021-12"></generic:ObsDimension>
+                <generic:ObsValue value="99.63"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2022-01"></generic:ObsDimension>
+                <generic:ObsValue value="99.35"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2022-02"></generic:ObsDimension>
+                <generic:ObsValue value="99.48"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2022-03"></generic:ObsDimension>
+                <generic:ObsValue value="99.27"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2022-04"></generic:ObsDimension>
+                <generic:ObsValue value="98.32"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2022-05"></generic:ObsDimension>
+                <generic:ObsValue value="98.39"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2022-06"></generic:ObsDimension>
+                <generic:ObsValue value="98.61"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2022-07"></generic:ObsDimension>
+                <generic:ObsValue value="97.61"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2022-08"></generic:ObsDimension>
+                <generic:ObsValue value="97.36"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2022-09"></generic:ObsDimension>
+                <generic:ObsValue value="97.61"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2022-10"></generic:ObsDimension>
+                <generic:ObsValue value="98.2"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2022-11"></generic:ObsDimension>
+                <generic:ObsValue value="99.05"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2022-12"></generic:ObsDimension>
+                <generic:ObsValue value="99.91"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2023-01"></generic:ObsDimension>
+                <generic:ObsValue value="100.02"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2023-02"></generic:ObsDimension>
+                <generic:ObsValue value="100.06"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2023-03"></generic:ObsDimension>
+                <generic:ObsValue value="100.3"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2023-04"></generic:ObsDimension>
+                <generic:ObsValue value="101.13"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2023-05"></generic:ObsDimension>
+                <generic:ObsValue value="100.98"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2023-06"></generic:ObsDimension>
+                <generic:ObsValue value="101.49"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2023-07"></generic:ObsDimension>
+                <generic:ObsValue value="102.54"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2023-08"></generic:ObsDimension>
+                <generic:ObsValue value="102.6"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2023-09"></generic:ObsDimension>
+                <generic:ObsValue value="102.28"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2023-10"></generic:ObsDimension>
+                <generic:ObsValue value="102.06"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2023-11"></generic:ObsDimension>
+                <generic:ObsValue value="102.42"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2023-12"></generic:ObsDimension>
+                <generic:ObsValue value="102.32"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2024-01"></generic:ObsDimension>
+                <generic:ObsValue value="102.52"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2024-02"></generic:ObsDimension>
+                <generic:ObsValue value="102.46"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2024-03"></generic:ObsDimension>
+                <generic:ObsValue value="102.92"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2024-04"></generic:ObsDimension>
+                <generic:ObsValue value="102.81"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2024-05"></generic:ObsDimension>
+                <generic:ObsValue value="102.96"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2024-06"></generic:ObsDimension>
+                <generic:ObsValue value="102.89"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2024-07"></generic:ObsDimension>
+                <generic:ObsValue value="103.31"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2024-08"></generic:ObsDimension>
+                <generic:ObsValue value="103.41"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2024-09"></generic:ObsDimension>
+                <generic:ObsValue value="103.37"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2024-10"></generic:ObsDimension>
+                <generic:ObsValue value="103.05"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2024-11"></generic:ObsDimension>
+                <generic:ObsValue value="102.68"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2024-12"></generic:ObsDimension>
+                <generic:ObsValue value="102.31"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+            <generic:Obs>
+                <generic:ObsDimension value="2025-01"></generic:ObsDimension>
+                <generic:ObsValue value="102.09"></generic:ObsValue>
+                <generic:Attributes>
+                    <generic:Value id="OBS_STATUS" value="A"></generic:Value>
+                    <generic:Value id="OBS_CONF" value="F"></generic:Value>
+                </generic:Attributes>
+            </generic:Obs>
+        </generic:Series>
+    </message:DataSet>
+</message:GenericData>
