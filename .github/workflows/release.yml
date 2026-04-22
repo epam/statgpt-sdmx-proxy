@@ -51,8 +51,9 @@ jobs:
         with:
           dependency-graph: generate-and-submit # Default value is 'generate-submit-and-upload', but we don't need job artifacts here
         env:
-          GPR_USERNAME: ${{ github.actor }}
-          GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          # PAT is used temporarily
+          GPR_USERNAME: ${{ secrets.GPR_USERNAME }}
+          GPR_PASSWORD: ${{ secrets.GPR_PASSWORD }}
 
   calculate_version:
     runs-on: ubuntu-24.04
