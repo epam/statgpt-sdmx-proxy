@@ -14,6 +14,7 @@ import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.common.utils.FormatSupportChecker;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
+import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
@@ -24,6 +25,7 @@ import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversi
 import com.epam.sdmxproxy.services.cache.CacheKeyGenerator;
 import com.epam.sdmxproxy.services.cache.CacheService;
 import com.epam.sdmxproxy.services.fixture.availability.AvailabilityFixtureService;
+import com.epam.sdmxproxy.services.fixture.data.DataFixtureService;
 import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
 import com.epam.sdmxproxy.services.translator.QueryTranslator;
 import feign.FeignException;
@@ -51,6 +53,7 @@ public class AdapterRouterImpl implements AdapterRouter {
     private final CacheService cacheService;
     private final StructureFixtureService fixtureService;
     private final AvailabilityFixtureService availabilityFixtureService;
+    private final DataFixtureService dataFixtureService;
 
     @Nullable
     private static List<FixtureConfiguration<AvailabilityFixtureType>> getFixtureConfigurations(TranslatedAvailabilityQuery query) {
@@ -181,9 +184,15 @@ public class AdapterRouterImpl implements AdapterRouter {
         // CONVERSION: use returnFormat from query (determined by QueryTranslator) and convert
         log.debug("Converting data from {} to {}", returnFormat, requestedMediaType);
         return outputStream -> {
-            try (InputStream inputStream = genericRegistryAdapter.getData(query)) {
-                SdmxBeans sdmxBeans = getSdmxBeans(getStructureQuery(query));
-
+            DataEndpointConfiguration dataConfig = versionConfig.getDataEndpointConfig();
+            SdmxBeans sdmxBeans = getSdmxBeans(getStructureQuery(query));
+            try (InputStream raw = genericRegistryAdapter.getData(query);
+                 InputStream inputStream = dataFixtureService.applyFixtures(
+                         raw,
+                         returnFormat,
+                         sdmxBeans,
+                         dataConfig != null ? dataConfig.getFixtures() : null
+                 )) {
                 streamingDataConversionService.convert(
                         inputStream,
                         outputStream,

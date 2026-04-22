@@ -29,7 +29,13 @@
             ],
             "defaultFormat": "JSON_1_0_0",
             "bypassEnabled": false,
-            "mergeAllWildcardKey": true
+            "mergeAllWildcardKey": true,
+            "fixtures": [
+              {
+                "type": "TIME_PERIOD_MONTHLY_NORMALIZATION",
+                "config": {}
+              }
+            ]
           },
           "availabilityEndpointConfig": {
             "url": "https://stats.bis.org/api/v2/availability/",

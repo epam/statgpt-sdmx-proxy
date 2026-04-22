@@ -89,6 +89,7 @@ dependencies {
     implementation 'org.threeten:threetenbp:1.6.8'
     implementation 'org.json:json:20240303'
     implementation("commons-io:commons-io:2.21.0")
+    implementation("com.opencsv:opencsv:5.12.0")
 
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
