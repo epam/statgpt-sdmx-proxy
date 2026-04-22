@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   test:
-    uses: epam/ai-dial-ci/.github/workflows/java_test.yml@3.2.0
+    uses: epam/ai-dial-ci/.github/workflows/java_test.yml@4.0.0
     secrets: inherit
     permissions:
       contents: read
