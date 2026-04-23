@@ -48,6 +48,9 @@ on:
         description: Overrides jobs runs-on settings (json-encoded list)
         default: '["ubuntu-24.04"]'
 
+permissions:
+  contents: read
+
 jobs:
   style_checks:
     if: ${{ inputs.style-checks-enabled }}
