@@ -20,6 +20,7 @@ configurations {
     // Exclude default Logback to use Log4j2
     all {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+        exclude group: 'ch.qos.logback'
     }
 }
 
@@ -39,6 +40,7 @@ repositories {
 }
 
 ext['jackson-bom.version'] = '3.1.1'
+ext['tomcat.version'] = '11.0.21'
 
 dependencies {
     implementation project(':sdmx-proxy-config')
