@@ -1,0 +1,109 @@
+name: Tests
+
+on:
+  workflow_call:
+    inputs:
+      bypass-checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if checks failed
+      style-checks-enabled:
+        type: boolean
+        default: true
+        description: Enable style_checks
+      style-checks-bypassed:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if style_checks failed
+      code-checks-enabled:
+        type: boolean
+        default: true
+        description: Enable code_checks
+      code-checks-bypassed:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if code_checks failed
+      ort-enabled:
+        type: boolean
+        default: true
+        description: Enable ORT scanning
+      ort-bypassed:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if ORT scan failed
+      ort-version:
+        type: string
+        default: "latest"
+        description: ORT version to use
+      java-version:
+        type: string
+        default: "17"
+        description: Java version to use
+      java-distribution:
+        type: string
+        default: "temurin"
+        description: Java distribution to use
+      runs-on:
+        type: string
+        description: Overrides jobs runs-on settings (json-encoded list)
+        default: '["ubuntu-24.04"]'
+
+jobs:
+  style_checks:
+    if: ${{ inputs.style-checks-enabled }}
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: true
+      - uses: epam/ai-dial-ci/actions/java_prepare@3.2.0
+        with:
+          java-version: ${{ inputs.java-version }}
+          java-distribution: ${{ inputs.java-distribution }}
+      - name: Test
+        continue-on-error: ${{ inputs.bypass-checks || inputs.style-checks-bypassed }}
+        shell: bash
+        env:
+          # PAT is used temporarily
+          GPR_USERNAME: ${{ secrets.GPR_USERNAME }}
+          GPR_PASSWORD: ${{ secrets.GPR_PASSWORD }}
+        run: |
+          ./gradlew checkstyleMain
+
+  code_checks:
+    if: ${{ inputs.code-checks-enabled }}
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: true
+      - uses: epam/ai-dial-ci/actions/java_prepare@3.2.0
+        with:
+          java-version: ${{ inputs.java-version }}
+          java-distribution: ${{ inputs.java-distribution }}
+      - name: Test
+        continue-on-error: ${{ inputs.bypass-checks || inputs.code-checks-bypassed }}
+        shell: bash
+        env:
+          # PAT is used temporarily
+          GPR_USERNAME: ${{ secrets.GPR_USERNAME }}
+          GPR_PASSWORD: ${{ secrets.GPR_PASSWORD }}
+        run: |
+          ./gradlew check || { echo "::error::Tests failed" && exit 1; } # TODO: figure out why we need to capture exit code
+
+  ort:
+    if: ${{ inputs.ort-enabled }}
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: true
+      - uses: oss-review-toolkit/ort-ci-github-action@9acdf1e56f1b42972b12274ae56c35bf70a5f65b # v1.0.1
+        env:
+          CONTINUE_ON_ERROR: ${{ inputs.bypass-checks || inputs.ort-bypassed }} # Hack to use the input below as a boolean
+        with:
+          image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort-version }}"
+          allow-dynamic-versions: "true"
+          fail-on: "violations"
+          ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Gradle"
+        continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
