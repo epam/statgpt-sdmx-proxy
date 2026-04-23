@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   test:
-    uses: epam/ai-dial-ci/.github/workflows/java_test.yml@3.2.0
+    uses: ./.github/workflows/test.yml
     secrets: inherit
     permissions:
       contents: read
@@ -140,8 +140,9 @@ jobs:
           trivy-severity: "CRITICAL,HIGH"
           trivy-severity-for-sarif: "CRITICAL,HIGH"
           trivy-limit-severities-for-sarif: true
-          gpr-username: ${{ github.actor }}
-          gpr-password: ${{ secrets.GITHUB_TOKEN }}
+          # PAT is used temporarily
+          gpr-username: ${{ secrets.GPR_USERNAME }}
+          gpr-password: ${{ secrets.GPR_PASSWORD }}
           platforms: "linux/amd64"
           image-extra-aliases: |
             ghcr.io/${{ matrix.image-name }}:${{ needs.calculate_version.outputs.next-version }}
