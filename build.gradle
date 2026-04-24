@@ -3,7 +3,7 @@
 var mavenProxy = findProperty('MAVEN_PROXY_CONFIG') ?: System.getenv('MAVEN_PROXY_CONFIG') ?: "MavenCentral"
 
 allprojects {
-    version = '0.1.0'
+    version = rootProject.version
     group = 'com.epam'
 
     apply from: "$rootDir/gradle/Common.gradle"
@@ -17,6 +17,22 @@ configure(subprojects.findAll { it.name != 'sdmx-proxy-e2e' }) {
     checkstyle {
         configFile = rootProject.file('checkstyle/checkstyle.xml')
         ignoreFailures = true
+    }
+}
+
+// Force vulnerable transitive dependencies to patched versions.
+// Covers CVEs flagged by the Dependency Review workflow that are not
+// managed by the Spring Boot BOM (those are pinned via ext[...] in each module).
+subprojects {
+    configurations.all {
+        resolutionStrategy {
+            force "commons-beanutils:commons-beanutils:${commons_beanutils_version}"
+            force "org.codehaus.plexus:plexus-utils:${plexus_utils_version}"
+            force "org.apache.commons:commons-compress:${commons_compress_version}"
+            force "org.apache.commons:commons-lang3:${commons_lang3_version}"
+            force "com.jayway.jsonpath:json-path:${json_path_version}"
+            force "net.minidev:json-smart:${json_smart_version}"
+        }
     }
 }
 
