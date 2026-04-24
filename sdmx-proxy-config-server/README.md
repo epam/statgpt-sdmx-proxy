@@ -22,7 +22,35 @@ Runs on port **8060** by default.
 | `CONFIG_SERVER_SOURCE_CONFIG_PATH` | No                                                | Path to the config file (filesystem path or Dial Storage object path) |                              | `config/sdmx_registries_config.json`  |
 | `DIAL_STORAGE_BASE_URL`           | Yes, if `$CONFIG_SERVER_SOURCE_TYPE=DIAL_STORAGE` | Base URL for the Dial Storage API                                     |                              | `http://localhost:9000`               |
 | `DIAL_STORAGE_API_KEY`            | Yes, if `$CONFIG_SERVER_SOURCE_TYPE=DIAL_STORAGE` | API key for Dial Storage authentication                               |                              | (empty)                               |
+| `CONFIG_SERVER_FORCE_SEED`        | No                                                | If `true`, overwrite stored configuration from the bundled classpath default on startup (`DIAL_STORAGE` only; hard-fails otherwise). See "Forced reseed" below. | `true`, `false`              | `false`                               |
 | `FEIGN_LOG_LEVEL`                 | No                                                | Feign HTTP client log level for the Dial Storage client               | `NONE`, `BASIC`, `HEADERS`, `FULL` |                                 |
+
+### Forced reseed
+
+`CONFIG_SERVER_FORCE_SEED=true` forces the config server to overwrite whatever is in Dial
+Storage with the bundled `sdmx_registries_config.json` on every startup while the flag is
+set. Use this to push an updated bundled configuration into an existing environment.
+
+**Recommended deploy flow:**
+
+1. Set `CONFIG_SERVER_FORCE_SEED=true` in the deployment manifest for the next rollout.
+2. After the deployment is healthy, flip the variable back to `false` (or remove it) and
+   redeploy.
+
+**Footguns:**
+
+- **Every restart while the flag is on wipes the stored configuration**, including any
+  manual changes made via `POST /config` or directly in Dial Storage. A WARN-level log is
+  emitted on every startup while the flag is on to make "we forgot to unset it" visible
+  in alerting.
+- The flag only applies to `CONFIG_SERVER_SOURCE_TYPE=DIAL_STORAGE`. With any other
+  source type the server will fail to start — the filesystem file is the source of truth
+  in filesystem mode, so "reseed from classpath" has no meaning there.
+- A forced reseed discards any environment-specific overrides that are not part of the
+  bundled default.
+- If the forced reseed itself fails (bundled resource missing, validation error, Dial
+  Storage write error), startup aborts — the pod will crashloop until the flag is
+  cleared or the underlying failure is fixed.
 
 ### OpenTelemetry
 

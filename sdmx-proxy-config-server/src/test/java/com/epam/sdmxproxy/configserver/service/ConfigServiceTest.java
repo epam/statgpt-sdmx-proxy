@@ -11,8 +11,10 @@ import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguratio
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -21,11 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -117,6 +121,65 @@ class ConfigServiceTest {
         ConfigService service = new ConfigService(configExtractor, configWriter, configValidator, objectMapper);
         service.init();
 
+        assertFalse(service.isStorageAvailable());
+        assertNull(service.getConfiguration());
+    }
+
+    @Test
+    void forceSeedOverwritesExistingConfig() {
+        when(configExtractor.sourceType()).thenReturn(ConfigSourceType.DIAL_STORAGE);
+
+        ConfigService service = new ConfigService(configExtractor, configWriter, configValidator, objectMapper);
+        ReflectionTestUtils.setField(service, "forceSeed", true);
+        service.init();
+
+        ArgumentCaptor<ProxyConfiguration> captor = ArgumentCaptor.forClass(ProxyConfiguration.class);
+        verify(configWriter).writeConfig(captor.capture());
+        ProxyConfiguration written = captor.getValue();
+        assertNotNull(written.getConfigs());
+        assertFalse(written.getConfigs().isEmpty());
+        assertNotNull(written.getAgencies());
+        assertFalse(written.getAgencies().isEmpty());
+        assertEquals(written, service.getConfiguration());
+        assertTrue(service.isStorageAvailable());
+    }
+
+    @Test
+    void forceSeedIsNoOpWhenFlagDisabled() {
+        ProxyConfiguration existing = validConfig();
+        when(configExtractor.getConfiguration()).thenReturn(existing);
+
+        ConfigService service = new ConfigService(configExtractor, configWriter, configValidator, objectMapper);
+        ReflectionTestUtils.setField(service, "forceSeed", false);
+        service.init();
+
+        assertEquals(existing, service.getConfiguration());
+        assertTrue(service.isStorageAvailable());
+        verify(configWriter, never()).writeConfig(any());
+    }
+
+    @Test
+    void forceSeedThrowsOnFilesystemMode() {
+        when(configExtractor.sourceType()).thenReturn(ConfigSourceType.FILESYSTEM);
+
+        ConfigService service = new ConfigService(configExtractor, configWriter, configValidator, objectMapper);
+        ReflectionTestUtils.setField(service, "forceSeed", true);
+
+        assertThrows(IllegalStateException.class, service::init);
+        verifyNoInteractions(configWriter);
+        assertFalse(service.isStorageAvailable());
+        assertNull(service.getConfiguration());
+    }
+
+    @Test
+    void forceSeedPropagatesWriterFailure() {
+        when(configExtractor.sourceType()).thenReturn(ConfigSourceType.DIAL_STORAGE);
+        doThrow(new IllegalStateException("write failed")).when(configWriter).writeConfig(any());
+
+        ConfigService service = new ConfigService(configExtractor, configWriter, configValidator, objectMapper);
+        ReflectionTestUtils.setField(service, "forceSeed", true);
+
+        assertThrows(IllegalStateException.class, service::init);
         assertFalse(service.isStorageAvailable());
         assertNull(service.getConfiguration());
     }
