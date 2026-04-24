@@ -90,6 +90,35 @@ class GenericRegistryAdapterImplTest {
     }
 
     @Test
+    void getAvailability_unwrapFalse_multipleValuesPerComponent_commaJoinedIntoOneParam() {
+        // SDMX-REST 2.2.0: c[X] may appear at most once per Component; multiple values are
+        // comma-joined (OR). Repeated c[X]=A&c[X]=B is a spec violation and BIS silently
+        // keeps only the first occurrence. Outbound side must always comma-join.
+        MultiValueMap<String, String> filters = new LinkedMultiValueMap<>();
+        filters.put("REF_AREA", List.of("AE", "AR", "AT"));
+        filters.add("FREQ", "M");
+        TranslatedAvailabilityQuery query = buildQuery(filters, false);
+
+        adapter.getAvailability(query);
+
+        MultiValueMap<String, String> capturedFilters = captureFilters();
+        assertEquals(List.of("AE,AR,AT"), capturedFilters.get("c[REF_AREA]"));
+        assertEquals(List.of("M"), capturedFilters.get("c[FREQ]"));
+    }
+
+    @Test
+    void getAvailability_unwrapTrue_multipleValuesPerComponent_commaJoinedIntoOneParam() {
+        MultiValueMap<String, String> filters = new LinkedMultiValueMap<>();
+        filters.put("REF_AREA", List.of("AE", "AR", "AT"));
+        TranslatedAvailabilityQuery query = buildQuery(filters, true);
+
+        adapter.getAvailability(query);
+
+        MultiValueMap<String, String> capturedFilters = captureFilters();
+        assertEquals(List.of("AE,AR,AT"), capturedFilters.get("REF_AREA"));
+    }
+
+    @Test
     void getAvailability_nullAvailabilityConfig_fallsBackToWrapIntoC() {
         MultiValueMap<String, String> filters = new LinkedMultiValueMap<>();
         filters.add("FREQ", "Q");

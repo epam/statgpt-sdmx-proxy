@@ -233,12 +233,32 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
     }
 
     private MultiValueMap<String, String> wrapIntoC(MultiValueMap<String, String> filters) {
-        MultiValueMap<String, String> wrapped = new LinkedMultiValueMap<>();
+        return joinPerComponent(filters, key -> "c[" + key + "]");
+    }
+
+    /**
+     * Builds a {@link MultiValueMap} where each Component id maps to at most one value --
+     * multiple values per Component are OR-joined with ',' as required by SDMX-REST 2.2.0
+     * ({@code sdmx-rest-2.2.0/doc/data.md}): {@code c[X]} may appear at most once per
+     * Component; the spec-compliant forms are {@code c[X]=A,B} (OR) and
+     * {@code c[X]=ge:A+le:B} (AND). Emitting repeated {@code c[X]} (or, on
+     * {@code unwrapFilterParameters=true} endpoints, repeated bare {@code X}) is a spec
+     * violation: BIS silently keeps only the first occurrence and drops the rest.
+     */
+    private static MultiValueMap<String, String> joinPerComponent(
+            MultiValueMap<String, String> filters,
+            java.util.function.UnaryOperator<String> keyTransform
+    ) {
+        MultiValueMap<String, String> out = new LinkedMultiValueMap<>();
         if (MapUtils.isEmpty(filters)) {
-            return wrapped;
+            return out;
         }
-        filters.forEach((key, values) -> wrapped.addAll("c[" + key + "]", values));
-        return wrapped;
+        filters.forEach((key, values) -> {
+            if (values != null && !values.isEmpty()) {
+                out.add(keyTransform.apply(key), String.join(",", values));
+            }
+        });
+        return out;
     }
 
     private String formatInstant(Instant instant) {
@@ -272,7 +292,9 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
                                                                       RegistrySelectionResult selectedRegistry) {
         AvailabilityEndpointConfiguration availabilityConfig = selectedRegistry.getVersionConfiguration().getAvailabilityEndpointConfig();
         if (availabilityConfig != null && availabilityConfig.isUnwrapFilterParameters()) {
-            return filters != null ? filters : new LinkedMultiValueMap<>();
+            // Unwrap: bare `X=A,B` (no c[] prefix). Must still comma-join per Component --
+            // the repeated-param spec violation applies equally to this shape.
+            return joinPerComponent(filters, java.util.function.UnaryOperator.identity());
         }
         return wrapIntoC(filters);
     }

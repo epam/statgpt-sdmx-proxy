@@ -1,0 +1,105 @@
+@startuml Heuristic Limit Emulation - Architecture
+
+title Heuristic Limit Emulation - Component View
+
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+
+package "sdmx-proxy (existing)" {
+  [DataQuery30Controller] as ctrl
+  [QueryTranslatorImpl] as qt
+  [AdapterRouterImpl] as router
+  [GenericRegistryAdapterImpl] as adapter
+  [AvailabilityFixtureService] as availfixtures
+  [DataFixtureService] as datafixtures
+  [StreamingDataConversionService] as convert
+  [DimensionService] as dims
+}
+
+package "sdmx-proxy: services.limit (new)" #LightGreen {
+  [LimitEmulationService\n(getShrunkQuery)] as svc
+  [AvailabilityProber\n<<callback>>] as prober
+  [AvailabilityResponseParser] as parser
+  [FilterShrinker] as shrinker
+  [KeyParser] as keyparser
+  [AvailabilityProjection\n<<record>>] as projection
+
+  package "truncate" {
+    [SeriesLimitTruncatorProvider] as provider
+    [JsonDataV10SeriesLimitTruncator] as json10
+    [JsonDataV20SeriesLimitTruncator] as json20
+    [CsvSeriesLimitTruncator] as csv
+    [XmlSeriesLimitTruncator] as xml
+  }
+}
+
+package "sdmx-proxy-config (modified)" {
+  [DataEndpointConfiguration\n+supportsLimit: boolean\n+limitEmulationTolerance: double\n+limitEmulationMaxShrinkIterations: int] as cfg
+}
+
+cloud "Upstream registry\n(BIS, IMF, ...)" as bis
+
+ctrl --> qt : translateDataQuery
+ctrl --> router : getData
+qt ..> cfg : reads
+
+router --> svc : getShrunkQuery\n(if !supportsLimit && limit != null)
+router --> adapter : getData(passthrough OR shrunkQuery)
+router --> provider : forFormat(returnFormat)
+router --> datafixtures : applyFixtures (on truncated stream)
+router --> convert
+
+svc ..> prober : probe(availabilityQuery)
+prober ..> adapter : delegated by router\n(genericRegistryAdapter::getAvailability)
+svc --> availfixtures : applyFixtures (each probe)
+svc --> parser : parse projection
+svc --> shrinker : decide next shrink
+svc --> keyparser : parseKey / buildKey (2.1 path)
+svc --> dims : getTimeDimensionId (excluded from shrink)
+shrinker ..> projection : reads
+parser ..> projection : produces
+
+provider --> json10 : JSON_1_0_0
+provider --> json20 : JSON_DATA_2_0_0
+provider --> csv : CSV_DATA_2_0_0
+provider --> xml : XML_GENERICDATA_2_1\nXML_STRUCTURE_SPECIFIC_2_1
+
+adapter --> bis
+
+note right of svc
+  Returns a modified TranslatedDataQuery
+  with .limit(null) and either
+  c[] filters narrowed (3.0)
+  or positional key narrowed (2.1).
+  Never calls GenericRegistryAdapter
+  directly -- probes flow through
+  AvailabilityProber callback.
+end note
+
+note right of router
+  Owns every call to GenericRegistryAdapter:
+   1. getShrunkQuery (with prober callback)
+   2. adapter.getData(shrunkQuery)
+   3. truncatorProvider.truncate(raw, n, beans)
+   4. dataFixtureService.applyFixtures
+   5. streamingDataConversionService.convert
+end note
+
+note right of shrinker
+  Pure function.
+  Picks dim d = argmax(size(A_d))
+  Excludes time dimension and
+  dims already at 1 value.
+  Signature takes projection + target
+  + timeDimId; NOT current filters.
+end note
+
+note bottom of provider
+  Lookup-by-format. No metrics,
+  no startup validator -- if a
+  registry's defaultFormat has
+  no truncator, the first request
+  fails loudly with a clear message.
+end note
+
+@enduml

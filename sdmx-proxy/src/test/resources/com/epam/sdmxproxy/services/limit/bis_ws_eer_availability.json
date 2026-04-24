@@ -1,0 +1,147 @@
+{
+    "meta": {
+        "id": "IREF244565",
+        "test": false,
+        "schema": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+        "prepared": "2026-04-24T09:54:17Z",
+        "contentLanguages": [
+            "en"
+        ],
+        "sender": {
+            "id": "FusionRegistry"
+        }
+    },
+    "data": {
+        "dataConstraints": [
+            {
+                "links": [
+                    {
+                        "rel": "self",
+                        "type": "dataconstraint",
+                        "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+                        "urn": "urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:33D4F7E2-FC7C-4D2B-AE51-C648F253170B(1.0)"
+                    }
+                ],
+                "id": "33D4F7E2-FC7C-4D2B-AE51-C648F253170B",
+                "annotations": [
+                    {
+                        "id": "series_count",
+                        "title": "271",
+                        "type": "sdmx_metrics"
+                    }
+                ],
+                "name": "Effective exchange rates",
+                "names": {
+                    "en": "Effective exchange rates"
+                },
+                "version": "1.0",
+                "agencyID": "BIS",
+                "isExternalReference": false,
+                "isFinal": false,
+                "role": "Actual",
+                "constraintAttachment": {
+                    "dataflows": [
+                        "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=BIS:WS_EER(1.0)"
+                    ]
+                },
+                "cubeRegions": [
+                    {
+                        "include": true,
+                        "keyValues": [
+                            {
+                                "id": "REF_AREA",
+                                "values": [
+                                    {"value": "AE"},
+                                    {"value": "AR"},
+                                    {"value": "AT"},
+                                    {"value": "AU"},
+                                    {"value": "BA"},
+                                    {"value": "BE"},
+                                    {"value": "BG"},
+                                    {"value": "BR"},
+                                    {"value": "CA"},
+                                    {"value": "CH"},
+                                    {"value": "CL"},
+                                    {"value": "CN"},
+                                    {"value": "CO"},
+                                    {"value": "CY"},
+                                    {"value": "CZ"},
+                                    {"value": "DE"},
+                                    {"value": "DK"},
+                                    {"value": "DZ"},
+                                    {"value": "EE"},
+                                    {"value": "ES"},
+                                    {"value": "FI"},
+                                    {"value": "FR"},
+                                    {"value": "GB"},
+                                    {"value": "GR"},
+                                    {"value": "HK"},
+                                    {"value": "HR"},
+                                    {"value": "HU"},
+                                    {"value": "ID"},
+                                    {"value": "IE"},
+                                    {"value": "IL"},
+                                    {"value": "IN"},
+                                    {"value": "IS"},
+                                    {"value": "IT"},
+                                    {"value": "JP"},
+                                    {"value": "KR"},
+                                    {"value": "LT"},
+                                    {"value": "LU"},
+                                    {"value": "LV"},
+                                    {"value": "MA"},
+                                    {"value": "MK"},
+                                    {"value": "MT"},
+                                    {"value": "MX"},
+                                    {"value": "MY"},
+                                    {"value": "NL"},
+                                    {"value": "NO"},
+                                    {"value": "NZ"},
+                                    {"value": "PE"},
+                                    {"value": "PH"},
+                                    {"value": "PL"},
+                                    {"value": "PT"},
+                                    {"value": "RO"},
+                                    {"value": "RS"},
+                                    {"value": "RU"},
+                                    {"value": "SA"},
+                                    {"value": "SE"},
+                                    {"value": "SG"},
+                                    {"value": "SI"},
+                                    {"value": "SK"},
+                                    {"value": "TH"},
+                                    {"value": "TR"},
+                                    {"value": "TW"},
+                                    {"value": "US"},
+                                    {"value": "XM"},
+                                    {"value": "ZA"}
+                                ]
+                            },
+                            {
+                                "id": "FREQ",
+                                "values": [
+                                    {"value": "D"},
+                                    {"value": "M"}
+                                ]
+                            },
+                            {
+                                "id": "EER_TYPE",
+                                "values": [
+                                    {"value": "N"},
+                                    {"value": "R"}
+                                ]
+                            },
+                            {
+                                "id": "EER_BASKET",
+                                "values": [
+                                    {"value": "B"},
+                                    {"value": "N"}
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

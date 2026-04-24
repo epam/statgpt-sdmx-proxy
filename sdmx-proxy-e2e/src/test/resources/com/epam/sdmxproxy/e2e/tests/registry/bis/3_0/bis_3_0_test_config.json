@@ -206,6 +206,20 @@
       "JSON_1_0_0"
     ]
   },
+  "limitTestSuitConfiguration": {
+    "urn": "BIS:WS_EER(1.0)",
+    "key": "*",
+    "filters": {},
+    "limit": 10,
+    "firstNObservations": 1,
+    "mediaType": "application/vnd.sdmx.data+json;version=2.0.0",
+    "registryReturnFormats": [
+      "JSON_1_0_0",
+      "CSV_DATA_2_0_0",
+      "XML_GENERICDATA_2_1",
+      "XML_STRUCTURE_SPECIFIC_2_1"
+    ]
+  },
   "availabilityTestSuitConfiguration": {
     "dataflowConfigs": [
       {
