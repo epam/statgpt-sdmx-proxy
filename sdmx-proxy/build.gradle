@@ -1,8 +1,8 @@
 plugins {
     id 'java'
 
-    id 'org.springframework.boot' version '4.0.5'
-    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.springframework.boot' version "${spring_boot_version}"
+    id 'io.spring.dependency-management' version "${spring_dependency_management_version}"
 }
 
 description = 'SDMX API Proxy'
@@ -39,8 +39,10 @@ repositories {
     }
 }
 
-ext['jackson-bom.version'] = '3.1.1'
-ext['tomcat.version'] = '11.0.21'
+ext['jackson-bom.version'] = jackson_bom_version
+ext['tomcat.version'] = tomcat_version
+ext['log4j2.version'] = log4j2_version
+ext['commons-lang3.version'] = commons_lang3_version
 
 dependencies {
     implementation project(':sdmx-proxy-config')
@@ -91,17 +93,17 @@ dependencies {
     }
 
     //------SDMX CORE dependencies start----
-    implementation("org.codehaus.jettison:jettison:1.5.4")
-    implementation("com.fasterxml.woodstox:woodstox-core:7.1.1")
-    implementation("it.unimi.dsi:fastutil-core:8.5.18")
-    implementation("com.esotericsoftware:kryo:5.6.2")
+    implementation("org.codehaus.jettison:jettison:${jettison_version}")
+    implementation("com.fasterxml.woodstox:woodstox-core:${woodstox_core_version}")
+    implementation("it.unimi.dsi:fastutil-core:${fastutil_core_version}")
+    implementation("com.esotericsoftware:kryo:${kryo_version}")
     //------SDMX CORE dependencies end------
 
-    implementation("org.apache.xmlbeans:xmlbeans:3.0.0")
-    implementation 'org.threeten:threetenbp:1.6.8'
-    implementation 'org.json:json:20240303'
-    implementation("commons-io:commons-io:2.21.0")
-    implementation("com.opencsv:opencsv:5.12.0")
+    implementation("org.apache.xmlbeans:xmlbeans:${xmlbeans_version}")
+    implementation("org.threeten:threetenbp:${threetenbp_version}")
+    implementation("org.json:json:${json_version}")
+    implementation("commons-io:commons-io:${commons_io_version}")
+    implementation("com.opencsv:opencsv:${opencsv_version}")
 
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
@@ -123,8 +125,8 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-ratelimiter:${resilience4j_version}")
     implementation("io.github.resilience4j:resilience4j-feign:${resilience4j_version}")
 
-    implementation("org.apache.commons:commons-lang3:${org_apache_commons_commons_lang3_version}")
-    implementation("org.apache.commons:commons-collections4:${org_apache_commons_commons_collections4_version}")
+    implementation("org.apache.commons:commons-lang3:${commons_lang3_version}")
+    implementation("org.apache.commons:commons-collections4:${commons_collections4_version}")
 
     // Caching dependencies
     implementation("com.github.ben-manes.caffeine:caffeine:${caffeine_version}")
@@ -136,17 +138,17 @@ dependencies {
     implementation("com.google.cloud:google-cloud-iamcredentials:${gcp_iamcredentials_version}")
 
     // OpenTelemetry dependencies
-    implementation platform('io.grpc:grpc-bom:1.75.0')
-    implementation platform('io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.26.1')
-    implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:2.26.1'
+    implementation platform("io.grpc:grpc-bom:${grpc_bom_version}")
+    implementation platform("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:${opentelemetry_instrumentation_version}")
+    implementation "io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:${opentelemetry_instrumentation_version}"
     implementation 'io.opentelemetry:opentelemetry-sdk'
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
-    implementation 'io.opentelemetry.instrumentation:opentelemetry-log4j-appender-2.17:2.26.1-alpha'
+    implementation "io.opentelemetry.instrumentation:opentelemetry-log4j-appender-2.17:${opentelemetry_instrumentation_version}-alpha"
     // Required for automatic trace_id/span_id injection into Log4j2 MDC
-    implementation 'io.opentelemetry.instrumentation:opentelemetry-log4j-context-data-2.17-autoconfigure:2.26.1-alpha'
+    implementation "io.opentelemetry.instrumentation:opentelemetry-log4j-context-data-2.17-autoconfigure:${opentelemetry_instrumentation_version}-alpha"
 
     // OpenAPI/Swagger documentation
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1'
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdoc_openapi_version}"
 }
 
 tasks.named('test') {

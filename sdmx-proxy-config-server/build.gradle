@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.5'
-    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.springframework.boot' version "${spring_boot_version}"
+    id 'io.spring.dependency-management' version "${spring_dependency_management_version}"
 }
 
 description = 'SDMX Proxy Config Server'
@@ -27,8 +27,9 @@ repositories {
     mavenCentral()
 }
 
-ext['jackson-bom.version'] = '3.1.1'
-ext['tomcat.version'] = '11.0.21'
+ext['jackson-bom.version'] = jackson_bom_version
+ext['tomcat.version'] = tomcat_version
+ext['log4j2.version'] = log4j2_version
 
 dependencies {
     implementation project(':sdmx-proxy-config')
@@ -51,18 +52,18 @@ dependencies {
     implementation "com.squareup.okhttp3:okhttp:${okhttp_version}"
 
     // OpenTelemetry dependencies
-    implementation platform('io.grpc:grpc-bom:1.75.0')
-    implementation platform('io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.26.1')
-    implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:2.26.1'
+    implementation platform("io.grpc:grpc-bom:${grpc_bom_version}")
+    implementation platform("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:${opentelemetry_instrumentation_version}")
+    implementation "io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:${opentelemetry_instrumentation_version}"
     implementation 'io.opentelemetry:opentelemetry-sdk'
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
-    implementation 'io.opentelemetry.instrumentation:opentelemetry-log4j-appender-2.17:2.26.1-alpha'
+    implementation "io.opentelemetry.instrumentation:opentelemetry-log4j-appender-2.17:${opentelemetry_instrumentation_version}-alpha"
     // Required for automatic trace_id/span_id injection into Log4j2 MDC
-    implementation 'io.opentelemetry.instrumentation:opentelemetry-log4j-context-data-2.17-autoconfigure:2.26.1-alpha'
+    implementation "io.opentelemetry.instrumentation:opentelemetry-log4j-context-data-2.17-autoconfigure:${opentelemetry_instrumentation_version}-alpha"
 
 
     // OpenAPI/Swagger documentation
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1'
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdoc_openapi_version}"
 
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
