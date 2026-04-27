@@ -604,35 +604,121 @@ class QueryTranslatorImplTest {
     }
 
     @Test
-    void testTranslateDataQuery_21_TimeFilterMultipleParams_IMF_WEO_mapsToStartPeriodEndPeriod() {
+    void testTranslateDataQuery_21_DuplicateTimePeriodFilter_throwsFilterValidationException() {
         RegistryConfiguration registryConfig = createRegistryWithSingleVersion("IMF.RES", SdmxVersion.SDMX_2_1);
         ProxyConfiguration config = proxyConfig(List.of(registryConfig));
 
         when(agencyRoutingService.resolveRegistry(eq("IMF.RES"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
-        when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("COUNTRY", "INDICATOR"));
-        when(dimensionService.getTimeDimensionId(any(), anyString(), anyString(), anyString()))
-                .thenReturn("TIME_PERIOD");
-        when(filterTranslator.mergeFiltersIntoKey(anyString(), any(), any())).thenAnswer(inv -> inv.getArgument(0));
 
         MultiValueMap<String, String> c = new LinkedMultiValueMap<>();
         c.add("c[TIME_PERIOD]", "ge:2024-12-31");
         c.add("c[TIME_PERIOD]", "le:2025-01-05");
 
+        FilterValidationException ex = assertThrows(FilterValidationException.class, () ->
+                queryTranslator.translateDataQuery(
+                        "dataflow", "IMF.RES", "WEO", "9.0.0", "USA.NGDP_RPCH.*",
+                        c, null, null, null, null, null, null, null, null, null, false,
+                        "application/xml", sdmxBeans, null
+                )
+        );
+        assertTrue(ex.getMessage().contains("c[TIME_PERIOD]"));
+        assertTrue(ex.getMessage().contains("+"));
+        assertTrue(ex.getMessage().contains(","));
+    }
+
+    @Test
+    void testTranslateDataQuery_30_DuplicateTimePeriodFilter_throwsFilterValidationException() {
+        RegistryConfiguration registryConfig = createRegistryWithBothVersions("BIS");
+        ProxyConfiguration config = proxyConfig(List.of(registryConfig));
+
+        when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        MultiValueMap<String, String> c = new LinkedMultiValueMap<>();
+        c.add("c[TIME_PERIOD]", "ge:2025-01-01");
+        c.add("c[TIME_PERIOD]", "le:2025-01-31");
+
+        FilterValidationException ex = assertThrows(FilterValidationException.class, () ->
+                queryTranslator.translateDataQuery(
+                        "dataflow", "BIS", "WS_EER", "1.0", "D.N.B.DE",
+                        c, null, null, null, null, null, null, null, null, null, false,
+                        "application/json", sdmxBeans, null
+                )
+        );
+        assertTrue(ex.getMessage().contains("c[TIME_PERIOD]"));
+        assertTrue(ex.getMessage().contains("+"));
+        assertTrue(ex.getMessage().contains(","));
+    }
+
+    @Test
+    void testTranslateDataQuery_30_DuplicateNonTimeFilter_throwsFilterValidationException() {
+        RegistryConfiguration registryConfig = createRegistryWithBothVersions("BIS");
+        ProxyConfiguration config = proxyConfig(List.of(registryConfig));
+
+        when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        MultiValueMap<String, String> c = new LinkedMultiValueMap<>();
+        c.add("c[FREQ]", "A");
+        c.add("c[FREQ]", "M");
+
+        FilterValidationException ex = assertThrows(FilterValidationException.class, () ->
+                queryTranslator.translateDataQuery(
+                        "dataflow", "BIS", "TEST_FLOW", "1.0", "all",
+                        c, null, null, null, null, null, null, null, null, null, false,
+                        "application/json", sdmxBeans, null
+                )
+        );
+        assertTrue(ex.getMessage().contains("c[FREQ]"));
+    }
+
+    @Test
+    void testTranslateDataQuery_30_SinglePlusJoinedTimeFilter_accepted() {
+        RegistryConfiguration registryConfig = createRegistryWithBothVersions("BIS");
+        ProxyConfiguration config = proxyConfig(List.of(registryConfig));
+
+        when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+        when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
+                .thenReturn(Set.of("FREQ", "REF_AREA"));
+
+        MultiValueMap<String, String> c = new LinkedMultiValueMap<>();
+        c.add("c[TIME_PERIOD]", "ge:2025-01-01+le:2025-01-31");
+
         TranslatedDataQuery query = queryTranslator.translateDataQuery(
-                "dataflow", "IMF.RES", "WEO", "9.0.0", "USA.NGDP_RPCH.*",
+                "dataflow", "BIS", "TEST_FLOW", "1.0", "all",
                 c, null, null, null, null, null, null, null, null, null, false,
-                "application/xml", sdmxBeans, null
+                "application/json", sdmxBeans, null
         );
 
-        assertEquals(SdmxVersion.SDMX_2_1, query.getVersionConfiguration().getSdmxVersion());
-        assertEquals("IMF.RES", query.getAgencyID());
-        assertEquals("WEO", query.getResourceID());
-        assertEquals("9.0.0", query.getVersion());
-        assertEquals("USA.NGDP_RPCH.*", query.getKey());
-        assertEquals("2024-12-31", query.getStartPeriod());
-        assertEquals("2025-01-05", query.getEndPeriod());
+        assertEquals(SdmxVersion.SDMX_3_0, query.getVersionConfiguration().getSdmxVersion());
+        assertNotNull(query.getFilters());
+        assertEquals(List.of("ge:2025-01-01+le:2025-01-31"), query.getFilters().get("TIME_PERIOD"));
+        assertNull(query.getStartPeriod());
+        assertNull(query.getEndPeriod());
+    }
+
+    @Test
+    void testTranslateAvailabilityQuery_30_DuplicateFilter_throwsFilterValidationException() {
+        RegistryConfiguration registryConfig = createRegistryWithBothVersions("BIS");
+        ProxyConfiguration config = proxyConfig(List.of(registryConfig));
+
+        when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        MultiValueMap<String, String> c = new LinkedMultiValueMap<>();
+        c.add("c[TIME_PERIOD]", "ge:2025-01-01");
+        c.add("c[TIME_PERIOD]", "le:2025-01-31");
+
+        FilterValidationException ex = assertThrows(FilterValidationException.class, () ->
+                queryTranslator.translateAvailabilityQuery(
+                        "dataflow", "BIS", "TEST_FLOW", "1.0", "all", "FREQ",
+                        c, null, "exact", "all", null, null, null,
+                        "application/vnd.sdmx.data+json; version=2.0.0", sdmxBeans, null
+                )
+        );
+        assertTrue(ex.getMessage().contains("c[TIME_PERIOD]"));
     }
 
     @Test

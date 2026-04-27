@@ -317,8 +317,17 @@ public class QueryTranslatorImpl implements QueryTranslator {
         for (Map.Entry<String, List<String>> entry : c.entrySet()) {
             String paramName = entry.getKey();
             if (paramName.startsWith("c[") && paramName.endsWith("]")) {
+                List<String> values = entry.getValue();
+                if (values != null && values.size() > 1) {
+                    throw new FilterValidationException(String.format(
+                            "Query parameter '%s' appears %d times but may only be used once per Component. " +
+                                    "Combine values in a single parameter: use '+' for AND (e.g. '%s=ge:A+le:B') " +
+                                    "or ',' for OR (e.g. '%s=A,B').",
+                            paramName, values.size(), paramName, paramName
+                    ));
+                }
                 String componentId = paramName.substring(2, paramName.length() - 1);
-                filters.put(componentId, entry.getValue());
+                filters.put(componentId, values);
             }
         }
 
