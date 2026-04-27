@@ -224,12 +224,6 @@ pip install pre-commit
 pre-commit install
 ```
 
-### 3. Build Docker-ready artifacts
-
-```bash
-./gradlew :sdmx-proxy:prepareFilesForDocker
-```
-
 ## Run tests
 
 ### Unit tests
@@ -249,13 +243,23 @@ To run a specific test class:
 E2E tests use [Testcontainers](https://testcontainers.com/) to spin up the proxy in a Docker container and test against
 real upstream registries. They require **Docker** and **internet access**.
 
-Before running E2E tests, build the Docker image:
+Before running E2E tests, build the Docker image. The Dockerfile at `docker/sdmx-proxy.Dockerfile` runs
+`./gradlew bootJar` inside a multi-stage build, so no local Gradle build is needed. `GPR_USERNAME` /
+`GPR_PASSWORD` must be set in the environment (GitHub username + token with `read:packages`) so the
+build can pull private Gradle dependencies.
 
-```powershell
+```bash
+# Windows (PowerShell) -- builds the project, prepares Docker artifacts, tags as
+# statgpt/statgpt-sdmx-proxy:local
 ./scripts/build-and-docker.ps1
-```
 
-This builds the project, prepares Docker artifacts, and tags the image as `statgpt/statgpt-sdmx-proxy:local`.
+# Or directly:
+docker build -f docker/sdmx-proxy.Dockerfile \
+  -t statgpt/statgpt-sdmx-proxy:local \
+  --secret id=GPR_USERNAME,env=GPR_USERNAME \
+  --secret id=GPR_PASSWORD,env=GPR_PASSWORD \
+  .
+```
 
 Then run the tests:
 

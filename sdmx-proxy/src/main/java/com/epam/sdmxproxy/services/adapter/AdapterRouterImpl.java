@@ -27,6 +27,9 @@ import com.epam.sdmxproxy.services.cache.CacheService;
 import com.epam.sdmxproxy.services.fixture.availability.AvailabilityFixtureService;
 import com.epam.sdmxproxy.services.fixture.data.DataFixtureService;
 import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
+import com.epam.sdmxproxy.services.limit.LimitEmulationService;
+import com.epam.sdmxproxy.services.limit.truncate.SeriesLimitTruncator;
+import com.epam.sdmxproxy.services.limit.truncate.SeriesLimitTruncatorProvider;
 import com.epam.sdmxproxy.services.translator.QueryTranslator;
 import feign.FeignException;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
@@ -54,6 +57,8 @@ public class AdapterRouterImpl implements AdapterRouter {
     private final StructureFixtureService fixtureService;
     private final AvailabilityFixtureService availabilityFixtureService;
     private final DataFixtureService dataFixtureService;
+    private final LimitEmulationService limitEmulationService;
+    private final SeriesLimitTruncatorProvider truncatorProvider;
 
     @Nullable
     private static List<FixtureConfiguration<AvailabilityFixtureType>> getFixtureConfigurations(TranslatedAvailabilityQuery query) {
@@ -183,10 +188,13 @@ public class AdapterRouterImpl implements AdapterRouter {
 
         // CONVERSION: use returnFormat from query (determined by QueryTranslator) and convert
         log.debug("Converting data from {} to {}", returnFormat, requestedMediaType);
+        DataEndpointConfiguration dataConfig = versionConfig.getDataEndpointConfig();
+        boolean emulateLimit = query.getLimit() != null
+                && dataConfig != null
+                && !dataConfig.isSupportsLimit();
         return outputStream -> {
-            DataEndpointConfiguration dataConfig = versionConfig.getDataEndpointConfig();
             SdmxBeans sdmxBeans = getSdmxBeans(getStructureQuery(query));
-            try (InputStream raw = genericRegistryAdapter.getData(query);
+            try (InputStream raw = resolveRawDataStream(query, sdmxBeans, emulateLimit);
                  InputStream inputStream = dataFixtureService.applyFixtures(
                          raw,
                          returnFormat,
@@ -208,6 +216,32 @@ public class AdapterRouterImpl implements AdapterRouter {
                 throw new IllegalArgumentException("Failed to convert data", e);
             }
         };
+    }
+
+    /**
+     * Raw data stream: limit-emulation path when the registry does not honor native
+     * {@code limit} (see design 014), otherwise direct passthrough to the registry.
+     * In the emulation path this router owns every call to {@code GenericRegistryAdapter}
+     * and the final truncation; the shrink service only tells us what query to issue.
+     */
+    private InputStream resolveRawDataStream(
+            TranslatedDataQuery query,
+            SdmxBeans sdmxBeans,
+            boolean emulateLimit
+    ) {
+        if (!emulateLimit) {
+            return genericRegistryAdapter.getData(query);
+        }
+        int n = query.getLimit() == null ? 0 : query.getLimit();
+        SeriesLimitTruncator truncator = truncatorProvider.forFormat(query.getReturnFormat());
+        if (n <= 0) {
+            log.info("Limit emulation short-circuit: limit={} <= 0, returning empty stream", n);
+            return truncator.emptyStream(sdmxBeans);
+        }
+        TranslatedDataQuery shrunkQuery = limitEmulationService.getShrunkQuery(
+                query, sdmxBeans, genericRegistryAdapter::getAvailability);
+        InputStream raw = genericRegistryAdapter.getData(shrunkQuery);
+        return truncator.truncate(raw, n, sdmxBeans);
     }
 
     private TranslatedStructureQuery getStructureQuery(TranslatedDataQuery query) {

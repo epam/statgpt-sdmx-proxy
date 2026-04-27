@@ -13,4 +13,9 @@ public class RegistryTestSuitConfiguration {
 
     private AvailabilityTestSuitConfiguration availabilityTestSuitConfiguration;
 
+    /**
+     * Optional. When present, enables generic {@code limit}-related diagnostics in
+     * {@link com.epam.sdmxproxy.e2e.tests.framework.BaseRegistryTestSuite}.
+     */
+    private LimitTestSuitConfiguration limitTestSuitConfiguration;
 }

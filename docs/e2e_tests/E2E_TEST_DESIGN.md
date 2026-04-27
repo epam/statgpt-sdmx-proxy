@@ -107,12 +107,17 @@ service as an external consumer would.
 
 ### Local Execution Flow
 
-1. **Build Docker image**:
+1. **Build Docker image** (requires `GPR_USERNAME` / `GPR_PASSWORD` env vars):
    ```bash
-   cd sdmx-proxy
-   ./gradlew bootJar prepareFilesForDocker
-   cd build/docker/backend
-   docker build -t statgpt/statgpt-sdmx-proxy:local .
+   # Windows (PowerShell)
+   ./scripts/build-and-docker.ps1
+
+   # Or directly from the repo root:
+   docker build -f docker/sdmx-proxy.Dockerfile \
+     -t statgpt/statgpt-sdmx-proxy:local \
+     --secret id=GPR_USERNAME,env=GPR_USERNAME \
+     --secret id=GPR_PASSWORD,env=GPR_PASSWORD \
+     .
    ```
 
 2. **Run E2E tests**:

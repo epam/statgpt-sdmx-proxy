@@ -1,0 +1,121 @@
+@startuml
+title Shrink Loop - LimitEmulationService.getShrunkQuery
+
+skinparam defaultFontName "Inter"
+skinparam activity {
+  BackgroundColor #FAFAFA
+  BorderColor #333
+  DiamondBackgroundColor #FFF4C2
+  DiamondBorderColor #333
+}
+
+start
+
+:**Inputs**
+query   = client TranslatedDataQuery
+beans   = SdmxBeans for the dataflow
+prober  = AvailabilityProber callback
+N       = query.limit
+T       = tolerance (DataEndpointConfiguration, default 1.2)
+target  = floor(N * T);
+
+if (sdmxVersion == SDMX_2_1?) then (yes)
+  :state = KeyParser.parseKey(query.key, nonTimeDims)
+  shape: positional key, no c[] filters;
+else (no)
+  :state = deepCopy(query.filters)
+  shape: c[] filter map, key untouched;
+endif
+
+:**Probe 1** via prober(availabilityQuery)
+availability fixtures applied,
+parser builds AvailabilityProjection;
+
+:M = projection.effectiveSeriesCount()
+(series_count annotation if present,
+else combinatorial product prod size(A_d));
+
+if (M <= target?) then (yes)
+  :Fast path - no shrink needed;
+else (no)
+  :iterations = 0
+  probesIssued = 1;
+  repeat
+    if (iterations >= MAX_SHRINK_ITERATIONS?) then (yes)
+      #PINK:**Exit #3**: safety cap
+      WARN log: shrink_capped;
+      break
+    endif
+
+    partition "FilterShrinker.decide" {
+      :candidates = dims where
+      size(A_d) > 1 AND d != timeDim;
+
+      if (candidates empty?) then (yes)
+        #PINK:**Exit #2**: ShrinkDecision.none()
+        every dim already narrowed;
+        break
+      endif
+
+      :d = argmax(size(A_d)) among candidates
+      (ties: registry insertion order);
+
+      :k = max(1, ceil(target * size(A_d) / M))
+      (ceil avoids undershoot in one step);
+
+      if (k >= size(A_d)?) then (yes)
+        #PINK:**Exit #2**: ShrinkDecision.none()
+        proportional shrink unproductive;
+        break
+      endif
+
+      :retained = first k values of A_d;
+    }
+
+    if (sdmxVersion == SDMX_2_1?) then (yes)
+      :state[d] = retained
+      (key map for that position);
+    else (no)
+      :state[d] = retained
+      (c[d] filter values);
+    endif
+
+    :iterations += 1;
+    :**Re-probe** via prober
+    (catches sparse-cube effect);
+    :Parse projection
+    probesIssued += 1;
+    :M = projection.effectiveSeriesCount();
+  repeat while (M > target?) is (yes)
+  -> no;
+  #LIGHTGREEN:**Exit #1**: target met;
+endif
+
+if (sdmxVersion == SDMX_2_1?) then (yes)
+  :newKey = KeyParser.buildKey(state, nonTimeDims, mergeAllWildcard)
+  shrunkQuery = query.toBuilder
+    .key(newKey)
+    .filters(null)
+    .limit(null)
+    .build();
+else (no)
+  :shrunkQuery = query.toBuilder
+    .filters(state)
+    .limit(null)
+    .build();
+endif
+
+:**Return shrunkQuery** to AdapterRouter;
+
+note right
+  AdapterRouter then:
+   - genericRegistryAdapter.getData(shrunkQuery)
+   - truncatorProvider.forFormat(returnFormat)
+       .truncate(raw, N, beans)
+   - dataFixtureService.applyFixtures
+   - streamingDataConversionService.convert
+end note
+
+stop
+
+@enduml

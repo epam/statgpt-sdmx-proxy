@@ -1,0 +1,104 @@
+@startuml Heuristic Limit Emulation - Request Sequence
+
+title Heuristic Limit Emulation - Request Flow (BIS 3.0 example, limit=10)
+
+actor Client
+participant "DataQuery30\nController" as C
+participant "AdapterRouter\nImpl" as R
+participant "LimitEmulation\nService" as L
+participant "Availability\nProber\n<<callback>>" as PR
+participant "Availability\nFixtureService" as AF
+participant "Availability\nResponseParser" as P
+participant "FilterShrinker" as S
+participant "GenericRegistry\nAdapter" as A
+participant "SeriesLimit\nTruncator" as T
+database "BIS registry" as BIS
+
+Client -> C : GET /data/.../key=*?limit=10
+activate C
+C -> C : translateDataQuery\n(reads supportsLimit=false,\nlimitEmulationTolerance=1.2)
+C -> R : getData(query)
+activate R
+
+R -> R : supportsLimit=false\n  && limit=10\n  -> emulate
+
+R -> L : getShrunkQuery(query, sdmxBeans,\n  prober = adapter::getAvailability)
+activate L
+L -> L : target = floor(10 * 1.2) = 12
+note right of L
+  Prober is a method reference
+  to GenericRegistryAdapter.getAvailability,
+  bound by AdapterRouter at the call site.
+  LimitEmulationService never sees the
+  adapter directly.
+end note
+
+== Probe 1: client filter ==
+L -> PR : probe(availQuery0)
+PR -> A : getAvailability(...)
+A -> BIS : GET /availability/...
+BIS --> A : SDMX-JSON projections (raw)
+A --> PR : InputStream
+PR --> L : InputStream
+L -> AF : applyFixtures
+AF --> L : fixed stream
+L -> P : parse(fixed stream)
+P --> L : AvailabilityProjection\n{values, seriesCount=271}
+L -> L : M = effectiveSeriesCount = 271,\n  M > 12
+
+== Shrink iteration 1 ==
+L -> S : decide(projection, target=12, timeDim)
+S --> L : narrow REF_AREA to first 2 values\n(k = ceil(12*65/271) = 3)
+L -> L : filters[REF_AREA] = [...]
+L -> PR : probe(availQuery1)
+PR -> A : getAvailability(...)
+A -> BIS : GET /availability/...\nc[REF_AREA]=AE,AR,AT
+BIS --> A : projections + seriesCount=N1
+A --> PR : InputStream
+PR --> L : InputStream
+L -> AF : applyFixtures
+L -> P : parse
+P --> L : new projection
+L -> L : M = N1, target met -> exit
+
+== Build & return shrunk query ==
+note right of L
+  shrunkQuery = query.toBuilder
+    .filters(shrunk)   // 3.0 path
+    .limit(null)       // strip
+    .build()
+  Returns TranslatedDataQuery to router.
+  No data call here.
+end note
+L --> R : TranslatedDataQuery
+deactivate L
+
+== Single data call (router) ==
+R -> A : getData(shrunkQuery)
+A -> BIS : GET /data/*?c[REF_AREA]=AE,AR,AT...\n(no limit param)
+BIS --> A : streaming data (<= ~12 series)
+A --> R : InputStream (raw)
+
+== Truncation (router) ==
+R -> T : truncate(raw, N=10, sdmxBeans)
+T --> R : truncated stream (<= 10 series)
+
+== Fixtures + conversion (router) ==
+R -> R : dataFixtureService.applyFixtures
+R -> R : streamingDataConversionService.convert
+
+R --> C : StreamingResponseBody
+deactivate R
+
+C --> Client : HTTP 200, exactly N series
+deactivate C
+
+note over R
+  AdapterRouter owns every call to
+  GenericRegistryAdapter -- both the
+  availability probes (delegated by the
+  prober callback) and the final getData
+  on the shrunk query.
+end note
+
+@enduml
