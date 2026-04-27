@@ -14,6 +14,8 @@ sdmxproxy:
       type: ${CONFIG_SERVER_SOURCE_TYPE:FILESYSTEM}
       # Path to the config file (filesystem path for FILESYSTEM, object path for DIAL_STORAGE)
       config-path: ${CONFIG_SERVER_SOURCE_CONFIG_PATH:config/sdmx_registries_config.json}
+      # When true, overwrite stored configuration from the bundled classpath default on startup (DIAL_STORAGE only).
+      force-seed: ${CONFIG_SERVER_FORCE_SEED:false}
     dial-storage:
       base-url: ${DIAL_STORAGE_BASE_URL:http://localhost:9000}
       api-key: ${DIAL_STORAGE_API_KEY:}
