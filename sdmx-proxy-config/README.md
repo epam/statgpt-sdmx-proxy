@@ -74,6 +74,9 @@ Shared by every `*EndpointConfig` block below.
 | `replaceEmptyDimensionsWithWildcard` | No       | Replace empty dot-separated key positions with `*` (e.g. `.L_T.P_F3` → `*.L_T.P_F3`). Required for IMF and similar registries      | `true`, `false`                                 | `false` |
 | `mergeAllWildcardKey`                | No       | Collapse a key whose every position is `*` to a single `*` (e.g. `*.*.*.*` → `*`). Required for BIS and similar registries          | `true`, `false`                                 | `false` |
 | `fixtures`                           | No       | Streaming response patches applied to the raw registry response before conversion, in the order listed                             | Array of `FixtureConfiguration<DataFixtureType>`| (empty) |
+| `supportsLimit`                      | No       | When false, the proxy emulates the SDMX 3.0 `limit` parameter via availability probing and streaming series truncation             | `true`, `false`                                 | `true`  |
+| `limitEmulationTolerance`            | No       | Overshoot factor for the emulation target: `target = floor(limit * limitEmulationTolerance)`. Ignored when `supportsLimit` is true | `[1.0, 10.0]`                                   | `1.2`   |
+| `limitEmulationMaxShrinkIterations`  | No       | Defensive cap on the shrink-loop iteration count. Ignored when `supportsLimit` is true                                             | `[1, 256]`                                      | `32`    |
 
 ### `AvailabilityEndpointConfiguration` (extends `EndpointConfiguration`)
 

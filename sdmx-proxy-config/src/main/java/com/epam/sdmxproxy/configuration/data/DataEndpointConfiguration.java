@@ -34,4 +34,29 @@ public class DataEndpointConfiguration extends EndpointConfiguration {
      * Data fixtures must be streaming -- see {@code DataFixture}.
      */
     private List<FixtureConfiguration<DataFixtureType>> fixtures;
+
+    /**
+     * When true, the registry natively supports the SDMX 3.0 {@code limit} query parameter on
+     * the data endpoint and the proxy passes it through. When false, the proxy emulates
+     * {@code limit} via availability probing and streaming truncation -- see design 014.
+     * <p>
+     * Default is true: existing registries retain passthrough behavior. Set to false only for
+     * registries that ignore the parameter (e.g. BIS, which does not accept it).
+     */
+    private boolean supportsLimit = true;
+
+    /**
+     * Overshoot factor used when emulating {@code limit}. The shrink loop terminates when the
+     * combinatorial upper bound drops to {@code floor(limit * limitEmulationTolerance)}. A
+     * higher value means fewer availability probes but a larger data response to truncate;
+     * a lower value means tighter shrinks and more probes. Has no effect when
+     * {@link #supportsLimit} is true.
+     */
+    private double limitEmulationTolerance = 1.2d;
+
+    /**
+     * Hard cap on shrink iterations, defensive for malformed DSDs. Has no effect when
+     * {@link #supportsLimit} is true.
+     */
+    private int limitEmulationMaxShrinkIterations = 32;
 }

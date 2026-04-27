@@ -191,24 +191,11 @@ test {
     }
 }
 
-
-def dockerDir = getRootProject().layout.buildDirectory.dir("docker/sdmx-proxy")
-
-tasks.register('prepareFilesForDocker', Copy) {
-    dependsOn bootJar
-    from bootJar.getArchiveFile().get(), layout.projectDirectory.file('src/main/docker/Dockerfile')
-    into dockerDir
-    // Ensure docker directory exists
-    doFirst {
-        dockerDir.get().asFile.mkdirs()
-    }
-}
-
 // Configure bootJar to merge Log4j2Plugins.dat files
 tasks.named('bootJar') {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
-build.dependsOn bootJar, prepareFilesForDocker
+build.dependsOn bootJar
 
 defaultTasks 'clean', 'build'
