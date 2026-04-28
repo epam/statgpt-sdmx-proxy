@@ -1,14 +1,14 @@
 package com.epam.sdmxproxy.services.cache;
 
+import java.time.Duration;
+import java.util.Optional;
+
 import com.epam.sdmxproxy.services.cache.config.CacheProperties;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-
-import java.time.Duration;
-import java.util.Optional;
 
 /**
  * In-memory cache service implementation using Caffeine.
@@ -21,6 +21,7 @@ public class InMemoryCacheService implements CacheService {
 
     private final Cache<String, byte[]> rawStructuresCache;
     private final Cache<String, byte[]> readyResponseCache;
+    private final Cache<String, byte[]> limitEmulationCache;
 
     public InMemoryCacheService(CacheProperties cacheProperties) {
         // Configure parsed structures cache with TTL
@@ -35,7 +36,16 @@ public class InMemoryCacheService implements CacheService {
                 .expireAfterWrite(readyResponseTtl)
                 .build();
 
-        log.info("In-memory cache initialized (Caffeine) - Parsed structures TTL: {}, Ready responses TTL: {}", parsedStructuresTtl, readyResponseTtl);
+        // Configure limit-emulation shrink cache with TTL
+        Duration limitEmulationTtl = cacheProperties.getTtl().getLimitEmulation().getDuration();
+        this.limitEmulationCache = Caffeine.newBuilder()
+                .expireAfterWrite(limitEmulationTtl)
+                .build();
+
+        log.info(
+                "In-memory cache initialized (Caffeine) - Parsed structures TTL: {}, Ready responses TTL: {}, Limit emulation TTL: {}",
+                parsedStructuresTtl, readyResponseTtl, limitEmulationTtl
+        );
     }
 
     @Override
@@ -68,6 +78,22 @@ public class InMemoryCacheService implements CacheService {
     @Override
     public void putReadyResponse(String key, byte[] responseBytes) {
         readyResponseCache.put(key, responseBytes);
+    }
+
+    @Override
+    public Optional<byte[]> getLimitEmulationShrinkFilters(String key) {
+        byte[] value = limitEmulationCache.getIfPresent(key);
+        if (value != null) {
+            log.debug("Cache hit for limit emulation: {}", key);
+            return Optional.of(value);
+        }
+        log.debug("Cache miss for limit emulation: {}", key);
+        return Optional.empty();
+    }
+
+    @Override
+    public void putLimitEmulationShrinkFilters(String key, byte[] value) {
+        limitEmulationCache.put(key, value);
     }
 
 }

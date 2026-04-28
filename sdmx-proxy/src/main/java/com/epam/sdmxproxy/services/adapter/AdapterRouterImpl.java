@@ -24,13 +24,16 @@ import com.epam.sdmxproxy.services.adapter.conversion.StreamingDataConversionSer
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
 import com.epam.sdmxproxy.services.cache.CacheKeyGenerator;
 import com.epam.sdmxproxy.services.cache.CacheService;
+import com.epam.sdmxproxy.services.filter.FilterNormalizer;
 import com.epam.sdmxproxy.services.fixture.availability.AvailabilityFixtureService;
 import com.epam.sdmxproxy.services.fixture.data.DataFixtureService;
 import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
+import com.epam.sdmxproxy.services.limit.CachedShrinkResult;
 import com.epam.sdmxproxy.services.limit.LimitEmulationService;
 import com.epam.sdmxproxy.services.limit.truncate.SeriesLimitTruncator;
 import com.epam.sdmxproxy.services.limit.truncate.SeriesLimitTruncatorProvider;
 import com.epam.sdmxproxy.services.translator.QueryTranslator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.base.IdentifiableBean;
@@ -41,6 +44,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @Slf4j
@@ -59,11 +64,47 @@ public class AdapterRouterImpl implements AdapterRouter {
     private final DataFixtureService dataFixtureService;
     private final LimitEmulationService limitEmulationService;
     private final SeriesLimitTruncatorProvider truncatorProvider;
+    private final FilterNormalizer filterNormalizer;
+    private final ObjectMapper objectMapper;
 
     @Nullable
     private static List<FixtureConfiguration<AvailabilityFixtureType>> getFixtureConfigurations(TranslatedAvailabilityQuery query) {
         AvailabilityEndpointConfiguration endpointConfig = query.getVersionConfiguration().getAvailabilityEndpointConfig();
         return endpointConfig != null ? endpointConfig.getFixtures() : null;
+    }
+
+    private static MultiValueMap<String, String> toMultiValueMap(java.util.Map<String, java.util.List<String>> source) {
+        LinkedMultiValueMap<String, String> result = new LinkedMultiValueMap<>();
+        if (source != null) {
+            source.forEach((k, v) -> {
+                if (v != null && !v.isEmpty()) {
+                    result.put(k, new java.util.ArrayList<>(v));
+                }
+            });
+        }
+        return result;
+    }
+
+    private static java.util.Map<String, java.util.List<String>> toPlainMap(MultiValueMap<String, String> source) {
+        java.util.LinkedHashMap<String, java.util.List<String>> result = new java.util.LinkedHashMap<>();
+        if (source != null) {
+            source.forEach((k, v) -> {
+                if (v != null && !v.isEmpty()) {
+                    result.put(k, new java.util.ArrayList<>(v));
+                }
+            });
+        }
+        return result;
+    }
+
+    private static List<String> nonTimeDimensionIds(SdmxBeans beans) {
+        DataStructureBean dsd = beans.getDataStructures().stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "No DataStructure available for filter normalization"));
+        return dsd.getDimensionList().getDimensions().stream()
+                .filter(d -> !d.isTimeDimension())
+                .map(IdentifiableBean::getId)
+                .toList();
     }
 
     @Override
@@ -175,6 +216,11 @@ public class AdapterRouterImpl implements AdapterRouter {
         VersionSpecificRegistryConfiguration versionConfig = query.getVersionConfiguration();
         MediaType requestedMediaType = query.getContentType();
         ReturnFormat returnFormat = query.getReturnFormat();
+        DataEndpointConfiguration dataConfig = versionConfig.getDataEndpointConfig();
+
+        if (dataConfig != null && dataConfig.isConvertKeyToFilters()) {
+            normalizeOutboundFilters(query);
+        }
 
         // BYPASS: if bypass is enabled and requested format is in supportedFormats
         if (FormatSupportChecker.canBypassDataFormat(versionConfig, requestedMediaType)) {
@@ -188,7 +234,6 @@ public class AdapterRouterImpl implements AdapterRouter {
 
         // CONVERSION: use returnFormat from query (determined by QueryTranslator) and convert
         log.debug("Converting data from {} to {}", returnFormat, requestedMediaType);
-        DataEndpointConfiguration dataConfig = versionConfig.getDataEndpointConfig();
         boolean emulateLimit = query.getLimit() != null
                 && dataConfig != null
                 && !dataConfig.isSupportsLimit();
@@ -223,6 +268,10 @@ public class AdapterRouterImpl implements AdapterRouter {
      * {@code limit} (see design 014), otherwise direct passthrough to the registry.
      * In the emulation path this router owns every call to {@code GenericRegistryAdapter}
      * and the final truncation; the shrink service only tells us what query to issue.
+     * <p>
+     * The shrunk query produced by the bisect is cached per
+     * {@code (registry, agency, resource, version, key, filters, limit)} so a repeat
+     * request reuses the result without spending availability probes.
      */
     private InputStream resolveRawDataStream(
             TranslatedDataQuery query,
@@ -238,10 +287,39 @@ public class AdapterRouterImpl implements AdapterRouter {
             log.info("Limit emulation short-circuit: limit={} <= 0, returning empty stream", n);
             return truncator.emptyStream(sdmxBeans);
         }
-        TranslatedDataQuery shrunkQuery = limitEmulationService.getShrunkQuery(
-                query, sdmxBeans, genericRegistryAdapter::getAvailability);
+        TranslatedDataQuery shrunkQuery = resolveShrunkQuery(query, sdmxBeans);
         InputStream raw = genericRegistryAdapter.getData(shrunkQuery);
         return truncator.truncate(raw, n, sdmxBeans);
+    }
+
+    /**
+     * Returns the shrunk query for {@code query}, hitting the cache when possible.
+     * On miss, runs the bisect and writes the result back.
+     */
+    private TranslatedDataQuery resolveShrunkQuery(TranslatedDataQuery query, SdmxBeans sdmxBeans) {
+        String cacheKey = CacheKeyGenerator.generateLimitEmulationKey(query);
+        Optional<byte[]> cached = cacheService.getLimitEmulationShrinkFilters(cacheKey);
+        if (cached.isPresent()) {
+            try {
+                CachedShrinkResult result = objectMapper.readValue(cached.get(), CachedShrinkResult.class);
+                log.info("Limit emulation cache hit: cacheKey={}, shrunkKey='{}', shrunkFilters={}", cacheKey, result.key(), result.filters());
+                return query.toBuilder().key(result.key()).filters(toMultiValueMap(result.filters())).limit(null).build();
+            } catch (IOException e) {
+                log.warn("Failed to deserialize cached limit emulation entry, recomputing: cacheKey={}", cacheKey, e);
+            }
+        }
+
+        TranslatedDataQuery shrunkQuery = limitEmulationService.getShrunkQuery(query, sdmxBeans, genericRegistryAdapter::getAvailability);
+
+        try {
+            CachedShrinkResult toCache = new CachedShrinkResult(shrunkQuery.getKey(), toPlainMap(shrunkQuery.getFilters()));
+            cacheService.putLimitEmulationShrinkFilters(cacheKey, objectMapper.writeValueAsBytes(toCache));
+            log.debug("Cached limit emulation shrink: cacheKey={}", cacheKey);
+        } catch (IOException e) {
+            log.warn("Failed to serialize limit emulation result for caching: cacheKey={}", cacheKey, e);
+        }
+
+        return shrunkQuery;
     }
 
     private TranslatedStructureQuery getStructureQuery(TranslatedDataQuery query) {
@@ -275,6 +353,11 @@ public class AdapterRouterImpl implements AdapterRouter {
         VersionSpecificRegistryConfiguration versionConfig = query.getVersionConfiguration();
         MediaType requestedMediaType = query.getContentType();
         ReturnFormat returnFormat = query.getReturnFormat();
+        AvailabilityEndpointConfiguration availabilityConfig = versionConfig.getAvailabilityEndpointConfig();
+
+        if (availabilityConfig != null && availabilityConfig.isConvertKeyToFilters()) {
+            normalizeOutboundFilters(query);
+        }
 
         if (shouldUnwrapStarComponentId(query, versionConfig)) {
             unwrapStarComponentId(query);
@@ -336,5 +419,22 @@ public class AdapterRouterImpl implements AdapterRouter {
         return isAllowedByConfig && isStarComponentId;
     }
 
+    /**
+     * Normalize outbound filters: move every dim narrowing into {@code c[]} and emit
+     * {@code *} as the path key. Workaround for BIS-style registries -- see design 016.
+     */
+    private void normalizeOutboundFilters(TranslatedDataQuery query) {
+        SdmxBeans beans = getSdmxBeans(getStructureQuery(query));
+        FilterNormalizer.NormalizedQuery normalized = filterNormalizer.normalize(query.getKey(), query.getFilters(), nonTimeDimensionIds(beans));
+        query.setKey(normalized.key());
+        query.setFilters(normalized.filters());
+    }
+
+    private void normalizeOutboundFilters(TranslatedAvailabilityQuery query) {
+        SdmxBeans beans = getSdmxBeans(getStructureQuery(query));
+        FilterNormalizer.NormalizedQuery normalized = filterNormalizer.normalize(query.getKey(), query.getFilters(), nonTimeDimensionIds(beans));
+        query.setKey(normalized.key());
+        query.setFilters(normalized.filters());
+    }
 
 }

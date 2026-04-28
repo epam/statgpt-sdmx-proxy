@@ -81,6 +81,9 @@ sdmxproxy:
       readyResponses:
         duration: PT6H
         jitter: PT30M
+      limitEmulation:
+        duration: PT1H
+        jitter: PT10M
 
 # OpenTelemetry configuration
 otel:

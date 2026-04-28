@@ -24,6 +24,25 @@ per-format truncator that cuts at exactly `N` series.
 Both SDMX 3.0 and SDMX 2.1 are supported. 3.0 narrows via `c[]` filters; 2.1 narrows via
 the positional key (no `c[]` in 2.1).
 
+## Notation
+
+The shrink loop and surrounding code pass several symbols around. A short reference
+(see `017-bisect-proportional-restep/ALGORITHM_GUIDE.md` in this repo for fuller
+definitions and worked examples):
+
+| Symbol           | Meaning                                                                                                                                                                                                 |
+|------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `N`              | The client's `limit` parameter -- the requested cap on the number of returned series.                                                                                                                   |
+| `tolerance`      | Per-registry overshoot factor (`limitEmulationTolerance`, default `1.2`).                                                                                                                               |
+| `target`         | `floor(N * tolerance)` -- upper edge of the band of acceptable registry-side series counts.                                                                                                             |
+| `series_count`   | Annotation on the data constraint in the availability response: the registry's count of series in the filtered cube.                                                                                    |
+| `M`              | The `effectiveSeriesCount` of the projection from the most recent probe -- equal to `series_count` when present, else the combinatorial upper bound.                                                    |
+| `A_d`            | Per-dim list of values that the registry reports for dim `d` in the availability response.                                                                                                              |
+| `\|A_d\|`        | Size of `A_d` (also called `dimSize` in code).                                                                                                                                                          |
+| `k`              | Number of values to keep on the chosen dim. Integer in `[1, \|A_d\|]`.                                                                                                                                  |
+| `kLow` / `kHigh` | Best known undershoot / overshoot bounds on `k` during the bisect. The "right" `k` lies in `[kLow, kHigh]`. (Introduced in design 017's bisect refactor; not used in the original proportional shrink.) |
+| `budget`         | `limitEmulationProbeBudget` -- maximum number of `/availability` probes the algorithm may issue per request.                                                                                            |
+
 ## Non-goals
 
 - **Exact strict `N` when the cube is sparse.** The shrink loop uses
@@ -233,35 +252,35 @@ See `architecture.puml`.
 
 #### `DataEndpointConfiguration` -- new fields
 
-| Field                              | Default | Description                                                                                                              |
-|------------------------------------|---------|--------------------------------------------------------------------------------------------------------------------------|
-| `supportsLimit`                    | `true`  | When false, the proxy emulates `limit` via availability probing and streaming truncation.                                |
-| `limitEmulationTolerance`          | `1.2`   | Overshoot factor: `target = floor(limit * tolerance)`. Higher = fewer probes, larger truncation slack. Range `[1.0, 10.0]`. |
-| `limitEmulationMaxShrinkIterations`| `32`    | Hard cap on shrink iterations. Range `[1, 256]`.                                                                           |
+| Field                               | Default | Description                                                                                                                 |
+|-------------------------------------|---------|-----------------------------------------------------------------------------------------------------------------------------|
+| `supportsLimit`                     | `true`  | When false, the proxy emulates `limit` via availability probing and streaming truncation.                                   |
+| `limitEmulationTolerance`           | `1.2`   | Overshoot factor: `target = floor(limit * tolerance)`. Higher = fewer probes, larger truncation slack. Range `[1.0, 10.0]`. |
+| `limitEmulationMaxShrinkIterations` | `32`    | Hard cap on shrink iterations. Range `[1, 256]`.                                                                            |
 
 `sdmx-proxy-config/README.md` documents these in the schema table.
 
 ### 2. Main module (`sdmx-proxy/`) -- new package `services.limit`
 
-| Type                                  | Kind                            | Role                                                                                          |
-|---------------------------------------|---------------------------------|-----------------------------------------------------------------------------------------------|
-| `LimitEmulationService`               | interface                       | Single method `getShrunkQuery(query, sdmxBeans, prober)`.                                     |
-| `LimitEmulationServiceImpl`           | `@Service`                      | Shrink loop; branches on `SdmxVersion`. No `GenericRegistryAdapter` dep.                      |
-| `AvailabilityProber`                  | functional interface            | `InputStream probe(TranslatedAvailabilityQuery)`. Callback supplied by `AdapterRouter`.       |
-| `AvailabilityProjection`              | Java record                     | `(valuesByDimensionId, seriesCount)` + `effectiveSeriesCount()` + `combinatorialUpperBound()`.|
-| `AvailabilityResponseParser`          | interface                       | Format-aware parse to `AvailabilityProjection`.                                               |
-| `JsonAvailabilityResponseParser`      | `@Component`                    | SDMX-JSON 2.0.0 structure; handles `components` and `keyValues`; reads `series_count`.        |
-| `FilterShrinker`                      | interface (pure function)       | One decision per call: `decide(projection, target, timeDimId)`.                               |
-| `FilterShrinkerImpl`                  | `@Component`                    | argmax-by-cardinality + proportional `ceil` keep count.                                       |
-| `ShrinkDecision`                      | `@Value`                        | `(dimensionId, retainedValues)`; `none()` sentinel.                                           |
-| `KeyParser`                           | interface                       | `parseKey` / `buildKey` for SDMX positional keys. Used by 2.1 path.                           |
-| `KeyParserImpl`                       | `@Service`                      | Stateless implementation.                                                                     |
-| `SeriesLimitTruncator`                | interface                       | `truncate(raw, n, sdmxBeans)` + `emptyStream(sdmxBeans)`. One impl per `ReturnFormat`.        |
-| `SeriesLimitTruncatorProvider`        | `@Component`                    | Lookup by `ReturnFormat`; collected from registered `SeriesLimitTruncator` beans.             |
-| `JsonDataV10SeriesLimitTruncator`     | `@Component`                    | SDMX-JSON 1.0.0 (series-as-map). Streaming Jackson.                                           |
-| `JsonDataV20SeriesLimitTruncator`     | `@Component`                    | SDMX-JSON 2.0.0 (series-as-array). Streaming Jackson.                                         |
-| `CsvSeriesLimitTruncator`             | `@Component`                    | SDMX-CSV 2.0.0. DSD-driven series-key derivation.                                             |
-| `XmlSeriesLimitTruncator`             | `@Component`                    | SDMX-ML generic + structure-specific. StAX, local-name match.                                 |
+| Type                              | Kind                      | Role                                                                                           |
+|-----------------------------------|---------------------------|------------------------------------------------------------------------------------------------|
+| `LimitEmulationService`           | interface                 | Single method `getShrunkQuery(query, sdmxBeans, prober)`.                                      |
+| `LimitEmulationServiceImpl`       | `@Service`                | Shrink loop; branches on `SdmxVersion`. No `GenericRegistryAdapter` dep.                       |
+| `AvailabilityProber`              | functional interface      | `InputStream probe(TranslatedAvailabilityQuery)`. Callback supplied by `AdapterRouter`.        |
+| `AvailabilityProjection`          | Java record               | `(valuesByDimensionId, seriesCount)` + `effectiveSeriesCount()` + `combinatorialUpperBound()`. |
+| `AvailabilityResponseParser`      | interface                 | Format-aware parse to `AvailabilityProjection`.                                                |
+| `JsonAvailabilityResponseParser`  | `@Component`              | SDMX-JSON 2.0.0 structure; handles `components` and `keyValues`; reads `series_count`.         |
+| `FilterShrinker`                  | interface (pure function) | One decision per call: `decide(projection, target, timeDimId)`.                                |
+| `FilterShrinkerImpl`              | `@Component`              | argmax-by-cardinality + proportional `ceil` keep count.                                        |
+| `ShrinkDecision`                  | `@Value`                  | `(dimensionId, retainedValues)`; `none()` sentinel.                                            |
+| `KeyParser`                       | interface                 | `parseKey` / `buildKey` for SDMX positional keys. Used by 2.1 path.                            |
+| `KeyParserImpl`                   | `@Service`                | Stateless implementation.                                                                      |
+| `SeriesLimitTruncator`            | interface                 | `truncate(raw, n, sdmxBeans)` + `emptyStream(sdmxBeans)`. One impl per `ReturnFormat`.         |
+| `SeriesLimitTruncatorProvider`    | `@Component`              | Lookup by `ReturnFormat`; collected from registered `SeriesLimitTruncator` beans.              |
+| `JsonDataV10SeriesLimitTruncator` | `@Component`              | SDMX-JSON 1.0.0 (series-as-map). Streaming Jackson.                                            |
+| `JsonDataV20SeriesLimitTruncator` | `@Component`              | SDMX-JSON 2.0.0 (series-as-array). Streaming Jackson.                                          |
+| `CsvSeriesLimitTruncator`         | `@Component`              | SDMX-CSV 2.0.0. DSD-driven series-key derivation.                                              |
+| `XmlSeriesLimitTruncator`         | `@Component`              | SDMX-ML generic + structure-specific. StAX, local-name match.                                  |
 
 ### 3. `AdapterRouterImpl` modifications
 
@@ -308,6 +327,7 @@ via `query.toBuilder().filters(...).limit(null).build()` (3.0) or `.key(...).fil
 ## Files affected
 
 ### New
+
 - `sdmx-proxy/.../services/limit/AvailabilityProber.java`
 - `sdmx-proxy/.../services/limit/AvailabilityProjection.java`
 - `sdmx-proxy/.../services/limit/AvailabilityResponseParser.java`
@@ -326,21 +346,30 @@ via `query.toBuilder().filters(...).limit(null).build()` (3.0) or `.key(...).fil
 - `sdmx-proxy/.../services/limit/truncate/CsvSeriesLimitTruncator.java`
 - `sdmx-proxy/.../services/limit/truncate/XmlSeriesLimitTruncator.java`
 - `sdmx-proxy-e2e/.../tests/LimitEmulationE2ETest.java` -- targeted BIS scenarios.
-- `sdmx-proxy-e2e/.../tests/framework/config/LimitTestSuitConfiguration.java` -- per-registry config DTO for the generic limit diagnostics.
+- `sdmx-proxy-e2e/.../tests/framework/config/LimitTestSuitConfiguration.java` -- per-registry config DTO for the generic
+  limit diagnostics.
 
 ### Modified
+
 - `sdmx-proxy-config/.../configuration/data/DataEndpointConfiguration.java` -- adds three fields.
 - `sdmx-proxy-config/README.md` -- schema table rows for the three fields.
 - `sdmx-proxy-config/src/main/resources/sdmx_registries_config.json` -- BIS 3.0 `supportsLimit: false`.
 - `sdmx-proxy/.../common/data/TranslatedDataQuery.java` -- `@Builder(toBuilder = true)`.
 - `sdmx-proxy/.../services/adapter/AdapterRouterImpl.java` -- inject service + provider; `resolveRawDataStream` helper.
-- `sdmx-proxy-e2e/.../tests/framework/BaseRegistryTestSuite.java` -- two generic limit tests (`testLimitNativelyHonored`, `testLimitEmulationStrict`); the latter is `@ParameterizedTest` over `LimitTestSuitConfiguration.registryReturnFormats`.
-- `sdmx-proxy-e2e/.../tests/framework/config/RegistryTestSuitConfiguration.java` -- adds optional `limitTestSuitConfiguration` field.
-- `sdmx-proxy-e2e/.../registry/bis/3_0/bis_3_0_test_config.json` -- adds `limitTestSuitConfiguration` block listing 4 formats.
-- `sdmx-proxy-e2e/.../registry/imf/3_0/imf_3_0_test_config.json` -- adds `limitTestSuitConfiguration` block listing JSON 2.0.
-- `sdmx-proxy-e2e/.../resources/log-patterns/allowed-errors.properties` -- allows benign startup WARNs that expect a runtime-POSTed config.
+- `sdmx-proxy-e2e/.../tests/framework/BaseRegistryTestSuite.java` -- two generic limit tests (
+  `testLimitNativelyHonored`, `testLimitEmulationStrict`); the latter is `@ParameterizedTest` over
+  `LimitTestSuitConfiguration.registryReturnFormats`.
+- `sdmx-proxy-e2e/.../tests/framework/config/RegistryTestSuitConfiguration.java` -- adds optional
+  `limitTestSuitConfiguration` field.
+- `sdmx-proxy-e2e/.../registry/bis/3_0/bis_3_0_test_config.json` -- adds `limitTestSuitConfiguration` block listing 4
+  formats.
+- `sdmx-proxy-e2e/.../registry/imf/3_0/imf_3_0_test_config.json` -- adds `limitTestSuitConfiguration` block listing JSON
+  2.0.
+- `sdmx-proxy-e2e/.../resources/log-patterns/allowed-errors.properties` -- allows benign startup WARNs that expect a
+  runtime-POSTed config.
 
 ### Unit tests (new)
+
 - `FilterShrinkerImplTest`
 - `JsonAvailabilityResponseParserTest`
 - `AvailabilityProjectionTest`
@@ -351,6 +380,7 @@ via `query.toBuilder().filters(...).limit(null).build()` (3.0) or `.key(...).fil
 - `XmlSeriesLimitTruncatorTest`
 
 ### No changes required
+
 - `QueryTranslatorImpl` -- emulation decision is orthogonal to translation.
 - `DataQuery30Controller` -- limit already flows to the translator.
 - `GenericRegistryAdapterImpl` / `Sdmx30DataClient` / `Sdmx30AvailabilityClient` -- the

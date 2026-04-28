@@ -11,7 +11,7 @@ import org.springframework.util.MultiValueMap;
 import java.time.Instant;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 public class TranslatedAvailabilityQuery {
     private RegistryConfiguration registryConfiguration;
     private VersionSpecificRegistryConfiguration versionConfiguration;

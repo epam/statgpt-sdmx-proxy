@@ -1,14 +1,14 @@
 package com.epam.sdmxproxy.services.cache;
 
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
 import com.epam.sdmxproxy.services.cache.config.CacheProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Redis-based cache service implementation.
@@ -22,6 +22,7 @@ public class RedisCacheService implements CacheService {
 
     private static final String RAW_STRUCTURES_PREFIX = "raw:";
     private static final String READY_RESPONSE_PREFIX = "response:";
+    private static final String LIMIT_EMULATION_PREFIX = "limit_emu:";
 
     private final RedisTemplate<String, byte[]> rawStructuresRedisTemplate;
     private final RedisTemplate<String, byte[]> readyResponseRedisTemplate;
@@ -85,6 +86,37 @@ public class RedisCacheService implements CacheService {
             log.debug("Cached ready response: {} (TTL: {}s, size: {} bytes)", key, ttlWithJitter, responseBytes.length);
         } catch (Exception e) {
             log.error("Error putting ready response into Redis cache: {}", key, e);
+            throw new RuntimeException("Redis cache operation failed", e);
+        }
+    }
+
+    @Override
+    public Optional<byte[]> getLimitEmulationShrinkFilters(String key) {
+        try {
+            String redisKey = LIMIT_EMULATION_PREFIX + key;
+            byte[] value = readyResponseRedisTemplate.opsForValue().get(redisKey);
+            if (value != null) {
+                log.debug("Cache hit for limit emulation: {}", key);
+                return Optional.of(value);
+            }
+            log.debug("Cache miss for limit emulation: {}", key);
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Error getting limit emulation entry from Redis cache: {}", key, e);
+            throw new RuntimeException("Redis cache operation failed", e);
+        }
+    }
+
+    @Override
+    public void putLimitEmulationShrinkFilters(String key, byte[] value) {
+        try {
+            long ttlSeconds = cacheProperties.getTtl().getLimitEmulation().getDuration().getSeconds();
+            String redisKey = LIMIT_EMULATION_PREFIX + key;
+            long ttlWithJitter = addJitter(ttlSeconds, cacheProperties.getTtl().getLimitEmulation().getJitter().getSeconds());
+            readyResponseRedisTemplate.opsForValue().set(redisKey, value, ttlWithJitter, TimeUnit.SECONDS);
+            log.debug("Cached limit emulation entry: {} (TTL: {}s, size: {} bytes)", key, ttlWithJitter, value.length);
+        } catch (Exception e) {
+            log.error("Error putting limit emulation entry into Redis cache: {}", key, e);
             throw new RuntimeException("Redis cache operation failed", e);
         }
     }
