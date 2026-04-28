@@ -259,7 +259,7 @@ public CircuitBreaker getOrCreateCircuitBreaker(
             .minimumNumberOfCalls(minimumNumberOfCalls)
             .waitDurationInOpenState(Duration.ofMillis(waitDuration))
             .slidingWindowSize(slidingWindowSize)
-            .recordExceptions(Exception.class)
+            .recordException(upstreamFailurePredicate())  // IOException + 5xx FeignException only
             .build();
 
     String circuitBreakerName = registryConfig.getName() + "-" + operationName;
@@ -274,7 +274,7 @@ public CircuitBreaker getOrCreateCircuitBreaker(
    - `BIS 2.1-sdmx21structureclient` for structure requests
    - `BIS 2.1-sdmx21availabilityclient` for availability requests
 
-2. **Failure Tracking**: All exceptions are recorded as failures. When the failure rate exceeds the threshold, the circuit opens.
+2. **Failure Tracking**: Only upstream-health failures are recorded — `IOException` (network/connection errors) and `FeignException` with status `>= 500`. Client-error responses such as `4xx` (e.g. SDMX `404 "No results for query"`) are valid registry answers about a client-input domain and are not counted toward the failure rate. When the failure rate exceeds the threshold, the circuit opens.
 
 3. **Circuit Opening**: When the circuit opens, all requests immediately fail with `RegistryUnavailableException` (returns HTTP 503).
 

@@ -55,7 +55,7 @@ public class Resilience4jComponentFactory {
                 .minimumNumberOfCalls(minimumNumberOfCalls)
                 .waitDurationInOpenState(Duration.ofMillis(waitDuration))
                 .slidingWindowSize(slidingWindowSize)
-                .recordExceptions(Exception.class)
+                .recordException(upstreamFailurePredicate())
                 .build();
 
         String circuitBreakerName = registryConfig.getName() + "-" + versionConfig.getSdmxVersion() + "-" + operationName;
@@ -87,7 +87,7 @@ public class Resilience4jComponentFactory {
                                 Duration.ofMillis(maxIntervalMillis)
                         )
                 )
-                .retryOnException(configureExceptionRetries())
+                .retryOnException(upstreamFailurePredicate())
                 .build();
 
         return Retry.of(registryConfig.getName() + "-" + versionConfig.getSdmxVersion() + "-retry", retryConfig);
@@ -149,7 +149,14 @@ public class Resilience4jComponentFactory {
         );
     }
 
-    private Predicate<Throwable> configureExceptionRetries() {
+    /**
+     * Predicate identifying exceptions that signal upstream-health failures (network errors, 5xx).
+     * Used by both the retry policy (retry only on these) and the circuit breaker (only count
+     * these toward the failure rate). Client-error responses such as 4xx are valid registry
+     * answers about a client-input domain (e.g. SDMX 404 "No results for query") and must not
+     * trip the breaker.
+     */
+    private Predicate<Throwable> upstreamFailurePredicate() {
         return throwable -> {
             if (throwable instanceof java.io.IOException) {
                 return true;
