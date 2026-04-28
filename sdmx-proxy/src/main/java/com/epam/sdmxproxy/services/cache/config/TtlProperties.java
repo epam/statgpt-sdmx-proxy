@@ -16,4 +16,9 @@ public class TtlProperties {
      * TTL configuration for ready responses
      */
     private ReadyResponsesProperties readyResponses = new ReadyResponsesProperties();
+
+    /**
+     * TTL configuration for limit-emulation shrunk-query results
+     */
+    private LimitEmulationProperties limitEmulation = new LimitEmulationProperties();
 }

@@ -1,11 +1,11 @@
 package com.epam.sdmxproxy.configuration.data;
 
+import java.util.List;
+
 import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.util.List;
 
 
 @Data
@@ -37,4 +37,12 @@ public class AvailabilityEndpointConfiguration extends EndpointConfiguration {
      * Applied as a chain of responsibility in the order they are listed.
      */
     private List<FixtureConfiguration<AvailabilityFixtureType>> fixtures;
+
+    /**
+     * When true, every dim filter is moved into {@code c[]} and the path key is sent as a
+     * single {@code *} on outbound requests to this registry's availability endpoint.
+     * Workaround for registries (BIS / FusionRegistry) that mishandle the combination of
+     * a partially narrowed path key and an enum-dim {@code c[]} filter -- see design 016.
+     */
+    private boolean convertKeyToFilters;
 }
