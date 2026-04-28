@@ -15,18 +15,28 @@ import com.epam.sdmxproxy.exception.IllegalRegistryConfigurationException;
 import com.epam.sdmxproxy.registry.api.config.CircuitBreakerProperties;
 import com.epam.sdmxproxy.registry.api.config.ResilienceProperties;
 import com.epam.sdmxproxy.registry.api.config.RetryProperties;
+import feign.FeignException;
+import feign.Request;
+import feign.RequestTemplate;
+import feign.Response;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.retry.Retry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit tests for Resilience4jComponentFactory.
@@ -198,6 +208,34 @@ class Resilience4jComponentFactoryTest {
         assertNotSame(cb1, cb2);
     }
 
+    @Test
+    void testGetOrCreateCircuitBreaker_RecordsOnlyUpstreamFailures() {
+        // Given
+        RegistrySelectionResult selectedRegistry = createSelectedRegistry("TestRegistry", SdmxVersion.SDMX_2_1);
+
+        // When
+        CircuitBreaker circuitBreaker = factory.getOrCreateCircuitBreaker(selectedRegistry, "testoperation");
+
+        // Then
+        Predicate<Throwable> recordPredicate = circuitBreaker.getCircuitBreakerConfig().getRecordExceptionPredicate();
+        assertNotNull(recordPredicate);
+
+        // Network/IO failures count as upstream-health failures
+        assertTrue(recordPredicate.test(new IOException("connection reset")));
+
+        // 5xx responses count
+        assertTrue(recordPredicate.test(createFeignException(500)));
+        assertTrue(recordPredicate.test(createFeignException(503)));
+
+        // 4xx responses do NOT count -- they are valid registry answers about a client-input
+        // domain (e.g. SDMX 404 "No results for query") and must not trip the breaker.
+        assertFalse(recordPredicate.test(createFeignException(400)));
+        assertFalse(recordPredicate.test(createFeignException(404)));
+
+        // Unrelated exception types do not count
+        assertFalse(recordPredicate.test(new IllegalArgumentException("not an upstream failure")));
+    }
+
     // ========== Retry Tests ==========
 
     @Test
@@ -349,6 +387,17 @@ class Resilience4jComponentFactoryTest {
             factory.getOrCreateRetry(null);
         });
         assertEquals("Registry selection result cannot be null and must contain both registry and version configurations", exception.getMessage());
+    }
+
+    private static FeignException createFeignException(int status) {
+        Request request = Request.create(Request.HttpMethod.GET, "https://example.com/test", Collections.emptyMap(), null, new RequestTemplate());
+        return FeignException.errorStatus("TestClient#method", Response.builder()
+                .status(status)
+                .reason("reason")
+                .request(request)
+                .headers(Collections.emptyMap())
+                .body("{}".getBytes(StandardCharsets.UTF_8))
+                .build());
     }
 
     // ========== Helper Methods ==========
