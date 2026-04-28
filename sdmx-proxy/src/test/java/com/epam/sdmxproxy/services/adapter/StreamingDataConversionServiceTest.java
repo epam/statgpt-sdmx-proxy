@@ -236,6 +236,10 @@ public class StreamingDataConversionServiceTest {
         String[] lines = csv.split("\n");
         assertTrue(lines.length > 1, "CSV should have header + data rows");
         assertTrue(lines[0].contains("STRUCTURE"), "CSV header should contain STRUCTURE column");
+        // Regression guard for the OBS_VALUE-drop bug — see issue #49 / design 016.
+        // Pre-fix this counted 0 populated rows.
+        assertTrue(countPopulatedObsValueRows(csv) > 0,
+                "OBS_VALUE column should have populated values after conversion");
     }
 
     @Test
@@ -263,6 +267,10 @@ public class StreamingDataConversionServiceTest {
         String[] lines = csv.split("\n");
         assertTrue(lines.length > 1, "CSV should have header + data rows");
         assertTrue(lines[0].contains("STRUCTURE"), "CSV header should contain STRUCTURE column");
+        // Regression guard for the OBS_VALUE-drop bug — see issue #49 / design 016.
+        // Pre-fix this counted 0 populated rows for WEO.
+        assertTrue(countPopulatedObsValueRows(csv) > 0,
+                "OBS_VALUE column should have populated values after conversion");
     }
 
     @Test
@@ -315,6 +323,170 @@ public class StreamingDataConversionServiceTest {
 
     @Test
     @SneakyThrows
+    void shouldPreserveObsValueWhenConvertingWeoJsonToCsv() {
+        // Regression guard: WEO JSON-in -> CSV-out goes through the same flat-writer
+        // path as BOP. Pre-fix this returned 0/51 — the existing
+        // shouldConvertDataFromJson20ToCsv20 only checked header presence, so the
+        // bug was silently affecting WEO too.
+        InputStream input = getClass().getResourceAsStream("data_conversion/NGDP_RPCH_currentStructureIndex_Null.json");
+        InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
+        FixtureConfiguration f = new FixtureConfiguration();
+        f.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
+        f.setConfig(new HashMap<>());
+        InputStream fixedStructures = fixtureService.applyFixtures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0, List.of(f));
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(fixedStructures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0,
+                MediaType.valueOf(SdmxMediaType.SDMX_CSV_2_0_0_VALUE));
+
+        assertEquals(51, countPopulatedObsValueRows(outputStream.toString(StandardCharsets.UTF_8)),
+                "WEO JSON->CSV should preserve all 51 NGDP_RPCH OBS_VALUE rows");
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldPreserveObsValueWhenConvertingBopJsonToCsv() {
+        // Regression guard: BOP JSON-in -> CSV-out. Exercises the same flat-writer
+        // path as CSV->CSV but with a different reader. Pre-fix this returned 0/90.
+        // First generate the BOP JSON in-memory (same as the registry would emit
+        // via JSON-out), then feed it back through JSON-in -> CSV-out.
+        InputStream csvInput = getClass().getResourceAsStream("data_conversion/imf_bop_data.csv");
+        SdmxBeans sdmxBeans = parseBopStructures();
+
+        ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream();
+        streamingDataConversionService.convert(csvInput, jsonBuffer, sdmxBeans, ReturnFormat.CSV_DATA_2_0_0,
+                MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+
+        ByteArrayOutputStream csvOut = new ByteArrayOutputStream();
+        streamingDataConversionService.convert(new java.io.ByteArrayInputStream(jsonBuffer.toByteArray()),
+                csvOut, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0,
+                MediaType.valueOf(SdmxMediaType.SDMX_CSV_2_0_0_VALUE));
+
+        assertEquals(90, countPopulatedObsValueRows(csvOut.toString(StandardCharsets.UTF_8)),
+                "BOP JSON->CSV should preserve all 90 IMF-populated OBS_VALUE rows");
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldPreserveObsValueWhenConvertingImfBopCsvToJson() {
+        // Regression guard: BOP CSV-in -> JSON-out path. Pre-fix this still worked
+        // (the JSON writer doesn't go through the buggy flat-data path), but kept
+        // as a regression test in case the JSON path ever picks up the same shape.
+        InputStream input = getClass().getResourceAsStream("data_conversion/imf_bop_data.csv");
+        SdmxBeans sdmxBeans = parseBopStructures();
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.CSV_DATA_2_0_0,
+                MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+
+        assertEquals(90, countNonNullPrimaryMeasures(outputStream.toString(StandardCharsets.UTF_8)),
+                "BOP CSV->JSON should preserve all 90 IMF-populated OBS_VALUE observations");
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldRoundTripRealImfDipCsvWithAttributesAll() {
+        // Regression guard for issue #39 Q1. Real IMF response for
+        // GET /data/dataflow/IMF.STA/DIP/12.0.1/AUT+MLT.*.*.*.* with attributes=all.
+        // Every data row in this response spans ~5 physical lines because
+        // FULL_DESCRIPTION (and other long attributes) carry quoted multi-line
+        // strings. Pre-fix the upstream reader threw
+        // SdmxException("Line 2 has less elements than expected. Expected 49 ...
+        // but line contained 41 elements") on the first data row.
+        // Fixture is the trimmed first 30 rows of the live response (full file is
+        // 4 MB; 30 rows is enough to exercise every quoted-newline path).
+        InputStream input = getClass().getResourceAsStream("data_conversion/imf_dip_data.csv");
+        SdmxBeans sdmxBeans = parseStructuresFixture("data_conversion/imf_dip_structures.json");
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        assertDoesNotThrow(() -> streamingDataConversionService.convert(input, outputStream, sdmxBeans,
+                ReturnFormat.CSV_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_CSV_2_0_0_VALUE)));
+
+        // Both the canonicalizer (fixes the read) and the copyDataToFlatWriter fix
+        // (preserves OBS_VALUE) must work together for this to come out right.
+        // The IMF source has 30 rows, of which the first one is dataset-metadata
+        // (empty TIME_PERIOD/OBS_VALUE) and 6 are series-metadata rows; the rest
+        // carry observation values.
+        assertTrue(countPopulatedObsValueRows(outputStream.toString(StandardCharsets.UTF_8)) > 0,
+                "Real DIP CSV with attributes=all should round-trip with at least one populated OBS_VALUE");
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldRoundTripRealImfCpiCsvWithAttributesAll() {
+        // Regression guard for issue #39 Q2. Real IMF response (~70 KB) for
+        // GET /data/dataflow/IMF.STA/CPI/5.0.0/AUT.*.CP01+CP06.POP_PCH_PA_PT.Q with attributes=all.
+        // Same root cause as Q1 (quoted multi-line attributes), so this is a sanity
+        // check that the fix covers a second real dataflow rather than only DIP.
+        InputStream input = getClass().getResourceAsStream("data_conversion/imf_cpi_data.csv");
+        SdmxBeans sdmxBeans = parseStructuresFixture("data_conversion/imf_cpi_structures.json");
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        assertDoesNotThrow(() -> streamingDataConversionService.convert(input, outputStream, sdmxBeans,
+                ReturnFormat.CSV_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_CSV_2_0_0_VALUE)));
+
+        assertTrue(countPopulatedObsValueRows(outputStream.toString(StandardCharsets.UTF_8)) > 0,
+                "Real CPI CSV with attributes=all should round-trip with at least one populated OBS_VALUE");
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldReadCsvWithQuotedMultiLineFields() {
+        // Regression guard for issue #39 / design 016. Upstream
+        // CSVColumnReaderEngineImpl.moveNextRow uses BufferedReader.readLine() and
+        // counts cells per physical line, so a CSV row whose quoted field spans
+        // multiple physical lines triggers
+        // SdmxException("Line N has less elements than expected ...").
+        // The proxy now wraps CSV input with QuotedNewlineCanonicalizingInputStream
+        // before handing the stream to the reader. This test pumps a synthetic
+        // BOP-shaped CSV that embeds newlines inside FULL_DESCRIPTION through the
+        // production path and asserts no exception + OBS_VALUE preserved.
+        SdmxBeans sdmxBeans = parseBopStructures();
+
+        // Build a tiny CSV using the real BOP header and two rows whose
+        // FULL_DESCRIPTION value contains literal newlines inside quotes.
+        // OBS_VALUE column index is 9; FULL_DESCRIPTION is index 11.
+        String header = "STRUCTURE[;],STRUCTURE_ID,ACTION,COUNTRY,BOP_ACCOUNTING_ENTRY,INDICATOR,UNIT,FREQUENCY,TIME_PERIOD,OBS_VALUE,SCALE,FULL_DESCRIPTION";
+        String row1 = "dataflow,IMF.STA:BOP(21.0.0),R,DEU,CD_T,G1,USD,A,2017,1230793709303.444,6,\"This is a long\nmulti-line description\nwith embedded newlines.\"";
+        String row2 = "dataflow,IMF.STA:BOP(21.0.0),R,DEU,CD_T,G1,USD,A,2018,1500000000000.0,6,\"Another\r\nsplit value.\"";
+        String csv = header + "\n" + row1 + "\n" + row2 + "\n";
+
+        InputStream input = new java.io.ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8));
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        // Pre-fix: this throws SdmxException("Line 2 has less elements than expected...").
+        assertDoesNotThrow(() -> streamingDataConversionService.convert(input, outputStream, sdmxBeans,
+                ReturnFormat.CSV_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_CSV_2_0_0_VALUE)));
+
+        // Sanity-check both observations made it through. The canonicalizer
+        // collapses the embedded newlines to spaces, so the writer emits well-formed
+        // single-line rows with both OBS_VALUE values intact.
+        assertEquals(2, countPopulatedObsValueRows(outputStream.toString(StandardCharsets.UTF_8)),
+                "Both quoted multi-line rows should round-trip with OBS_VALUE preserved");
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldPreserveObsValueWhenRoundTrippingImfBopCsv() {
+        // Regression guard for issue #49 / design 016. BOP 21.0.0 CSV from IMF (DEU,
+        // 2017) is fed back through the proxy's CSV-in -> CSV-out path. The IMF
+        // source has 90 observation rows with OBS_VALUE populated and 24 rows with
+        // empty OBS_VALUE (dataset-metadata-only rows). Pre-fix the round-trip
+        // produced 0 populated rows.
+        InputStream input = getClass().getResourceAsStream("data_conversion/imf_bop_data.csv");
+        SdmxBeans sdmxBeans = parseBopStructures();
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.CSV_DATA_2_0_0,
+                MediaType.valueOf(SdmxMediaType.SDMX_CSV_2_0_0_VALUE));
+
+        assertEquals(90, countPopulatedObsValueRows(outputStream.toString(StandardCharsets.UTF_8)),
+                "BOP CSV->CSV should preserve all 90 IMF-populated OBS_VALUE rows");
+    }
+
+    @Test
+    @SneakyThrows
     void shouldConvertData_imf_fsic_seriesKeyed_withInlineDatasetAttributes() {
         //GIVEN
         // Series-keyed SDMX-JSON 2.0 response from IMF FSIC dataflow whose dataset-level
@@ -360,5 +532,60 @@ public class StreamingDataConversionServiceTest {
             totalObs += s.path("observations").size();
         }
         assertTrue(totalObs > 0, "total observations across series should be > 0");
+    }
+
+    // ---- helpers used by the issue #49 regression tests ----
+
+    @SneakyThrows
+    private SdmxBeans parseBopStructures() {
+        return parseStructuresFixture("data_conversion/imf_bop_structures.json");
+    }
+
+    @SneakyThrows
+    private SdmxBeans parseStructuresFixture(String resourcePath) {
+        InputStream structures = getClass().getResourceAsStream(resourcePath);
+        FixtureConfiguration f = new FixtureConfiguration();
+        f.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
+        f.setConfig(new HashMap<>());
+        InputStream fixed = fixtureService.applyFixtures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0, List.of(f));
+        return streamingStructureConversionService.parseStructures(fixed, ReturnFormat.JSON_STRUCTURE_2_0_0);
+    }
+
+    /**
+     * Counts CSV rows with a non-empty OBS_VALUE cell. Uses a crude split because
+     * the OBS_VALUE column is numeric/unquoted; quoted multi-line cells (long
+     * descriptions) come later in the row and don't affect the count.
+     */
+    private static int countPopulatedObsValueRows(String csv) {
+        String[] lines = csv.split("\\R");
+        if (lines.length == 0) return 0;
+        String[] header = lines[0].split(",", -1);
+        int obsIdx = -1;
+        for (int i = 0; i < header.length; i++) {
+            if ("OBS_VALUE".equals(header[i].trim())) { obsIdx = i; break; }
+        }
+        if (obsIdx < 0) return 0;
+        int filled = 0;
+        for (int li = 1; li < lines.length; li++) {
+            if (lines[li].isEmpty()) continue;
+            String[] cells = lines[li].split(",", -1);
+            if (obsIdx < cells.length && !cells[obsIdx].trim().isEmpty()) filled++;
+        }
+        return filled;
+    }
+
+    @SneakyThrows
+    private static int countNonNullPrimaryMeasures(String json) {
+        JsonNode root = new ObjectMapper().readTree(json);
+        JsonNode dataSets = root.path("data").path("dataSets");
+        int count = 0;
+        if (dataSets.isArray() && !dataSets.isEmpty()) {
+            for (JsonNode s : dataSets.get(0).path("series")) {
+                for (JsonNode o : s.path("observations")) {
+                    if (o.isArray() && !o.isEmpty() && !o.get(0).isNull()) count++;
+                }
+            }
+        }
+        return count;
     }
 }
