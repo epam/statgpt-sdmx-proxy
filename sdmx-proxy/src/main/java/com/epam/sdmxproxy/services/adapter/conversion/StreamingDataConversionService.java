@@ -3,9 +3,11 @@ package com.epam.sdmxproxy.services.adapter.conversion;
 import com.epam.sdmxproxy.common.data.SdmxMediaType;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
+import com.epam.sdmxproxy.services.sdmxsource.CustomDataTransformationUtil;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxCsvDataReaderFactoryV2;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxJsonDataReaderFactory;
 import com.epam.sdmxproxy.services.sdmxsource.JsonDataWriterFactoryProducer;
+import com.epam.sdmxproxy.services.sdmxsource.QuotedNewlineCanonicalizingInputStream;
 import io.sdmx.api.io.ReadableDataLocation;
 import io.sdmx.api.sdmx.constants.DATA_TYPE;
 import io.sdmx.api.sdmx.engine.DataReaderEngine;
@@ -128,7 +130,14 @@ public class StreamingDataConversionService {
     }
 
     private DataReaderEngine getDataReader(SdmxBeans sdmxBeans, InputStream inputStream, ReturnFormat sourceFormat, MediaType sourceMediaType) {
-        ReadableDataLocation dataLocation = readableDataLocationFactory.getReadableDataLocation(inputStream);
+        InputStream effectiveInputStream = inputStream;
+        if (sourceFormat == ReturnFormat.CSV_DATA_2_0_0 || sourceFormat == ReturnFormat.CSV_DATA_1_0_0) {
+            // Sidestep an upstream defect in CSVColumnReaderEngineImpl that splits rows on
+            // every physical newline, including newlines embedded inside quoted fields.
+            // See https://github.com/epam/statgpt-sdmx-proxy/issues/57.
+            effectiveInputStream = new QuotedNewlineCanonicalizingInputStream(inputStream);
+        }
+        ReadableDataLocation dataLocation = readableDataLocationFactory.getReadableDataLocation(effectiveInputStream);
 
         DataReaderFactory dataReaderFactory = getDataReaderFactory(sourceFormat);
 
@@ -209,7 +218,7 @@ public class StreamingDataConversionService {
 
         IFlatDataWriterEngine writer = new SdmxCsvDataWriterEngineV2(csvFormat, superBeanRetrievalManager, outputStream);
 
-        DataTransformationUtil.copyData(reader, writer, true, true, true);
+        CustomDataTransformationUtil.copyDataToFlatWriter(reader, writer);
     }
 
     private SdmxCsvDataFormat buildCsvDataFormat(MediaType mediaType) {
