@@ -11,8 +11,9 @@ import java.util.Map;
  * the literal {@code all} denotes all-wildcard.
  * <p>
  * The in-memory representation is an ordered {@code Map<dimensionId, List<value>>} --
- * matching {@link AvailabilityProjection#valuesByDimensionId()} so {@link FilterShrinker}
- * decisions apply directly. An empty list = wildcard for that dim.
+ * matching {@link AvailabilityProjection#valuesByDimensionId()} so the bisect
+ * orchestration in {@link LimitEmulationServiceImpl} can apply per-dim narrowings directly.
+ * An empty list = wildcard for that dim.
  */
 public interface KeyParser {
 

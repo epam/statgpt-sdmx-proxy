@@ -1,11 +1,11 @@
 package com.epam.sdmxproxy.configuration.data;
 
+import java.util.List;
+
 import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -46,17 +46,26 @@ public class DataEndpointConfiguration extends EndpointConfiguration {
     private boolean supportsLimit = true;
 
     /**
-     * Overshoot factor used when emulating {@code limit}. The shrink loop terminates when the
-     * combinatorial upper bound drops to {@code floor(limit * limitEmulationTolerance)}. A
-     * higher value means fewer availability probes but a larger data response to truncate;
-     * a lower value means tighter shrinks and more probes. Has no effect when
-     * {@link #supportsLimit} is true.
+     * Overshoot factor used when emulating {@code limit}. The shrink algorithm aims to land
+     * the registry-side series count in the band {@code [limit, floor(limit *
+     * limitEmulationTolerance)]}. A higher value means fewer availability probes but a
+     * larger data response to truncate; a lower value means tighter shrinks and more probes.
+     * Has no effect when {@link #supportsLimit} is true.
      */
     private double limitEmulationTolerance = 1.2d;
 
     /**
-     * Hard cap on shrink iterations, defensive for malformed DSDs. Has no effect when
-     * {@link #supportsLimit} is true.
+     * Hard cap on the total number of availability probes the limit-emulation algorithm may
+     * issue per request. Bounds the worst-case latency (each probe is one HTTP round-trip).
+     * Has no effect when {@link #supportsLimit} is true.
      */
-    private int limitEmulationMaxShrinkIterations = 32;
+    private int limitEmulationProbeBudget = 8;
+
+    /**
+     * When true, every dim filter is moved into {@code c[]} and the path key is sent as a
+     * single {@code *} on outbound requests to this registry's data endpoint. Workaround
+     * for registries (BIS / FusionRegistry) that mishandle the combination of a partially
+     * narrowed path key and an enum-dim {@code c[]} filter -- see design 016.
+     */
+    private boolean convertKeyToFilters;
 }

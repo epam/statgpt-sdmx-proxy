@@ -23,8 +23,9 @@ the [documentation repository](https://github.com/epam/statgpt).
 4. **Response fixing (fixtures)** -- applies configurable patches to fix known defects in upstream registry
    responses before parsing and conversion.
 
-5. **Caching** -- two-layer caching (raw parsed structures and ready-to-serve structure responses) backed by Caffeine (local) or
-   Redis (distributed).
+5. **Caching** -- three cache domains backed by Caffeine (local) or Redis (distributed): raw parsed structures,
+   ready-to-serve structure responses, and limit-emulation shrunk filter results (so repeat requests skip the
+   availability-probe loop).
 
 6. **Resilience** -- Feign HTTP clients wrapped with Resilience4j circuit breaker, retry with exponential backoff, and
    optional per-registry rate limiting.
@@ -36,10 +37,10 @@ the [documentation repository](https://github.com/epam/statgpt).
 
 The proxy ships with built-in configurations for the following SDMX registries:
 
-| Registry | Organization                        | SDMX version | Structure formats        | Data formats                  |
-|----------|-------------------------------------|--------------|--------------------------|-------------------------------|
-| BIS      | Bank for International Settlements  | 3.0          | SDMX-JSON 2.0.0         | SDMX-JSON 1.0.0, CSV 2.0.0   |
-| IMF      | International Monetary Fund         | 3.0          | SDMX-JSON 2.0.0         | SDMX-JSON 2.0.0, CSV 2.0.0   |
+| Registry | Organization                       | SDMX version | Structure formats | Data formats               |
+|----------|------------------------------------|--------------|-------------------|----------------------------|
+| BIS      | Bank for International Settlements | 3.0          | SDMX-JSON 2.0.0   | SDMX-JSON 1.0.0, CSV 2.0.0 |
+| IMF      | International Monetary Fund        | 3.0          | SDMX-JSON 2.0.0   | SDMX-JSON 2.0.0, CSV 2.0.0 |
 
 Additional registries can be added through the JSON configuration file without code changes.
 
@@ -48,30 +49,30 @@ Additional registries can be added through the JSON configuration file without c
 Regardless of what format the upstream registry returns, the proxy can convert and serve responses in the following
 formats per endpoint:
 
-| Format              | Structure | Data | Availability |
-|---------------------|-----------|------|--------------|
-| SDMX-JSON 2.0.0    | Yes       | Yes  | Yes          |
-| SDMX-JSON 1.0.0    | --        | Yes  | --           |
-| SDMX-ML 2.1 (XML)  | Yes       | --   | --           |
-| SDMX-ML 3.0 (XML)  | --        | Yes  | --           |
-| CSV 2.0.0           | --        | Yes  | --           |
+| Format            | Structure | Data | Availability |
+|-------------------|-----------|------|--------------|
+| SDMX-JSON 2.0.0   | Yes       | Yes  | Yes          |
+| SDMX-JSON 1.0.0   | --        | Yes  | --           |
+| SDMX-ML 2.1 (XML) | Yes       | --   | --           |
+| SDMX-ML 3.0 (XML) | --        | Yes  | --           |
+| CSV 2.0.0         | --        | Yes  | --           |
 
 ## Technological stack
 
 The application is written in Java 25 and uses the following main technologies:
 
-| Technology                                                          | Purpose                                        |
-|---------------------------------------------------------------------|-------------------------------------------------|
-| [Spring Boot 4.0](https://spring.io/projects/spring-boot)          | Application framework                           |
-| [OpenFeign](https://github.com/OpenFeign/feign)                    | Declarative HTTP clients for upstream registries |
-| [Resilience4j](https://resilience4j.readme.io/)                    | Circuit breaker, retry, rate limiting            |
-| [Caffeine](https://github.com/ben-manes/caffeine)                  | High-performance local caching                   |
-| [Spring Data Redis](https://spring.io/projects/spring-data-redis)  | Distributed caching                              |
-| [OpenTelemetry](https://opentelemetry.io/)                          | Observability (traces, metrics, logs)            |
-| [SpringDoc OpenAPI](https://springdoc.org/)                         | API documentation (Swagger UI)                   |
-| [OkHttp](https://square.github.io/okhttp/)                         | HTTP transport for Feign clients                 |
-| [Lombok](https://projectlombok.org/)                                | Boilerplate reduction                            |
-| [Log4j2](https://logging.apache.org/log4j/2.x/)                    | Logging framework                                |
+| Technology                                                        | Purpose                                          |
+|-------------------------------------------------------------------|--------------------------------------------------|
+| [Spring Boot 4.0](https://spring.io/projects/spring-boot)         | Application framework                            |
+| [OpenFeign](https://github.com/OpenFeign/feign)                   | Declarative HTTP clients for upstream registries |
+| [Resilience4j](https://resilience4j.readme.io/)                   | Circuit breaker, retry, rate limiting            |
+| [Caffeine](https://github.com/ben-manes/caffeine)                 | High-performance local caching                   |
+| [Spring Data Redis](https://spring.io/projects/spring-data-redis) | Distributed caching                              |
+| [OpenTelemetry](https://opentelemetry.io/)                        | Observability (traces, metrics, logs)            |
+| [SpringDoc OpenAPI](https://springdoc.org/)                       | API documentation (Swagger UI)                   |
+| [OkHttp](https://square.github.io/okhttp/)                        | HTTP transport for Feign clients                 |
+| [Lombok](https://projectlombok.org/)                              | Boilerplate reduction                            |
+| [Log4j2](https://logging.apache.org/log4j/2.x/)                   | Logging framework                                |
 
 ## Project structure
 
@@ -102,7 +103,8 @@ statgpt-sdmx-proxy/
 Each module documents its own environment variables in its README:
 
 - [sdmx-proxy/README.md](sdmx-proxy/README.md) -- main application (cache, Redis, OpenTelemetry, config source, Feign)
-- [sdmx-proxy-config-server/README.md](sdmx-proxy-config-server/README.md) -- config server (authentication, source type, Dial Storage)
+- [sdmx-proxy-config-server/README.md](sdmx-proxy-config-server/README.md) -- config server (authentication, source
+  type, Dial Storage)
 - [sdmx-proxy-e2e/README.md](sdmx-proxy-e2e/README.md) -- E2E tests (Docker image configuration)
 
 The `sdmx-proxy-config` module is a pure data library with no environment variables
@@ -112,11 +114,11 @@ The `sdmx-proxy-config` module is a pure data library with no environment variab
 
 The following environment variables are used by the Gradle build system and are not needed at runtime:
 
-| Variable                 | Required | Description                        | Default values                            |
-|--------------------------|:--------:|------------------------------------|-------------------------------------------|
-| `GPR_USERNAME`           | Yes      | GitHub Packages username            | `FakeUser` (build will fail to resolve BIS deps) |
-| `GPR_PASSWORD`           | Yes      | GitHub Packages token (`read:packages` scope) | `FakePass` (build will fail to resolve BIS deps) |
-| `MAVEN_PROXY_REPOSITORY` | No       | Maven proxy repository URL          | `https://repo.maven.apache.org/maven2/` |
+| Variable                 | Required | Description                                   | Default values                                   |
+|--------------------------|:--------:|-----------------------------------------------|--------------------------------------------------|
+| `GPR_USERNAME`           |   Yes    | GitHub Packages username                      | `FakeUser` (build will fail to resolve BIS deps) |
+| `GPR_PASSWORD`           |   Yes    | GitHub Packages token (`read:packages` scope) | `FakePass` (build will fail to resolve BIS deps) |
+| `MAVEN_PROXY_REPOSITORY` |    No    | Maven proxy repository URL                    | `https://repo.maven.apache.org/maven2/`          |
 
 ## Local setup
 
@@ -153,7 +155,7 @@ cd statgpt-sdmx-proxy
 
 #### 2. Set GitHub Packages credentials
 
-The build resolves sdmx-core dependencies from BIS's GitHub Packages. You need a GitHub PAT with `read:packages` scope 
+The build resolves sdmx-core dependencies from BIS's GitHub Packages. You need a GitHub PAT with `read:packages` scope
 
 ```bash
 export GPR_USERNAME=<your-github-username>
@@ -183,12 +185,14 @@ docker compose -f compose/docker-compose.yml up -d
 ```
 
 This starts:
+
 * **Redis** on port 6379 (password: `local_password`)
 * **OpenTelemetry Collector** on ports 4317 (gRPC) and 4318 (HTTP)
 
 ## Run the proxy locally
 
-Make sure `GPR_USERNAME` and `GPR_PASSWORD` environment variables are set (see [step 2](#2-set-github-packages-credentials) above), then:
+Make sure `GPR_USERNAME` and `GPR_PASSWORD` environment variables are set (
+see [step 2](#2-set-github-packages-credentials) above), then:
 
 ```bash
 ./gradlew :sdmx-proxy:bootRun

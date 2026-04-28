@@ -1,0 +1,84 @@
+@startuml
+title Probe-budgeted bisect - LimitEmulationService.getShrunkQuery
+
+skinparam defaultFontName "Inter"
+skinparam activity {
+  BackgroundColor #FAFAFA
+  BorderColor #333
+  DiamondBackgroundColor #FFF4C2
+  DiamondBorderColor #333
+}
+
+start
+
+:Inputs: query, beans, prober, N=query.limit, T=tolerance (default 1.2), target=floor(N*T), budget=limitEmulationProbeBudget (default 8);
+
+:Step 0: TC fast-path. Compute TC = product over non-time dims of: client filter size if narrowed, else dsd codelist size via CodelistSizeResolver. TC = -1 if any codelist unresolvable;
+
+if (TC resolved AND TC le target ?) then (yes)
+  #LIGHTGREEN:Fast-path hit;
+  :return query.toBuilder.limit(null).build;
+  stop
+else (no)
+endif
+
+:Step 1: Initial probe via prober. Apply fixtures. Parse projection. M = projection.effectiveSeriesCount();
+
+if (M le target ?) then (yes)
+  #LIGHTGREEN:Initial probe at-or-below target;
+  :return query.toBuilder.limit(null).build;
+  stop
+else (no)
+endif
+
+:Step 2: Order non-time dims in reverse DSD order (last DSD dim first). Single-value dims skipped inside bisect;
+
+partition "For each dim d (greedy outer loop)" {
+  :Snapshot original state[d]. Init kLow=0, kHigh=dimSize, k = clamp(ceil(target * dimSize / M), 1, dimSize-1);
+
+  repeat
+    :state[d] = first k values. Probe k. SC = projection.effectiveSeriesCount. probesIssued += 1;
+
+    if (N le SC le target ?) then (in-band)
+      #LIGHTGREEN:IN_BAND -- lock at k, return shrunk query;
+      stop
+    elseif (SC gt target ?) then (overshoot)
+      :kHigh = k. lastOvershootSc = SC;
+    else (undershoot)
+      :kLow = k;
+    endif
+
+    if (kHigh - kLow le 1 ?) then (converged)
+      if (kHigh lt dimSize ?) then (overshoot known)
+        :If k != kHigh and budget allows then re-probe at kHigh, else apply state[d] = first kHigh values without probe;
+        #YELLOW:LOCKED_AT_KHIGH. M = lastOvershootSc;
+      else (kHigh == dimSize)
+        #ORANGE:NO_OVERSHOOT_FOUND. Revert state[d] to snapshot. M unchanged;
+      endif
+    elseif (probesIssued ge budget ?) then (budget exhausted)
+      if (kHigh lt dimSize ?) then (overshoot known)
+        :state[d] = first kHigh values (no re-probe);
+        #PINK:BUDGET_EXHAUSTED with k_high. M = lastOvershootSc;
+      else (no overshoot)
+        :Revert state[d] to snapshot;
+        #PINK:BUDGET_EXHAUSTED no overshoot;
+      endif
+    else (continue)
+      :Proportional re-step: k = clamp(ceil(target * k / SC), kLow+1, kHigh-1). Same formula as warm-start but re-applied to last (k, SC) pair, so step size scales with overshoot/undershoot magnitude;
+    endif
+  repeat while (continue inner bisect ?) is (yes) not (no)
+}
+
+:Apply final state. Build shrunkQuery: filters (3.0) or rebuilt key (2.1). Limit nulled;
+
+note right
+  AdapterRouter then:
+   - genericRegistryAdapter.getData(shrunkQuery)
+   - truncatorProvider.truncate(raw, N, beans)
+   - dataFixtureService.applyFixtures
+   - streamingDataConversionService.convert
+end note
+
+stop
+
+@enduml

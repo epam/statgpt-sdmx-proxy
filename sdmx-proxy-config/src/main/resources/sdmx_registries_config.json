@@ -32,6 +32,7 @@
             "bypassEnabled": false,
             "mergeAllWildcardKey": true,
             "supportsLimit": false,
+            "convertKeyToFilters": true,
             "fixtures": [
               {
                 "type": "TIME_PERIOD_MONTHLY_NORMALIZATION",
@@ -49,7 +50,8 @@
             "availabilityEnabled": true,
             "unwrapStarComponentId": true,
             "unwrapFilterParameters": false,
-            "mergeAllWildcardKey": true
+            "mergeAllWildcardKey": true,
+            "convertKeyToFilters": true
           },
           "resilienceConfig": {
             "connectionTimeout": 30000,
