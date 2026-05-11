@@ -1,0 +1,147 @@
+name: E2E Tests
+
+# Manually triggered via PR comment: post `/run-e2e` on a pull request.
+# The commenter must have write or admin permission on the repo.
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+jobs:
+  slash-command-dispatch:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '/run-e2e') }}
+    permissions:
+      contents: none
+    outputs:
+      should-run: ${{ steps.check-command.outputs.should-run }}
+      pr-number: ${{ steps.get-pr.outputs.number }}
+      pr-head-ref: ${{ steps.get-pr.outputs.head-ref }}
+      pr-head-repo: ${{ steps.get-pr.outputs.head-repo }}
+      pr-head-sha: ${{ steps.get-pr.outputs.head-sha }}
+      comment-id: ${{ github.event.comment.id }}
+    steps:
+      - name: Check permissions and command
+        id: check-command
+        run: |
+          # Check if user has write permissions
+          PERMISSION=$(curl -s -H "Authorization: token ${{ secrets.ACTIONS_BOT_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/collaborators/${{ github.event.comment.user.login }}/permission" | \
+            jq -r '.permission')
+
+          if [[ "$PERMISSION" == "admin" || "$PERMISSION" == "write" ]]; then
+            echo "✅ User has sufficient permissions"
+            echo "should-run=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ User does not have sufficient permissions"
+            echo "should-run=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get PR details
+        id: get-pr
+        if: steps.check-command.outputs.should-run == 'true'
+        run: |
+          PR_DATA=$(curl -s -H "Authorization: token ${{ secrets.ACTIONS_BOT_TOKEN }}" \
+            "${{ github.event.issue.pull_request.url }}")
+
+          echo "number=$(echo "$PR_DATA" | jq -r '.number')" >> $GITHUB_OUTPUT
+          echo "head-ref=$(echo "$PR_DATA" | jq -r '.head.ref')" >> $GITHUB_OUTPUT
+          echo "head-repo=$(echo "$PR_DATA" | jq -r '.head.repo.full_name')" >> $GITHUB_OUTPUT
+          echo "head-sha=$(echo "$PR_DATA" | jq -r '.head.sha')" >> $GITHUB_OUTPUT
+
+      - name: React to comment
+        run: |
+          if [[ "${{ steps.check-command.outputs.should-run }}" == "true" ]]; then
+            REACTION="eyes"
+          else
+            REACTION="confused"
+          fi
+
+          curl -s -H "Authorization: token ${{ secrets.ACTIONS_BOT_TOKEN }}" \
+            -X POST \
+            -d "{\"content\": \"$REACTION\"}" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions"
+
+  e2e:
+    runs-on: ubuntu-24.04
+    needs: slash-command-dispatch
+    if: needs.slash-command-dispatch.outputs.should-run == 'true'
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Workflow run URL
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+        with:
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          repository: ${{ github.repository }}
+          comment-id: ${{ needs.slash-command-dispatch.outputs.comment-id }}
+          body: |
+            >GitHub actions run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: ${{ needs.slash-command-dispatch.outputs.pr-head-repo }}
+          ref: ${{ needs.slash-command-dispatch.outputs.pr-head-sha }}
+          lfs: true
+
+      - uses: epam/ai-dial-ci/actions/java_prepare@3.2.0
+        with:
+          java-version: "25"
+          java-distribution: "corretto"
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Build sdmx-proxy image (local tag)
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        with:
+          context: .
+          file: docker/sdmx-proxy.Dockerfile
+          load: true
+          platforms: linux/amd64
+          tags: statgpt/statgpt-sdmx-proxy:local
+          secrets: |
+            GPR_USERNAME=${{ secrets.GPR_USERNAME }}
+            GPR_PASSWORD=${{ secrets.GPR_PASSWORD }}
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
+
+      - name: Run E2E tests
+        env:
+          DOCKER_IMAGE_TAG: local
+          GPR_USERNAME: ${{ secrets.GPR_USERNAME }}
+          GPR_PASSWORD: ${{ secrets.GPR_PASSWORD }}
+        run: ./gradlew :sdmx-proxy-e2e:e2eTest --no-daemon
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@de65e23aa2b7e23d713bb51fbfcb6d502f8667d8 # v5.0.0
+        with:
+          name: e2e-reports
+          path: |
+            sdmx-proxy-e2e/build/reports/tests/
+            sdmx-proxy-e2e/build/reports/e2e-logs/
+            build/test-results/e2e/
+          retention-days: 1
+          if-no-files-found: ignore
+
+      - name: React with rocket on success
+        if: success()
+        run: |
+          curl -s -H "Authorization: token ${{ secrets.ACTIONS_BOT_TOKEN }}" \
+            -X POST \
+            -d '{"content": "rocket"}' \
+            "https://api.github.com/repos/${{ github.repository }}/issues/comments/${{ needs.slash-command-dispatch.outputs.comment-id }}/reactions"
+
+      - name: Comment on failure
+        if: failure()
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+        with:
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          repository: ${{ github.repository }}
+          comment-id: ${{ needs.slash-command-dispatch.outputs.comment-id }}
+          body: |
+            >E2E tests failed. See the [run logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
