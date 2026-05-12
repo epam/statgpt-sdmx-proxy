@@ -38,6 +38,7 @@ import feign.FeignException;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.base.IdentifiableBean;
 import io.sdmx.api.sdmx.model.beans.datastructure.DataStructureBean;
+import io.sdmx.im.beans.container.SdmxBeansImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -95,6 +96,10 @@ public class AdapterRouterImpl implements AdapterRouter {
             });
         }
         return result;
+    }
+
+    private static InputStream orEmpty(InputStream stream) {
+        return stream != null ? stream : InputStream.nullInputStream();
     }
 
     private static List<String> nonTimeDimensionIds(SdmxBeans beans) {
@@ -174,7 +179,7 @@ public class AdapterRouterImpl implements AdapterRouter {
     @NotNull
     private StreamingResponseBody getStructuresBypass(TranslatedStructureQuery query, String responseKey) {
         return outputStream -> {
-            try (InputStream structures = genericRegistryAdapter.getStructures(query)) {
+            try (InputStream structures = orEmpty(genericRegistryAdapter.getStructures(query))) {
                 byte[] bytes = structures.readAllBytes();
                 outputStream.write(bytes);
                 cacheService.putReadyResponse(responseKey, bytes);
@@ -184,10 +189,12 @@ public class AdapterRouterImpl implements AdapterRouter {
 
     @Override
     public SdmxBeans getSdmxBeans(TranslatedStructureQuery query) {
-        // Generate structure cache key
         String structureKey = CacheKeyGenerator.generateStructureKey(query);
-
         byte[] structures = getStructureBytes(query, structureKey);
+        if (structures.length == 0) {
+            log.debug("Empty structures payload for {}; returning empty SdmxBeans", structureKey);
+            return new SdmxBeansImpl();
+        }
         ReturnFormat structureReturnFormat = query.getRegistryReturnFormat();
         return streamingStructureConversionService.parseStructures(new ByteArrayInputStream(structures), structureReturnFormat);
     }
@@ -200,15 +207,18 @@ public class AdapterRouterImpl implements AdapterRouter {
         }
 
         log.debug("Cache miss for raw structures: {}", structureKey);
-        byte[] structures;
-        try (InputStream structuresStream = getFixedStructureStream(query)) {
-            structures = structuresStream.readAllBytes();
+        InputStream structuresStream = getFixedStructureStream(query);
+        if (structuresStream == null) {
+            log.debug("Registry returned no body (e.g. HTTP 204) for raw structures: {}", structureKey);
+            return new byte[0];
+        }
+        try (structuresStream) {
+            byte[] structures = structuresStream.readAllBytes();
             cacheService.putRawStructures(structureKey, structures);
+            return structures;
         } catch (IOException e) {
             throw new RuntimeException("Failed to read structures", e);
         }
-
-        return structures;
     }
 
     @Override
@@ -226,7 +236,7 @@ public class AdapterRouterImpl implements AdapterRouter {
         if (FormatSupportChecker.canBypassDataFormat(versionConfig, requestedMediaType)) {
             log.debug("Bypassing conversion for data - bypass enabled and format {} is supported", requestedMediaType);
             return outputStream -> {
-                try (InputStream dataInputStream = genericRegistryAdapter.getData(query)) {
+                try (InputStream dataInputStream = orEmpty(genericRegistryAdapter.getData(query))) {
                     dataInputStream.transferTo(outputStream);
                 }
             };
@@ -279,7 +289,7 @@ public class AdapterRouterImpl implements AdapterRouter {
             boolean emulateLimit
     ) {
         if (!emulateLimit) {
-            return genericRegistryAdapter.getData(query);
+            return orEmpty(genericRegistryAdapter.getData(query));
         }
         int n = query.getLimit() == null ? 0 : query.getLimit();
         SeriesLimitTruncator truncator = truncatorProvider.forFormat(query.getReturnFormat());
@@ -288,7 +298,7 @@ public class AdapterRouterImpl implements AdapterRouter {
             return truncator.emptyStream(sdmxBeans);
         }
         TranslatedDataQuery shrunkQuery = resolveShrunkQuery(query, sdmxBeans);
-        InputStream raw = genericRegistryAdapter.getData(shrunkQuery);
+        InputStream raw = orEmpty(genericRegistryAdapter.getData(shrunkQuery));
         return truncator.truncate(raw, n, sdmxBeans);
     }
 
@@ -367,7 +377,7 @@ public class AdapterRouterImpl implements AdapterRouter {
         if (FormatSupportChecker.canBypassAvailabilityFormat(versionConfig, requestedMediaType)) {
             log.debug("Bypassing conversion for availability - bypass enabled and format {} is supported", requestedMediaType);
             return outputStream -> {
-                try (InputStream availability = genericRegistryAdapter.getAvailability(query)) {
+                try (InputStream availability = orEmpty(genericRegistryAdapter.getAvailability(query))) {
                     availability.transferTo(outputStream);
                 }
             };
@@ -395,7 +405,7 @@ public class AdapterRouterImpl implements AdapterRouter {
 
     private InputStream getFixedAvailabilityStream(TranslatedAvailabilityQuery query) {
         return availabilityFixtureService.applyFixtures(
-                genericRegistryAdapter.getAvailability(query),
+                orEmpty(genericRegistryAdapter.getAvailability(query)),
                 query.getReturnFormat(),
                 getSdmxBeans(getStructureQuery(query)),
                 getFixtureConfigurations(query)
