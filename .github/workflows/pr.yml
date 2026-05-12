@@ -44,11 +44,11 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@3.2.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.0.1
         with:
           java-version: "25"
           java-distribution: "corretto"
-      - uses: gradle/actions/dependency-submission@f29f5a9d7b09a7c6b29859002d29d24e1674c884 # v5.0.1
+      - uses: gradle/actions/dependency-submission@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
         with:
           dependency-graph: generate-and-upload
           artifact-retention-days: 1
@@ -66,7 +66,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@3.2.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.0.1
         with:
           java-version: "25"
           java-distribution: "corretto"
