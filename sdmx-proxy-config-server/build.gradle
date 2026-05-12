@@ -30,6 +30,7 @@ repositories {
 ext['jackson-bom.version'] = jackson_bom_version
 ext['tomcat.version'] = tomcat_version
 ext['log4j2.version'] = log4j2_version
+ext['netty.version'] = netty_version
 
 dependencies {
     implementation project(':sdmx-proxy-config')
