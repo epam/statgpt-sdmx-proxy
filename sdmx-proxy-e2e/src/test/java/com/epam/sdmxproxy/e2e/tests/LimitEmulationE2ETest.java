@@ -2,9 +2,7 @@ package com.epam.sdmxproxy.e2e.tests;
 
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
-import com.epam.sdmxproxy.e2e.support.container.ContainerFixture;
-import com.epam.sdmxproxy.e2e.support.logs.ContainerLogReporter;
-import com.epam.sdmxproxy.e2e.support.logs.LogsGate;
+import com.epam.sdmxproxy.e2e.support.url.BaseUrlProvider;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,7 +14,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -32,7 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@code c[]} filters.
  */
 @Slf4j
-@ExtendWith({ContainerFixture.class, LogsGate.class, ContainerLogReporter.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Tag("registry")
 class LimitEmulationE2ETest {
@@ -47,7 +43,7 @@ class LimitEmulationE2ETest {
     @BeforeAll
     @SneakyThrows
     void setUp() {
-        restClient = new RestClient(ContainerFixture.getBaseUrl());
+        restClient = new RestClient(BaseUrlProvider.getBaseUrl());
 
         // Load the main BIS config and flip supportsLimit=false so every test in this
         // suite routes through the limit-emulation path. No dedicated emulation config

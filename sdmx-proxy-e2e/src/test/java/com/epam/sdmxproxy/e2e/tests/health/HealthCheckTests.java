@@ -1,22 +1,19 @@
 package com.epam.sdmxproxy.e2e.tests.health;
 
-import com.epam.sdmxproxy.e2e.support.container.ContainerFixture;
-import com.epam.sdmxproxy.e2e.support.logs.ContainerLogReporter;
+import com.epam.sdmxproxy.e2e.support.url.BaseUrlProvider;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for the health/readiness endpoint.
- * Validates that the container starts correctly and the health endpoint returns expected responses.
+ * Validates that the proxy under test answers on the configured base URL.
  */
-@ExtendWith({ContainerFixture.class, ContainerLogReporter.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Health Check Tests")
 class HealthCheckTests {
@@ -28,7 +25,7 @@ class HealthCheckTests {
 
     @BeforeAll
     void setUp() {
-        this.restClient = new RestClient(ContainerFixture.getBaseUrl());
+        this.restClient = new RestClient(BaseUrlProvider.getBaseUrl());
     }
 
     @Test

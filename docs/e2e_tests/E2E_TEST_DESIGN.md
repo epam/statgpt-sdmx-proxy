@@ -1,5 +1,11 @@
 # End-to-End Test Module Design for sdmx-proxy
 
+> **Status:** Superseded by [design 019](../designs/019-e2e-against-review-env/DESIGN.md).
+> Retained for historical context only. The Testcontainers / `GenericContainer` /
+> `HttpWaitStrategy` / logs-gate model described below no longer reflects the
+> code: the test module now runs against an externally provided base URL
+> (`E2E_HOST` / `-Dsdmxproxy.e2e.host=...`) and does not start the proxy.
+
 ## 1) Scope and Non-Goals
 
 ### What E2E Tests Cover
