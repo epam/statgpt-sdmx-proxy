@@ -1,0 +1,61 @@
+name: test-statgpt-sdmx-proxy
+description: Run statgpt-sdmx-proxy E2E tests against a deployed review environment
+inputs:
+  environment-url:
+    description: Application URL of the environment, e.g. `https://chat-statgpt-sdmx-proxy-pr-1.example.com`
+    required: true
+  test-repository:
+    description: GitHub repository with E2E test sources
+    default: epam/statgpt-sdmx-proxy
+  test-branch:
+    description: Git branch name of the E2E test repository to use
+    default: development
+  java-distribution:
+    description: Java distribution
+    default: corretto
+  java-version:
+    description: Java version
+    default: "25"
+  gradle-task:
+    description: Gradle task that runs the E2E suite
+    default: :sdmx-proxy-e2e:e2eTest
+  test-filter:
+    description: Gradle --tests filter for the E2E suite
+    default: "*.ReviewEnvironmentPlaceholderE2ETest"
+  report-prefix:
+    description: Test report name prefix
+    default: ${{ github.run_id }}
+  working-directory:
+    description: Working directory to run tests in
+    default: .
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        repository: ${{ inputs.test-repository }}
+        ref: ${{ inputs.test-branch }}
+        lfs: true
+        persist-credentials: false
+    - uses: epam/ai-dial-ci/actions/java_prepare@3.2.0
+      with:
+        java-version: ${{ inputs.java-version }}
+        java-distribution: ${{ inputs.java-distribution }}
+    - name: Run E2E tests
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        E2E_HOST: ${{ inputs.environment-url }}
+        GPR_USERNAME: ${{ env.GPR_USERNAME }}
+        GPR_PASSWORD: ${{ env.GPR_PASSWORD }}
+      run: |
+        echo "URL to run e2e tests against: ${E2E_HOST}"
+        ./gradlew ${{ inputs.gradle-task }} --tests "${{ inputs.test-filter }}"
+    - name: Upload JUnit reports
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+      with:
+        name: ${{ inputs.report-prefix }}-e2e
+        path: ${{ inputs.working-directory }}/build/test-results/e2e/
+        retention-days: 30

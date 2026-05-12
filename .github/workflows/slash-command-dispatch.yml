@@ -25,7 +25,7 @@ jobs:
                 "static_args": [
                   "application=${{ github.event.repository.name }}",
                   "environment=statgpt-review",
-                  "skip-e2e"
+                  "test-applications=${{ github.event.repository.name }}:${{ github.repository }}"
                 ]
               }
             ]
