@@ -6,12 +6,10 @@ import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
-import com.epam.sdmxproxy.e2e.support.container.ContainerFixture;
 import com.epam.sdmxproxy.e2e.support.fixtures.ResponseValidator;
-import com.epam.sdmxproxy.e2e.support.logs.ContainerLogReporter;
-import com.epam.sdmxproxy.e2e.support.logs.LogsGate;
 import com.epam.sdmxproxy.e2e.support.sdmx.StructureQueryDetail;
 import com.epam.sdmxproxy.e2e.support.sdmx.StructureReferenceDetail;
+import com.epam.sdmxproxy.e2e.support.url.BaseUrlProvider;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import com.epam.sdmxproxy.e2e.tests.framework.config.DataflowKeyCase;
 import com.epam.sdmxproxy.e2e.tests.framework.config.LimitTestSuitConfiguration;
@@ -31,7 +29,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -60,7 +57,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - {@link #getTestConfig()} - provides test data with per-dataset/structure/availability configs
  */
 @Slf4j
-@ExtendWith({ContainerFixture.class, LogsGate.class, ContainerLogReporter.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Tag("registry")
 public abstract class BaseRegistryTestSuite {
@@ -174,7 +170,7 @@ public abstract class BaseRegistryTestSuite {
     @BeforeAll
     @SneakyThrows
     void setUp() {
-        restClient = new RestClient(ContainerFixture.getBaseUrl());
+        restClient = new RestClient(BaseUrlProvider.getBaseUrl());
         responseValidator = new ResponseValidator();
         proxyConfig = getProxyConfig();
         testConfig = getTestConfig();

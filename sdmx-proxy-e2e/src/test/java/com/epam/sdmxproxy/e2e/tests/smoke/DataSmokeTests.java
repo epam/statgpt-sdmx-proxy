@@ -1,9 +1,8 @@
 package com.epam.sdmxproxy.e2e.tests.smoke;
 
-import com.epam.sdmxproxy.e2e.support.container.ContainerFixture;
 import com.epam.sdmxproxy.e2e.support.fixtures.ResponseValidator;
 import com.epam.sdmxproxy.e2e.support.fixtures.TestDataProvider;
-import com.epam.sdmxproxy.e2e.support.logs.ContainerLogReporter;
+import com.epam.sdmxproxy.e2e.support.url.BaseUrlProvider;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,7 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * Smoke tests for Data Controller.
@@ -19,7 +17,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
  * <p>
  * Phase 1.2: Data Controller - Smoke Test
  */
-@ExtendWith({ContainerFixture.class, ContainerLogReporter.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Data Controller Smoke Tests")
 @Tag("smoke")
@@ -31,7 +28,7 @@ class DataSmokeTests {
 
     @BeforeAll
     void setUp() {
-        this.restClient = new RestClient(ContainerFixture.getBaseUrl());
+        this.restClient = new RestClient(BaseUrlProvider.getBaseUrl());
         this.responseValidator = new ResponseValidator();
     }
 
