@@ -45,7 +45,7 @@ class StructureSmokeTests {
         // Endpoint: GET /structure/dataflow/BIS/{dataflowId}/1.0
         // Expected: HTTP 200, Response is parseable, contains dataflow element
 
-        String path = String.format("%s/structure/dataflow/%s/%s/%s",
+        String path = String.format("%s/sdmx/3.0/structure/dataflow/%s/%s/%s",
                 BASE_PATH,
                 TestDataProvider.BIS_AGENCY,
                 TestDataProvider.BIS_DATAFLOW_1,

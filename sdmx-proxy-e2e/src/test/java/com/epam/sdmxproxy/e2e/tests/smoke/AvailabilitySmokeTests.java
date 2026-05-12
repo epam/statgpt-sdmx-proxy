@@ -41,7 +41,7 @@ class AvailabilitySmokeTests {
         // Endpoint: GET /availability/dataflow/BIS/{dataflowId}/1.0/*/all
         // Expected: HTTP 200, Response contains availability info
 
-        String path = String.format("%s/availability/dataflow/%s/%s/%s/%s/all",
+        String path = String.format("%s/sdmx/3.0/availability/dataflow/%s/%s/%s/%s/all",
                 BASE_PATH,
                 TestDataProvider.BIS_AGENCY,
                 TestDataProvider.BIS_DATAFLOW_1,

@@ -23,10 +23,6 @@
       },
       {
         "type": "dataflow",
-        "urn": "IMF.STA:QGFS(9.0.0)"
-      },
-      {
-        "type": "dataflow",
         "urn": "IMF.STA:GFS_COFOG(11.0.0)"
       },
       {
@@ -104,13 +100,6 @@
         "filters": {}
       },
       {
-        "urn": "IMF.STA:QGFS(9.0.0)",
-        "keys": [
-          "AUS.BS.*.6M2_NETAL_SP_XDC.*"
-        ],
-        "filters": {}
-      },
-      {
         "urn": "IMF.STA:GFS_COFOG(11.0.0)",
         "keys": [
           "AFG.S1311B.G2MF.GF0240_T"
@@ -171,13 +160,6 @@
   },
   "availabilityTestSuitConfiguration": {
     "dataflowConfigs": [
-      {
-        "urn": "IMF.STA:QGFS(9.0.0)",
-        "keys": [
-          "*"
-        ],
-        "filters": {}
-      },
       {
         "urn": "IMF.STA:GFS_COFOG(11.0.0)",
         "keys": [
