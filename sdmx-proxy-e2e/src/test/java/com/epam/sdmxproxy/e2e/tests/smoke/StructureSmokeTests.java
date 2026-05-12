@@ -1,10 +1,8 @@
 package com.epam.sdmxproxy.e2e.tests.smoke;
 
-import com.epam.sdmxproxy.e2e.support.container.ContainerFixture;
 import com.epam.sdmxproxy.e2e.support.fixtures.ResponseValidator;
 import com.epam.sdmxproxy.e2e.support.fixtures.TestDataProvider;
-import com.epam.sdmxproxy.e2e.support.logs.ContainerLogReporter;
-import com.epam.sdmxproxy.e2e.support.logs.LogsGate;
+import com.epam.sdmxproxy.e2e.support.url.BaseUrlProvider;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
@@ -12,7 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>
  * Phase 1.1: Structure Controller - Smoke Test
  */
-@ExtendWith({ContainerFixture.class, LogsGate.class, ContainerLogReporter.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Structure Controller Smoke Tests")
 @Tag("smoke")
@@ -34,7 +30,7 @@ class StructureSmokeTests {
 
     @BeforeAll
     void setUp() {
-        this.restClient = new RestClient(ContainerFixture.getBaseUrl());
+        this.restClient = new RestClient(BaseUrlProvider.getBaseUrl());
         this.responseValidator = new ResponseValidator();
     }
 
@@ -45,7 +41,7 @@ class StructureSmokeTests {
         // Endpoint: GET /structure/dataflow/BIS/{dataflowId}/1.0
         // Expected: HTTP 200, Response is parseable, contains dataflow element
 
-        String path = String.format("%s/structure/dataflow/%s/%s/%s",
+        String path = String.format("%s/sdmx/3.0/structure/dataflow/%s/%s/%s",
                 BASE_PATH,
                 TestDataProvider.BIS_AGENCY,
                 TestDataProvider.BIS_DATAFLOW_1,

@@ -1,8 +1,7 @@
 package com.epam.sdmxproxy.e2e.tests.smoke;
 
-import com.epam.sdmxproxy.e2e.support.container.ContainerFixture;
 import com.epam.sdmxproxy.e2e.support.fixtures.TestDataProvider;
-import com.epam.sdmxproxy.e2e.support.logs.ContainerLogReporter;
+import com.epam.sdmxproxy.e2e.support.url.BaseUrlProvider;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
@@ -10,7 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>
  * Phase 1.3: Availability Controller - Smoke Test
  */
-@ExtendWith({ContainerFixture.class, ContainerLogReporter.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Availability Controller Smoke Tests")
 @Tag("smoke")
@@ -31,7 +28,7 @@ class AvailabilitySmokeTests {
 
     @BeforeAll
     void setUp() {
-        this.restClient = new RestClient(ContainerFixture.getBaseUrl());
+        this.restClient = new RestClient(BaseUrlProvider.getBaseUrl());
     }
 
     @Test
@@ -41,7 +38,7 @@ class AvailabilitySmokeTests {
         // Endpoint: GET /availability/dataflow/BIS/{dataflowId}/1.0/*/all
         // Expected: HTTP 200, Response contains availability info
 
-        String path = String.format("%s/availability/dataflow/%s/%s/%s/%s/all",
+        String path = String.format("%s/sdmx/3.0/availability/dataflow/%s/%s/%s/%s/all",
                 BASE_PATH,
                 TestDataProvider.BIS_AGENCY,
                 TestDataProvider.BIS_DATAFLOW_1,

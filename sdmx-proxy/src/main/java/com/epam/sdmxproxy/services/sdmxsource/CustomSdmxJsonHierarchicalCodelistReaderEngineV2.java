@@ -15,7 +15,7 @@ import io.sdmx.im.mutable.codelist.HierarchyMutableBeanImpl;
 import io.sdmx.im.mutable.codelist.LevelMutableBeanImpl;
 import io.sdmx.im.mutable.reference.CodeRefMutableBeanImpl;
 import io.sdmx.utils.core.application.FusionBeanStore;
-import io.sdmx.utils.core.date.DateUtil;
+import io.sdmx.utils.core.date.SdmxDateImpl;
 import io.sdmx.utils.json.JsonReader;
 
 import java.util.ArrayList;
@@ -101,10 +101,10 @@ public class CustomSdmxJsonHierarchicalCodelistReaderEngineV2 extends AbstractSd
                 String fieldName = jReader.getCurrentFieldName();
                 switch (fieldName) {
                     case "validFrom":
-                        hRefBean.setStartDate(DateUtil.formatDate(value, true));
+                        hRefBean.setStartDate(SdmxDateImpl.getSdmxDate(value, true));
                         break;
                     case "validTo":
-                        hRefBean.setEndDate(DateUtil.formatDate(value, true));
+                        hRefBean.setEndDate(SdmxDateImpl.getSdmxDate(value, false));
                         break;
                     case "code":
                         hRefBean.setCodeReference(new io.sdmx.utils.sdmx.xs.StructureReferenceBeanImpl(value));

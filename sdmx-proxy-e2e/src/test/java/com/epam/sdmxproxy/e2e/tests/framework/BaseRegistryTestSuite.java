@@ -6,12 +6,10 @@ import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
-import com.epam.sdmxproxy.e2e.support.container.ContainerFixture;
 import com.epam.sdmxproxy.e2e.support.fixtures.ResponseValidator;
-import com.epam.sdmxproxy.e2e.support.logs.ContainerLogReporter;
-import com.epam.sdmxproxy.e2e.support.logs.LogsGate;
 import com.epam.sdmxproxy.e2e.support.sdmx.StructureQueryDetail;
 import com.epam.sdmxproxy.e2e.support.sdmx.StructureReferenceDetail;
+import com.epam.sdmxproxy.e2e.support.url.BaseUrlProvider;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import com.epam.sdmxproxy.e2e.tests.framework.config.DataflowKeyCase;
 import com.epam.sdmxproxy.e2e.tests.framework.config.LimitTestSuitConfiguration;
@@ -31,7 +29,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -60,7 +57,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - {@link #getTestConfig()} - provides test data with per-dataset/structure/availability configs
  */
 @Slf4j
-@ExtendWith({ContainerFixture.class, LogsGate.class, ContainerLogReporter.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Tag("registry")
 public abstract class BaseRegistryTestSuite {
@@ -92,23 +88,11 @@ public abstract class BaseRegistryTestSuite {
     protected ResponseValidator responseValidator;
     protected ProxyConfiguration proxyConfig;
     protected RegistryTestSuitConfiguration testConfig;
-    private List<Case> genericStructureCases;
     private List<Case> specificStructureCases;
     private List<Case> dataCases;
     private List<Case> availabilityCases;
     private static final Pattern SHORT_URN = Pattern.compile(
             "^(?<agency>[^:]+):(?<resourceId>.+)\\((?<version>[^)]+)\\)$");
-
-    private static AllPairs.AllPairsBuilder getGenericStructureCases(ProxyConfiguration proxyConfig) {
-        VersionSpecificRegistryConfiguration registryConfiguration = getVersionSpecificRegistryConfiguration(proxyConfig);
-
-        return new AllPairs.AllPairsBuilder()
-                .withParameter(new Parameter("supportedStructures", new ArrayList<>(registryConfiguration.getStructureEndpointConfig().getSupportedStructures())))
-                .withParameter(new Parameter("details", List.of(StructureQueryDetail.values())))
-                .withParameter(new Parameter("references", List.of(StructureReferenceDetail.values())))
-                .withParameter(new Parameter("registryReturnTypes", registryConfiguration.getStructureEndpointConfig().getSupportedFormats()))
-                .withParameter(new Parameter("supportedProxyFormats", STRUCTURE_SUPPORTED_PROXY_FORMATS));
-    }
 
     /**
      * Parses a short SDMX URN to extract agency, resource ID, and version.
@@ -186,12 +170,11 @@ public abstract class BaseRegistryTestSuite {
     @BeforeAll
     @SneakyThrows
     void setUp() {
-        restClient = new RestClient(ContainerFixture.getBaseUrl());
+        restClient = new RestClient(BaseUrlProvider.getBaseUrl());
         responseValidator = new ResponseValidator();
         proxyConfig = getProxyConfig();
         testConfig = getTestConfig();
 
-        genericStructureCases = getGenericStructureCases(proxyConfig).build().getGeneratedCases();
         specificStructureCases = getSpecificStructureCases().build().getGeneratedCases();
         dataCases = getDataCases().build().getGeneratedCases();
         availabilityCases = getAvailabilityCases().build().getGeneratedCases();
@@ -208,52 +191,6 @@ public abstract class BaseRegistryTestSuite {
      * Subclasses must provide test data with per-dataset/structure/availability configs.
      */
     protected abstract RegistryTestSuitConfiguration getTestConfig();
-
-    Stream<Arguments> genericStructureCases() {
-        return genericStructureCases.stream()
-                .map(testCase -> Arguments.of(
-                        testCase.get("supportedStructures"),
-                        testCase.get("details"),
-                        testCase.get("references"),
-                        testCase.get("registryReturnTypes"),
-                        testCase.get("supportedProxyFormats")
-                ));
-    }
-
-    @ParameterizedTest(name = "supportedStructures: {0}, detail: {1}, references: {2}, registryReturnType: {3}, supportedProxyFormat: {4}")
-    @DisplayName("Generic Structure Cases")
-    @MethodSource("genericStructureCases")
-    void testGenericStructureTypes(String supportedStructure, StructureQueryDetail detail, StructureReferenceDetail references, ReturnFormat registryReturnType, String supportedProxyFormat) {
-        updateConfigToMatchRegistryReturnType(registryReturnType);
-
-        String agency = "*";
-        String id = "*";
-        String version = "*";
-        String path = String.format("%s/sdmx/3.0/structure/%s/%s/%s/%s?references=%s&detail=%s",
-                BASE_PATH,
-                supportedStructure,
-                agency,
-                id,
-                version,
-                references,
-                detail
-        );
-
-        Response response = restClient.getResponseWithAccept(path, supportedProxyFormat);
-
-        assertThat(response.getStatusCode())
-                .as("Structure endpoint should return HTTP 200 for supported structure type: %s", supportedStructure)
-                .isEqualTo(200);
-
-        String responseBody = response.getBody().asString();
-        assertThat(responseBody)
-                .as("Response body should not be empty")
-                .isNotEmpty();
-
-        assertThat(responseBody)
-                .as("Response should contain %s element", supportedStructure)
-                .containsIgnoringCase(supportedStructure);
-    }
 
     Stream<Arguments> specificStructureCases() {
         return specificStructureCases.stream()

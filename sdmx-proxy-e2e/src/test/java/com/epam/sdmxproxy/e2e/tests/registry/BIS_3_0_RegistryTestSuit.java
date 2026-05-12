@@ -4,7 +4,7 @@ import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.BaseRegistryTestSuite;
 import com.epam.sdmxproxy.e2e.tests.framework.config.RegistryTestSuitConfiguration;
 import lombok.SneakyThrows;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 public class BIS_3_0_RegistryTestSuit extends BaseRegistryTestSuite {

@@ -10,9 +10,7 @@ import io.sdmx.api.sdmx.manager.retrieval.HeaderRetrievalManager;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.base.IURNMaintainable;
 import io.sdmx.api.sdmx.model.beans.base.MaintainableBean;
-import io.sdmx.api.sdmx.model.beans.mapping.StructureSetBean;
 import io.sdmx.api.sdmx.model.beans.registry.RegistrationBean;
-import io.sdmx.api.sdmx.model.beans.validityperiod.ValidatableBean;
 import io.sdmx.api.sdmx.model.header.HeaderBean;
 import io.sdmx.core.sdmx.api.engine.structure.StructureWriterEngine;
 import io.sdmx.core.sdmx.api.model.structure.IExternalMaintainableLinks;
@@ -46,7 +44,6 @@ import io.sdmx.format.ml.engine.structure.writer.v21.transformation.StaxVtlMappi
 import io.sdmx.format.ml.engine.structure.writer.v21.util.StaxHeaderWriterUtil;
 import io.sdmx.im.format.SDMXMetadataStandard;
 import io.sdmx.im.header.HeaderBeanImpl;
-import io.sdmx.im.util.ItemValidityPeriodHelper;
 import io.sdmx.utils.core.object.ObjectUtil;
 import io.sdmx.utils.core.xml.Namespace;
 import io.sdmx.utils.core.xml.StaxWriter;
@@ -288,16 +285,6 @@ public abstract class CustomStaxAbstractStructureWriterEngineV21 extends Abstrac
             StaxMaintainableWriterEngine writerEngine = getWriterEngine(structureType);
             writer.writeStartElement(structureNs, startNode);
             for (MaintainableBean maint : beans.getMaintainables(structureType)) {
-				/*if (structureType == SDMX_STRUCTURE_TYPE.CODE_LIST) {
-					maint = ItemValidityPeriodHelper.potentiallyMutateIt((CodelistBean)maint);
-				} else if (structureType == SDMX_STRUCTURE_TYPE.CONCEPT_SCHEME) {
-					maint = ItemValidityPeriodHelper.potentiallyMutateIt((ConceptSchemeBean)maint);
-				}*/
-                if (maint instanceof ValidatableBean) {
-                    maint = ItemValidityPeriodHelper.potentiallyMutateIt((ValidatableBean<?>) maint);
-                } else if (maint instanceof StructureSetBean) {
-                    maint = ItemValidityPeriodHelper.potentiallyMutateIt((StructureSetBean) maint);
-                }
                 writerEngine.writeMaintainable(maint, null, writer);
             }
             writer.writeEndElement();

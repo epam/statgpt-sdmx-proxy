@@ -30,6 +30,7 @@
             "defaultFormat": "JSON_1_0_0",
             "bypassEnabled": false,
             "mergeAllWildcardKey": true,
+            "supportsLimit": false,
             "fixtures": [
               {
                 "type": "TIME_PERIOD_MONTHLY_NORMALIZATION",
@@ -77,7 +78,8 @@
   "agencies": [
     {
       "name": "BIS",
-      "primaryRegistry": "BIS"
+      "primaryRegistry": "BIS",
+      "allowSubAgencies": true
     }
   ]
 }
