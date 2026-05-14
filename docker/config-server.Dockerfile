@@ -8,9 +8,7 @@ RUN apk add --no-cache bash
 COPY . /src
 WORKDIR /src
 
-RUN --mount=type=secret,id=GPR_USERNAME,env=GPR_USERNAME \
-    --mount=type=secret,id=GPR_PASSWORD,env=GPR_PASSWORD \
-    ./gradlew --no-daemon :sdmx-proxy-config-server:bootJar -x test
+RUN ./gradlew --no-daemon :sdmx-proxy-config-server:bootJar -x test
 
 ############################
 # Runtime stage

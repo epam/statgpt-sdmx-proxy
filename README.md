@@ -114,11 +114,9 @@ The `sdmx-proxy-config` module is a pure data library with no environment variab
 
 The following environment variables are used by the Gradle build system and are not needed at runtime:
 
-| Variable                 | Required | Description                                   | Default values                                   |
-|--------------------------|:--------:|-----------------------------------------------|--------------------------------------------------|
-| `GPR_USERNAME`           |   Yes    | GitHub Packages username                      | `FakeUser` (build will fail to resolve BIS deps) |
-| `GPR_PASSWORD`           |   Yes    | GitHub Packages token (`read:packages` scope) | `FakePass` (build will fail to resolve BIS deps) |
-| `MAVEN_PROXY_REPOSITORY` |    No    | Maven proxy repository URL                    | `https://repo.maven.apache.org/maven2/`          |
+| Variable                 | Required | Description                | Default values                          |
+|--------------------------|:--------:|----------------------------|-----------------------------------------|
+| `MAVEN_PROXY_REPOSITORY` |    No    | Maven proxy repository URL | `https://repo.maven.apache.org/maven2/` |
 
 ## Local setup
 
@@ -153,16 +151,7 @@ git clone https://github.com/epam/statgpt-sdmx-proxy.git
 cd statgpt-sdmx-proxy
 ```
 
-#### 2. Set GitHub Packages credentials
-
-The build resolves sdmx-core dependencies from BIS's GitHub Packages. You need a GitHub PAT with `read:packages` scope
-
-```bash
-export GPR_USERNAME=<your-github-username>
-export GPR_PASSWORD=<pat-from-with-read:packages-scope>
-```
-
-#### 3. Build the project
+#### 2. Build the project
 
 ```bash
 ./gradlew clean build
@@ -176,7 +165,7 @@ To build without running tests:
 ./gradlew clean build -x test
 ```
 
-#### 4. (Optional) Start infrastructure services
+#### 3. (Optional) Start infrastructure services
 
 If you need Redis or the OpenTelemetry Collector for local development:
 
@@ -190,9 +179,6 @@ This starts:
 * **OpenTelemetry Collector** on ports 4317 (gRPC) and 4318 (HTTP)
 
 ## Run the proxy locally
-
-Make sure `GPR_USERNAME` and `GPR_PASSWORD` environment variables are set (
-see [step 2](#2-set-github-packages-credentials) above), then:
 
 ```bash
 ./gradlew :sdmx-proxy:bootRun
@@ -248,9 +234,7 @@ E2E tests use [Testcontainers](https://testcontainers.com/) to spin up the proxy
 real upstream registries. They require **Docker** and **internet access**.
 
 Before running E2E tests, build the Docker image. The Dockerfile at `docker/sdmx-proxy.Dockerfile` runs
-`./gradlew bootJar` inside a multi-stage build, so no local Gradle build is needed. `GPR_USERNAME` /
-`GPR_PASSWORD` must be set in the environment (GitHub username + token with `read:packages`) so the
-build can pull private Gradle dependencies.
+`./gradlew bootJar` inside a multi-stage build, so no local Gradle build is needed.
 
 ```bash
 # Windows (PowerShell) -- builds the project, prepares Docker artifacts, tags as
@@ -258,11 +242,7 @@ build can pull private Gradle dependencies.
 ./scripts/build-and-docker.ps1
 
 # Or directly:
-docker build -f docker/sdmx-proxy.Dockerfile \
-  -t statgpt/statgpt-sdmx-proxy:local \
-  --secret id=GPR_USERNAME,env=GPR_USERNAME \
-  --secret id=GPR_PASSWORD,env=GPR_PASSWORD \
-  .
+docker build -f docker/sdmx-proxy.Dockerfile -t statgpt/statgpt-sdmx-proxy:local .
 ```
 
 Then run the tests:
