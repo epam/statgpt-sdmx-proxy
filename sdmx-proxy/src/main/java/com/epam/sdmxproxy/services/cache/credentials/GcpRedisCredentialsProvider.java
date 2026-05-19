@@ -1,5 +1,6 @@
 package com.epam.sdmxproxy.services.cache.credentials;
 
+import com.epam.sdmxproxy.exception.CredentialProvisioningException;
 import com.google.cloud.iam.credentials.v1.GenerateAccessTokenResponse;
 import com.google.cloud.iam.credentials.v1.IamCredentialsClient;
 import com.google.cloud.iam.credentials.v1.IamCredentialsSettings;
@@ -61,7 +62,7 @@ public class GcpRedisCredentialsProvider implements RedisCredentialsProvider {
             IamCredentialsSettings settings = IamCredentialsSettings.newHttpJsonBuilder().build();
             return IamCredentialsClient.create(settings);
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to create GCP IAM credentials client", e);
+            throw new CredentialProvisioningException("Failed to create GCP IAM credentials client", e);
         }
     }
 

@@ -3,6 +3,7 @@ package com.epam.sdmxproxy.services.cache;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import com.epam.sdmxproxy.exception.CacheUnavailableException;
 import com.epam.sdmxproxy.services.cache.config.CacheProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +42,7 @@ public class RedisCacheService implements CacheService {
             return Optional.empty();
         } catch (Exception e) {
             log.error("Error getting parsed structures from Redis cache: {}", key, e);
-            throw new RuntimeException("Redis cache operation failed", e);
+            throw new CacheUnavailableException("Redis cache operation failed", e);
         }
     }
 
@@ -55,7 +56,7 @@ public class RedisCacheService implements CacheService {
             log.debug("Cached parsed structures: {} (TTL: {}s)", key, ttlWithJitter);
         } catch (Exception e) {
             log.error("Error putting parsed structures into Redis cache: {}", key, e);
-            throw new RuntimeException("Redis cache operation failed", e);
+            throw new CacheUnavailableException("Redis cache operation failed", e);
         }
     }
 
@@ -72,7 +73,7 @@ public class RedisCacheService implements CacheService {
             return Optional.empty();
         } catch (Exception e) {
             log.error("Error getting ready response from Redis cache: {}", key, e);
-            throw new RuntimeException("Redis cache operation failed", e);
+            throw new CacheUnavailableException("Redis cache operation failed", e);
         }
     }
 
@@ -86,7 +87,7 @@ public class RedisCacheService implements CacheService {
             log.debug("Cached ready response: {} (TTL: {}s, size: {} bytes)", key, ttlWithJitter, responseBytes.length);
         } catch (Exception e) {
             log.error("Error putting ready response into Redis cache: {}", key, e);
-            throw new RuntimeException("Redis cache operation failed", e);
+            throw new CacheUnavailableException("Redis cache operation failed", e);
         }
     }
 
@@ -103,7 +104,7 @@ public class RedisCacheService implements CacheService {
             return Optional.empty();
         } catch (Exception e) {
             log.error("Error getting limit emulation entry from Redis cache: {}", key, e);
-            throw new RuntimeException("Redis cache operation failed", e);
+            throw new CacheUnavailableException("Redis cache operation failed", e);
         }
     }
 
@@ -117,7 +118,7 @@ public class RedisCacheService implements CacheService {
             log.debug("Cached limit emulation entry: {} (TTL: {}s, size: {} bytes)", key, ttlWithJitter, value.length);
         } catch (Exception e) {
             log.error("Error putting limit emulation entry into Redis cache: {}", key, e);
-            throw new RuntimeException("Redis cache operation failed", e);
+            throw new CacheUnavailableException("Redis cache operation failed", e);
         }
     }
 

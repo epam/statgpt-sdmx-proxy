@@ -4,6 +4,7 @@ import com.epam.sdmxproxy.common.data.Structure;
 import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
+import com.epam.sdmxproxy.exception.UnexpectedStateException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
@@ -177,7 +178,7 @@ public class CacheKeyGenerator {
             return bytesToHex(hashBytes);
         } catch (NoSuchAlgorithmException e) {
             log.error("MD5 algorithm not available", e);
-            throw new RuntimeException("MD5 hashing not available", e);
+            throw new UnexpectedStateException("MD5 hashing not available", e);
         }
     }
 

@@ -1,6 +1,7 @@
 package com.epam.sdmxproxy.services.limit;
 
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.exception.AvailabilityProbeException;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
@@ -47,7 +48,7 @@ public class JsonAvailabilityResponseParser implements AvailabilityResponseParse
     @Override
     public AvailabilityProjection parse(InputStream availabilityResponseStream, ReturnFormat format) {
         if (!supports(format)) {
-            throw new IllegalArgumentException(
+            throw new AvailabilityProbeException(
                     "Unsupported availability return format for JSON parser: " + format);
         }
         Map<String, LinkedHashMap<String, Boolean>> accumulator = new LinkedHashMap<>();
@@ -66,7 +67,7 @@ public class JsonAvailabilityResponseParser implements AvailabilityResponseParse
                 }
             }
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to parse availability response", e);
+            throw new AvailabilityProbeException("Failed to parse availability response", e);
         }
 
         Map<String, List<String>> result = new LinkedHashMap<>(accumulator.size());

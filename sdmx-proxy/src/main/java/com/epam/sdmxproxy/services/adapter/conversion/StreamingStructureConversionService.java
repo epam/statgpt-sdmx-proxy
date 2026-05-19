@@ -7,6 +7,7 @@ import com.epam.jsdmx.serializer.sdmx30.common.DefaultReferenceAdapter;
 import com.epam.sdmxproxy.common.data.SdmxMediaType;
 import com.epam.sdmxproxy.common.mapping.StructureMapperImpl;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.exception.UnsupportedConversionException;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxMLStructureWriterFactory;
 import com.epam.sdmxproxy.services.sdmxsource.JsonV1StructureReaderFactory;
 import com.epam.sdmxproxy.services.sdmxsource.JsonV2StructureReaderFactory;
@@ -73,7 +74,7 @@ public class StreamingStructureConversionService {
             return;
         }
 
-        throw new UnsupportedOperationException(
+        throw new UnsupportedConversionException(
                 String.format("Structure conversion to %s is not supported", targetMediaType)
         );
     }
@@ -98,7 +99,7 @@ public class StreamingStructureConversionService {
             case JSON_1_0_0 -> jsonV1StructureReaderFactory;
             case JSON_STRUCTURE_2_0_0 -> jsonV2StructureReaderFactory;
             default ->
-                    throw new UnsupportedOperationException("Unsupported return format for parsing: " + returnFormat);
+                    throw new UnsupportedConversionException("Unsupported return format for parsing: " + returnFormat);
         };
     }
 
@@ -106,7 +107,7 @@ public class StreamingStructureConversionService {
 
         switch (SdmxMediaType.extractSdmxVersion(targetMediaType.toString())) {
             case SDMX_2_1 -> {
-                throw new UnsupportedOperationException("Json for SDMX 2.1 (JSON v1.0) is not currently supported. Choose different format");
+                throw new UnsupportedConversionException("Json for SDMX 2.1 (JSON v1.0) is not currently supported. Choose different format");
             }
             case SDMX_3_0 -> {
                 Artefacts artefacts = getArtefacts(sdmxBeans);
@@ -118,7 +119,7 @@ public class StreamingStructureConversionService {
                 );
                 writerFactory.newInstance(outputStream).write(artefacts);
             }
-            default -> throw new RuntimeException("Unsupported SDMX version for JSON conversion");
+            default -> throw new UnsupportedConversionException("Unsupported SDMX version for JSON conversion");
         }
     }
 
@@ -135,9 +136,9 @@ public class StreamingStructureConversionService {
                 sdmxMLStructureWriterFactory.getStructureWriterEngine(xmlV21).writeStructures(sdmxBeans, null, outputStream);
             }
             case SDMX_3_0 -> {
-                throw new UnsupportedOperationException("XML for SDMX 3.0 is not currently supported. Choose different format");
+                throw new UnsupportedConversionException("XML for SDMX 3.0 is not currently supported. Choose different format");
             }
-            default -> throw new RuntimeException("Unsupported SDMX version for JSON conversion");
+            default -> throw new UnsupportedConversionException("Unsupported SDMX version for XML conversion");
         }
     }
 }

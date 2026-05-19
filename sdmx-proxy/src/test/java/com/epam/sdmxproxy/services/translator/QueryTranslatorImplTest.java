@@ -14,7 +14,9 @@ import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.exception.AgencyRoutingException;
 import com.epam.sdmxproxy.exception.FilterValidationException;
+import com.epam.sdmxproxy.exception.IllegalRegistryConfigurationException;
 import com.epam.sdmxproxy.exception.UnsupportedAgencyWildcardException;
+import com.epam.sdmxproxy.exception.UnsupportedContextException;
 import com.epam.sdmxproxy.services.filter.FilterTranslator;
 import com.epam.sdmxproxy.services.filter.FilterValidationResult;
 import com.epam.sdmxproxy.services.filter.FilterValidator;
@@ -179,7 +181,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("EMPTY"), isNull())).thenReturn(registryConfig);
 
         // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        IllegalRegistryConfigurationException exception = assertThrows(IllegalRegistryConfigurationException.class, () -> {
             queryTranslator.translateStructureQuery(
                     "dataflow", "EMPTY", "TEST_FLOW", "1.0", null, "full", null, null
             );
@@ -354,7 +356,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
 
         // When/Then - Requesting unsupported structure type
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        UnsupportedContextException exception = assertThrows(UnsupportedContextException.class, () -> {
             queryTranslator.translateStructureQuery(
                     "unsupported", "BIS", "TEST_FLOW", "1.0", null, "full", null, null
             );
@@ -821,7 +823,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), any())).thenReturn(registryConfig);
 
         // When/Then - Should throw exception
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(IllegalRegistryConfigurationException.class, () ->
                 queryTranslator.translateStructureQuery(
                         "dataflow", "BIS", "TEST_FLOW", "1.0", null, "full", "application/xml", null
                 )
@@ -864,7 +866,7 @@ class QueryTranslatorImplTest {
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
 
         // When/Then
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(IllegalRegistryConfigurationException.class, () ->
                 queryTranslator.translateDataQuery(
                         "dataflow", "BIS", "TEST_FLOW", "1.0", "all",
                         null, null, null, null, null, null, null, null, null, null, false,
@@ -913,7 +915,7 @@ class QueryTranslatorImplTest {
                 .thenReturn(Set.of("FREQ", "REF_AREA"));
 
         // When/Then
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(IllegalRegistryConfigurationException.class, () ->
                 queryTranslator.translateAvailabilityQuery(
                         "dataflow", "BIS", "TEST_FLOW", "1.0", "all", "FREQ",
                         null, null, "exact", "all", null, null, null,

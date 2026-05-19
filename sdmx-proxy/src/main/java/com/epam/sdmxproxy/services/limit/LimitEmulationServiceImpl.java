@@ -16,6 +16,8 @@ import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
+import com.epam.sdmxproxy.exception.AvailabilityProbeException;
+import com.epam.sdmxproxy.exception.IllegalRegistryConfigurationException;
 import com.epam.sdmxproxy.services.fixture.availability.AvailabilityFixtureService;
 import com.epam.sdmxproxy.services.misc.DimensionService;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
@@ -62,7 +64,7 @@ public class LimitEmulationServiceImpl implements LimitEmulationService {
         AvailabilityEndpointConfiguration availabilityConfig =
                 query.getVersionConfiguration().getAvailabilityEndpointConfig();
         if (availabilityConfig == null) {
-            throw new IllegalStateException(
+            throw new IllegalRegistryConfigurationException(
                     "availabilityEndpointConfig is required for supportsLimit=false registries");
         }
         return availabilityConfig;
@@ -602,7 +604,7 @@ public class LimitEmulationServiceImpl implements LimitEmulationService {
             }
             return projection;
         } catch (IOException e) {
-            throw new IllegalStateException("Availability probe failed", e);
+            throw new AvailabilityProbeException("Availability probe failed", e);
         }
     }
 

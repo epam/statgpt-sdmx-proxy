@@ -5,6 +5,7 @@ import com.epam.jsdmx.infomodel.sdmx30.EnumeratedRepresentationImpl;
 import com.epam.jsdmx.infomodel.sdmx30.FacetValueType;
 import com.epam.jsdmx.infomodel.sdmx30.Representation;
 import com.epam.jsdmx.infomodel.sdmx30.StructureClassImpl;
+import com.epam.sdmxproxy.exception.UnexpectedStateException;
 import io.sdmx.api.sdmx.model.beans.base.RepresentationBean;
 import io.sdmx.api.sdmx.model.beans.base.TextFormatBean;
 import io.sdmx.api.sdmx.model.beans.reference.ICrossReferenceBean;
@@ -30,7 +31,7 @@ public class RepresentationMapper {
             return new BaseTextFormatRepresentationImpl(mapType(textFormat));
         }
 
-        throw new IllegalArgumentException("Unknown representation type: " + representation);
+        throw new UnexpectedStateException("Unknown representation type: " + representation);
     }
 
     private FacetValueType mapType(TextFormatBean textFormat) {

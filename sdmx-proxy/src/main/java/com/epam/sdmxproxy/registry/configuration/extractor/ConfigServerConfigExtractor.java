@@ -2,6 +2,7 @@ package com.epam.sdmxproxy.registry.configuration.extractor;
 
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfigurationSourceType;
+import com.epam.sdmxproxy.exception.ConfigurationLoadException;
 import com.epam.sdmxproxy.registry.configuration.configserver.ConfigServerFeignApi;
 import com.epam.sdmxproxy.registry.configuration.configserver.ConfigServerProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -66,13 +67,13 @@ public class ConfigServerConfigExtractor implements ProxyConfigurationExtractor 
         try (var resourceStream = this.getClass().getClassLoader().getResourceAsStream(RESOURCE_FILE_NAME)) {
             if (resourceStream == null) {
                 log.error("Classpath config resource not found: {}", RESOURCE_FILE_NAME);
-                throw new IllegalStateException("Configuration resource not found: " + RESOURCE_FILE_NAME);
+                throw new ConfigurationLoadException("Configuration resource not found: " + RESOURCE_FILE_NAME);
             }
             byte[] fileBytes = resourceStream.readAllBytes();
             return objectMapper.readValue(fileBytes, ProxyConfiguration.class);
         } catch (Exception e) {
             log.error("Failed to load classpath config: {}", e.getMessage());
-            throw new IllegalStateException("Failed to load classpath configuration", e);
+            throw new ConfigurationLoadException("Failed to load classpath configuration", e);
         }
     }
 }

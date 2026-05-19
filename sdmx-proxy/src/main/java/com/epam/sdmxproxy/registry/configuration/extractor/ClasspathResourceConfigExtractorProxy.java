@@ -2,6 +2,7 @@ package com.epam.sdmxproxy.registry.configuration.extractor;
 
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfigurationSourceType;
+import com.epam.sdmxproxy.exception.ConfigurationLoadException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -24,7 +25,7 @@ public class ClasspathResourceConfigExtractorProxy implements ProxyConfiguration
             var resourceStream = this.getClass().getClassLoader().getResourceAsStream(RESOURCE_FILE_NAME);
             if (resourceStream == null) {
                 log.error("Configuration resource not found in classpath: {}", RESOURCE_FILE_NAME);
-                throw new IllegalStateException("Configuration resource not found: " + RESOURCE_FILE_NAME);
+                throw new ConfigurationLoadException("Configuration resource not found: " + RESOURCE_FILE_NAME);
             }
 
             byte[] fileBytes = resourceStream.readAllBytes();

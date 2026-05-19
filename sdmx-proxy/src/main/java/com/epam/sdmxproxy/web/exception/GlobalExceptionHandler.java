@@ -1,13 +1,12 @@
 package com.epam.sdmxproxy.web.exception;
 
 import com.epam.sdmxproxy.configuration.telemetry.TraceContextUtils;
-import com.epam.sdmxproxy.exception.AgencyRoutingException;
+import com.epam.sdmxproxy.exception.BadRequestException;
 import com.epam.sdmxproxy.exception.FilterValidationException;
-import com.epam.sdmxproxy.exception.IllegalRegistryConfigurationException;
-import com.epam.sdmxproxy.exception.RateLimitExceededException;
-import com.epam.sdmxproxy.exception.RegistryUnavailableException;
-import com.epam.sdmxproxy.exception.UnsupportedAgencyWildcardException;
-import com.epam.sdmxproxy.exception.UnsupportedContextException;
+import com.epam.sdmxproxy.exception.NotImplementedException;
+import com.epam.sdmxproxy.exception.ServerErrorException;
+import com.epam.sdmxproxy.exception.ServiceUnavailableException;
+import com.epam.sdmxproxy.exception.TooManyRequestsException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
@@ -24,7 +23,19 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * Global exception handler for all controllers.
- * Handles exceptions and returns appropriate HTTP responses.
+ *
+ * <p>Dispatches on the {@code BaseException} family hierarchy: one method per HTTP
+ * status family. External exceptions (Feign, Spring) keep dedicated handlers.
+ *
+ * <p>Logging and message policy is enforced here, not at the throw site:
+ * <ul>
+ *   <li>4xx / 501 families log at {@code warn} without stack and echo the throw-site
+ *       message verbatim.</li>
+ *   <li>5xx families log at {@code error} with stack and use the family's generic
+ *       client message (subclasses may override to expose operator-friendly detail).</li>
+ *   <li>The catch-all {@code Exception} handler is reached only by unmapped exceptions
+ *       and always logs at {@code error} with stack.</li>
+ * </ul>
  */
 @Slf4j
 @RestControllerAdvice
@@ -45,49 +56,48 @@ public class GlobalExceptionHandler {
         response.setMessage(message);
         response.setStatus(status.value());
         response.setTraceparent(TraceContextUtils.formatTraceParent());
-        return ResponseEntity.status(status)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(response);
+        return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(response);
     }
 
-    /**
-     * Handles unsupported agency wildcard/comma-separated requests.
-     * Returns 501 Not Implemented.
-     */
-    @ApiResponse(responseCode = "501", description = "Not Implemented - Wildcard and comma-separated agency queries are not supported")
-    @ExceptionHandler(UnsupportedAgencyWildcardException.class)
-    public ResponseEntity<ErrorResponse> handleUnsupportedAgencyWildcardException(UnsupportedAgencyWildcardException ex) {
-        log.warn("Unsupported agency wildcard: {}", ex.getMessage());
-        return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_IMPLEMENTED);
+    @ApiResponse(responseCode = "400", description = "Bad Request - client input is invalid")
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
+        log.warn("Bad request: {}", ex.getMessage());
+        String message = ex.getClientMessage();
+        if (ex instanceof FilterValidationException) {
+            message = message + " The registry does not support these filters. Please use another API endpoint or remove them.";
+        }
+        return buildErrorResponse(message, HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     * Handles agency routing exceptions (unsupported agency).
-     * Returns 400 Bad Request with the error message.
-     */
-    @ApiResponse(responseCode = "400", description = "Bad Request - Agency routing failed")
-    @ExceptionHandler(AgencyRoutingException.class)
-    public ResponseEntity<ErrorResponse> handleAgencyRoutingException(AgencyRoutingException ex) {
-        log.warn("Agency routing failed: {}", ex.getMessage());
-        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    @ApiResponse(responseCode = "501", description = "Not Implemented - the proxy does not implement this operation")
+    @ExceptionHandler(NotImplementedException.class)
+    public ResponseEntity<ErrorResponse> handleNotImplemented(NotImplementedException ex) {
+        log.warn("Not implemented: {}", ex.getMessage());
+        return buildErrorResponse(ex.getClientMessage(), HttpStatus.NOT_IMPLEMENTED);
     }
 
-    /**
-     * Handles filter validation exceptions.
-     * Returns 400 Bad Request with the validation error message.
-     */
-    @ApiResponse(responseCode = "400", description = "Bad Request - Filter validation failed")
-    @ExceptionHandler(FilterValidationException.class)
-    public ResponseEntity<ErrorResponse> handleFilterValidationException(FilterValidationException ex) {
-        log.warn("Filter validation failed: {}", ex.getMessage());
-        String errorMessage = ex.getMessage() +
-                " The registry does not support these filters. Please use another API endpoint or remove them.";
-        return buildErrorResponse(errorMessage, HttpStatus.BAD_REQUEST);
+    @ApiResponse(responseCode = "429", description = "Too Many Requests - rate limit exceeded")
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyRequests(TooManyRequestsException ex) {
+        log.warn("Too many requests: {}", ex.getMessage());
+        return buildErrorResponse(ex.getClientMessage(), HttpStatus.TOO_MANY_REQUESTS);
     }
 
-    /**
-     * Handles feign exceptions, propagating upstream registry error messages to the client.
-     */
+    @ApiResponse(responseCode = "500", description = "Internal Server Error - server-side bug or misconfiguration")
+    @ExceptionHandler(ServerErrorException.class)
+    public ResponseEntity<ErrorResponse> handleServerError(ServerErrorException ex) {
+        log.error("Server error: {}", ex.getMessage(), ex);
+        return buildErrorResponse(ex.getClientMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ApiResponse(responseCode = "503", description = "Service Unavailable - a dependent service failed")
+    @ExceptionHandler(ServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleServiceUnavailable(ServiceUnavailableException ex) {
+        log.error("Service unavailable: {}", ex.getMessage(), ex);
+        return buildErrorResponse(ex.getClientMessage(), HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
     @ApiResponse(description = "Feign exception.")
     @ExceptionHandler(FeignException.class)
     public ResponseEntity<ErrorResponse> handleFeignException(FeignException ex) {
@@ -116,93 +126,35 @@ public class GlobalExceptionHandler {
                 return message.asText();
             }
         } catch (Exception ignored) {
-            // Not valid JSON — fall through to raw body
+            // Not valid JSON - fall through to raw body
         }
         return body;
     }
 
-    /**
-     * Handles unsupported context exceptions.
-     * Returns 400 Bad Request with the error message.
-     */
-    @ApiResponse(responseCode = "400", description = "Bad Request - Unsupported context")
-    @ExceptionHandler(UnsupportedContextException.class)
-    public ResponseEntity<ErrorResponse> handleUnsupportedContextException(UnsupportedContextException ex) {
-        log.warn("Unsupported context: {}", ex.getMessage());
-        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-    /**
-     * Handles illegal argument exceptions (e.g., unsupported context).
-     * Returns 400 Bad Request with the error message.
-     */
-    @ApiResponse(responseCode = "400", description = "Bad Request - Invalid argument")
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
-        log.warn("Invalid argument: {}", ex.getMessage(), ex);
-        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-    /**
-     * Handles illegal registry configuration exceptions (e.g., null registry configuration).
-     * Returns 400 Bad Request with the error message.
-     */
-    @ApiResponse(responseCode = "400", description = "Bad Request - Illegal registry configuration")
-    @ExceptionHandler(IllegalRegistryConfigurationException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalRegistryConfigurationException(IllegalRegistryConfigurationException ex) {
-        log.warn("Illegal registry configuration: {}", ex.getMessage(), ex);
-        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-    /**
-     * Handles registry unavailable exceptions (circuit breaker open).
-     * Returns 503 Service Unavailable.
-     */
-    @ApiResponse(responseCode = "503", description = "Service Unavailable - Registry is down or circuit breaker is open")
-    @ExceptionHandler(RegistryUnavailableException.class)
-    public ResponseEntity<ErrorResponse> handleRegistryUnavailableException(RegistryUnavailableException ex) {
-        log.warn("Registry unavailable: {}", ex.getMessage(), ex);
-        return buildErrorResponse(ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
-    }
-
-    /**
-     * Handles rate limit exceeded exceptions.
-     * Returns 429 Too Many Requests.
-     */
-    @ApiResponse(responseCode = "429", description = "Too Many Requests - Rate limit exceeded")
-    @ExceptionHandler(RateLimitExceededException.class)
-    public ResponseEntity<ErrorResponse> handleRateLimitExceededException(RateLimitExceededException ex) {
-        log.warn("Rate limit exceeded: {}", ex.getMessage(), ex);
-        return buildErrorResponse(ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS);
-    }
-
     @ApiResponse(responseCode = "404", description = "Not found - No resource found")
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(NoResourceFoundException ex) {
-        log.error("NoResourceFoundException", ex);
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex) {
+        log.warn("Resource not found: {}", ex.getResourcePath());
         return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
-
     @ApiResponse(responseCode = "400", description = "Bad request - http media not acceptable")
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(HttpMediaTypeNotAcceptableException ex) {
-        log.error("HttpMediaTypeNotAcceptableException ", ex);
+    public ResponseEntity<ErrorResponse> handleMediaTypeNotAcceptable(HttpMediaTypeNotAcceptableException ex) {
+        log.warn("Media type not acceptable: {}", ex.getMessage());
         return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
-
     /**
-     * Handles all other exceptions.
-     * Returns 500 Internal Server Error.
+     * Catch-all for anything not mapped above. Reaching this handler indicates either a raw
+     * JDK runtime exception that slipped through migration, or an exception from a library
+     * (sdmx-core, Jackson) that we have not wrapped. Logged at error with stack; client
+     * receives a generic message.
      */
     @ApiResponse(responseCode = "500", description = "Internal Server Error - An unexpected error occurred")
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        log.error("Unexpected error occurred", ex);
-        return buildErrorResponse(
-                "An unexpected error occurred. Please try again later.",
-                HttpStatus.INTERNAL_SERVER_ERROR
-        );
+        log.error("Unhandled exception", ex);
+        return buildErrorResponse("An unexpected error occurred. Please try again later.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

@@ -5,6 +5,7 @@ import com.epam.sdmxproxy.configuration.data.RegistryResilienceConfig;
 import com.epam.sdmxproxy.configuration.data.RegistrySelectionResult;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.exception.RateLimitExceededException;
+import com.epam.sdmxproxy.exception.UnexpectedStateException;
 import com.epam.sdmxproxy.registry.api.config.RateLimitProperties;
 import com.epam.sdmxproxy.registry.api.config.ResilienceProperties;
 import com.epam.sdmxproxy.registry.api.util.ConfigUtils;
@@ -71,8 +72,11 @@ public class RateLimitingInvocationHandlerFactory implements InvocationHandlerFa
                 return rateLimiter.executeCallable(() -> {
                     try {
                         return originalHandler.invoke(args);
+                    } catch (RuntimeException | Error e) {
+                        throw e;
                     } catch (Throwable e) {
-                        throw new RuntimeException(e);
+                        throw new UnexpectedStateException(
+                                String.format("Rate-limited Feign call '%s' threw a checked exception", rateLimiterName), e);
                     }
                 });
             } catch (RequestNotPermitted e) {

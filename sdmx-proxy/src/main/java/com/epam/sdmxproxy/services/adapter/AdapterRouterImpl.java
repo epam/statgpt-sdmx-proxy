@@ -19,6 +19,9 @@ import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
+import com.epam.sdmxproxy.exception.AvailabilityConversionException;
+import com.epam.sdmxproxy.exception.DataConversionException;
+import com.epam.sdmxproxy.exception.StructureConversionException;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingAvailabilityConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingDataConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
@@ -171,7 +174,7 @@ public class AdapterRouterImpl implements AdapterRouter {
                 throw e;
             } catch (Exception e) {
                 log.error("Failed to convert structures from {} to {}", returnFormat, requestedMediaType, e);
-                throw new IllegalArgumentException("Failed to convert structures", e);
+                throw new StructureConversionException("Failed to convert structures", e);
             }
         };
     }
@@ -217,7 +220,7 @@ public class AdapterRouterImpl implements AdapterRouter {
             cacheService.putRawStructures(structureKey, structures);
             return structures;
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read structures", e);
+            throw new StructureConversionException("Failed to read structures", e);
         }
     }
 
@@ -268,7 +271,7 @@ public class AdapterRouterImpl implements AdapterRouter {
                 throw e;
             } catch (Exception e) {
                 log.error("Failed to convert data from {} to {}", returnFormat, requestedMediaType, e);
-                throw new IllegalArgumentException("Failed to convert data", e);
+                throw new DataConversionException("Failed to convert data", e);
             }
         };
     }
@@ -398,7 +401,7 @@ public class AdapterRouterImpl implements AdapterRouter {
                 throw e;
             } catch (Exception e) {
                 log.error("Failed to convert availability from {} to {}", returnFormat, requestedMediaType, e);
-                throw new IllegalArgumentException("Failed to convert availability data", e);
+                throw new AvailabilityConversionException("Failed to convert availability data", e);
             }
         };
     }
