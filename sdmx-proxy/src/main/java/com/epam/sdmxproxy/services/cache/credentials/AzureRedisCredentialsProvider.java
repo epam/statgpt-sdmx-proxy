@@ -4,6 +4,7 @@ import com.azure.core.credential.AccessToken;
 import com.azure.core.credential.TokenRequestContext;
 import com.azure.identity.DefaultAzureCredential;
 import com.azure.identity.DefaultAzureCredentialBuilder;
+import com.epam.sdmxproxy.exception.CredentialProvisioningException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.RedisCredentials;
@@ -52,7 +53,7 @@ public class AzureRedisCredentialsProvider implements RedisCredentialsProvider {
     static String extractUsernameFromToken(String token) {
         String[] parts = token.split("\\.");
         if (parts.length < 2) {
-            throw new IllegalArgumentException("Malformed JWT token: expected at least 2 dot-separated parts, got " + parts.length);
+            throw new CredentialProvisioningException("Malformed JWT token: expected at least 2 dot-separated parts, got " + parts.length);
         }
 
         try {
@@ -60,13 +61,13 @@ public class AzureRedisCredentialsProvider implements RedisCredentialsProvider {
             JsonNode jwt = OBJECT_MAPPER.readTree(jsonBytes);
             JsonNode oid = jwt.get("oid");
             if (oid == null || !oid.isTextual()) {
-                throw new IllegalArgumentException("JWT payload missing 'oid' claim");
+                throw new CredentialProvisioningException("JWT payload missing 'oid' claim");
             }
             return oid.asText();
-        } catch (IllegalArgumentException e) {
+        } catch (CredentialProvisioningException e) {
             throw e;
         } catch (Exception e) {
-            throw new IllegalArgumentException("Failed to parse JWT payload", e);
+            throw new CredentialProvisioningException("Failed to parse JWT payload", e);
         }
     }
 

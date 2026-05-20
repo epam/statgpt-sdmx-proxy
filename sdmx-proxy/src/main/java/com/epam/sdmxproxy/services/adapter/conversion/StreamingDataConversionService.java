@@ -3,6 +3,7 @@ package com.epam.sdmxproxy.services.adapter.conversion;
 import com.epam.sdmxproxy.common.data.SdmxMediaType;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
+import com.epam.sdmxproxy.exception.UnsupportedConversionException;
 import com.epam.sdmxproxy.services.sdmxsource.CustomDataTransformationUtil;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxCsvDataReaderFactoryV2;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxJsonDataReaderFactory;
@@ -87,7 +88,7 @@ public class StreamingDataConversionService {
             processAsXml(inputStream, outputStream, sdmxBeans, targetMediaType, sourceFormat);
             return;
         }
-        throw new UnsupportedOperationException(
+        throw new UnsupportedConversionException(
                 String.format("Data conversion to %s is not supported", targetMediaType)
         );
     }
@@ -178,7 +179,7 @@ public class StreamingDataConversionService {
             case CSV_DATA_2_0_0 -> {
                 return buildCsvDataFormat(sourceMediaType, DATA_TYPE.SDMX_CSV_2_0_0);
             }
-            default -> throw new IllegalArgumentException("Cannot use this format for data");
+            default -> throw new UnsupportedConversionException("Cannot use this format for data");
         }
     }
 
@@ -250,7 +251,7 @@ public class StreamingDataConversionService {
                 dataFormat = new SdmxJsonDataFormat(DATA_TYPE.SDMXJSON_2_0_0, null);
             }
             default ->
-                    throw new UnsupportedOperationException("Unsupported SDMX version for data conversion: " + sdmxVersion);
+                    throw new UnsupportedConversionException("Unsupported SDMX version for data conversion: " + sdmxVersion);
         }
 
         return jsonDataWriterFactoryProducer.getDataWriterFactory(new InMemoryRetrievalManager(sdmxBeans)).getDataWriterEngine(

@@ -15,7 +15,9 @@ import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.exception.FilterValidationException;
+import com.epam.sdmxproxy.exception.IllegalRegistryConfigurationException;
 import com.epam.sdmxproxy.exception.UnsupportedAgencyWildcardException;
+import com.epam.sdmxproxy.exception.UnsupportedContextException;
 import com.epam.sdmxproxy.services.filter.FilterTranslator;
 import com.epam.sdmxproxy.services.filter.FilterValidator;
 import com.epam.sdmxproxy.services.misc.DimensionService;
@@ -142,7 +144,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
                     .build();
         }
 
-        throw new IllegalArgumentException(String.format("No suitable SDMX version found for registry: %s, agency: %s", registryConfig.getName(), agencyID));
+        throw new IllegalRegistryConfigurationException(String.format("No suitable SDMX version found for registry: %s, agency: %s", registryConfig.getName(), agencyID));
     }
 
     @Override
@@ -292,7 +294,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
     private String checkStructureTypeIsSupported(String structureType, VersionSpecificRegistryConfiguration versionConfig) {
         Set<String> supportedStructures = versionConfig.getStructureEndpointConfig().getSupportedStructures();
         if (supportedStructures == null || !supportedStructures.contains(structureType)) {
-            throw new IllegalArgumentException(
+            throw new UnsupportedContextException(
                     String.format("%s structure type is not supported by SDMX version %s; Supported structures: %s",
                             structureType,
                             versionConfig.getSdmxVersion(),
@@ -489,7 +491,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         VersionSpecificRegistryConfiguration versionConfig = selectedRegistry.getVersionConfiguration();
         StructureEndpointConfiguration structureConfig = versionConfig.getStructureEndpointConfig();
         if (structureConfig == null) {
-            throw new IllegalArgumentException(
+            throw new IllegalRegistryConfigurationException(
                     String.format("Structure endpoint configuration is missing for registry %s (version %s)",
                             selectedRegistry.getRegistryConfiguration().getName(),
                             versionConfig.getSdmxVersion())
@@ -513,7 +515,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         // Use default format
         ReturnFormat defaultFormat = structureConfig.getDefaultFormat();
         if (defaultFormat == null) {
-            throw new IllegalArgumentException(
+            throw new IllegalRegistryConfigurationException(
                     String.format("Registry %s (version %s) does not support structure format %s and no default format is configured",
                             selectedRegistry.getRegistryConfiguration().getName(),
                             versionConfig.getSdmxVersion(),
@@ -536,7 +538,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         VersionSpecificRegistryConfiguration versionConfig = selectedRegistry.getVersionConfiguration();
         DataEndpointConfiguration dataConfig = versionConfig.getDataEndpointConfig();
         if (dataConfig == null) {
-            throw new IllegalArgumentException(
+            throw new IllegalRegistryConfigurationException(
                     String.format("Data endpoint configuration is missing for registry %s (version %s)",
                             selectedRegistry.getRegistryConfiguration().getName(),
                             versionConfig.getSdmxVersion())
@@ -568,7 +570,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         // Use default format
         ReturnFormat defaultFormat = dataConfig.getDefaultFormat();
         if (defaultFormat == null) {
-            throw new IllegalArgumentException(
+            throw new IllegalRegistryConfigurationException(
                     String.format("Registry %s (version %s) does not support data format %s and no default format is configured",
                             selectedRegistry.getRegistryConfiguration().getName(),
                             versionConfig.getSdmxVersion(),
@@ -592,7 +594,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         VersionSpecificRegistryConfiguration versionConfig = selectedRegistry.getVersionConfiguration();
         AvailabilityEndpointConfiguration availabilityConfig = versionConfig.getAvailabilityEndpointConfig();
         if (availabilityConfig == null) {
-            throw new IllegalArgumentException(
+            throw new IllegalRegistryConfigurationException(
                     String.format("Availability endpoint configuration is missing for registry %s (version %s)",
                             selectedRegistry.getRegistryConfiguration().getName(),
                             versionConfig.getSdmxVersion())
@@ -616,7 +618,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         // Use default format
         ReturnFormat defaultFormat = availabilityConfig.getDefaultFormat();
         if (defaultFormat == null) {
-            throw new IllegalArgumentException(
+            throw new IllegalRegistryConfigurationException(
                     String.format("Registry %s (version %s) does not support availability format %s and no default format is configured",
                             selectedRegistry.getRegistryConfiguration().getName(),
                             versionConfig.getSdmxVersion(),

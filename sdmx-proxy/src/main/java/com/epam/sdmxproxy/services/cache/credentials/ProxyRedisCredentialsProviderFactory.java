@@ -1,5 +1,6 @@
 package com.epam.sdmxproxy.services.cache.credentials;
 
+import com.epam.sdmxproxy.exception.IllegalRegistryConfigurationException;
 import com.epam.sdmxproxy.services.cache.config.AwsRedisProperties;
 import com.epam.sdmxproxy.services.cache.config.CacheProperties;
 import com.epam.sdmxproxy.services.cache.config.RedisAuthProvider;
@@ -23,7 +24,7 @@ public class ProxyRedisCredentialsProviderFactory {
 
     private static void requireNonBlank(String value, String envVar) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Required property is missing: set the " + envVar + " environment variable");
+            throw new IllegalRegistryConfigurationException("Required property is missing: set the " + envVar + " environment variable");
         }
     }
 
@@ -31,7 +32,7 @@ public class ProxyRedisCredentialsProviderFactory {
      * Creates a {@link RedisCredentialsProvider} for the configured cloud provider.
      *
      * @return credentials provider, or empty if provider is {@link RedisAuthProvider#NONE}
-     * @throws IllegalArgumentException if required properties are missing for the configured provider
+     * @throws IllegalRegistryConfigurationException if required properties are missing for the configured provider
      */
     public Optional<RedisCredentialsProvider> create() {
         RedisAuthProvider provider = cacheProperties.getRedis().getProvider();

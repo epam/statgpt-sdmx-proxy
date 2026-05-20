@@ -1,6 +1,7 @@
 package com.epam.sdmxproxy.services.limit.truncate;
 
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.exception.UnexpectedStateException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +26,7 @@ public class SeriesLimitTruncatorProvider {
             for (ReturnFormat fmt : t.supportedFormats()) {
                 SeriesLimitTruncator prior = map.putIfAbsent(fmt, t);
                 if (prior != null) {
-                    throw new IllegalStateException(
+                    throw new UnexpectedStateException(
                             "Multiple SeriesLimitTruncator implementations registered for "
                                     + fmt + ": " + prior.getClass().getName()
                                     + " and " + t.getClass().getName());
@@ -38,7 +39,7 @@ public class SeriesLimitTruncatorProvider {
     public SeriesLimitTruncator forFormat(ReturnFormat format) {
         SeriesLimitTruncator t = byFormat.get(format);
         if (t == null) {
-            throw new IllegalStateException(
+            throw new UnexpectedStateException(
                     "No SeriesLimitTruncator registered for return format " + format);
         }
         return t;

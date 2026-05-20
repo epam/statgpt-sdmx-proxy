@@ -7,6 +7,7 @@ import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistrySelectionResult;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.exception.UnexpectedStateException;
 import com.epam.sdmxproxy.registry.api.SdmxApiClientProvider;
 import com.epam.sdmxproxy.registry.api.client.Sdmx21AvailabilityClient;
 import com.epam.sdmxproxy.registry.api.client.Sdmx21DataClient;
@@ -53,7 +54,7 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
                 return getStructures30(query, selectedRegistry, structure);
             }
             default ->
-                    throw new IllegalStateException("Unexpected value: " + selectedRegistry.getVersionConfiguration().getSdmxVersion());
+                    throw new UnexpectedStateException("Unexpected value: " + selectedRegistry.getVersionConfiguration().getSdmxVersion());
         }
     }
 
@@ -100,7 +101,7 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
                 return getData30(query, selectedRegistry);
             }
             default ->
-                    throw new IllegalStateException("Unexpected value: " + selectedRegistry.getVersionConfiguration().getSdmxVersion());
+                    throw new UnexpectedStateException("Unexpected value: " + selectedRegistry.getVersionConfiguration().getSdmxVersion());
         }
     }
 
@@ -181,7 +182,7 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
                 return getAvailability30(query, selectedRegistry);
             }
             default ->
-                    throw new IllegalStateException("Unexpected value: " + selectedRegistry.getVersionConfiguration().getSdmxVersion());
+                    throw new UnexpectedStateException("Unexpected value: " + selectedRegistry.getVersionConfiguration().getSdmxVersion());
         }
     }
 

@@ -3,7 +3,8 @@ package com.epam.sdmxproxy.exception;
 /**
  * Exception thrown when a registry is unavailable due to circuit breaker being open.
  */
-public class RegistryUnavailableException extends RuntimeException {
+public class RegistryUnavailableException extends ServiceUnavailableException {
+
     public RegistryUnavailableException(String message) {
         super(message);
     }

@@ -2,6 +2,7 @@ package com.epam.sdmxproxy.services.cache.credentials;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.epam.sdmxproxy.exception.CredentialProvisioningException;
 import com.epam.sdmxproxy.services.cache.config.AwsRedisProperties;
 import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.RedisCredentialsProvider;
@@ -83,7 +84,7 @@ public class AwsRedisCredentialsProvider implements RedisCredentialsProvider {
             log.debug("AWS ElastiCache IAM token generated, expires at {}", expiresAt);
             return cachedCredentials;
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Failed to generate ElastiCache IAM auth token", e);
+            throw new CredentialProvisioningException("Failed to generate ElastiCache IAM auth token", e);
         }
     }
 

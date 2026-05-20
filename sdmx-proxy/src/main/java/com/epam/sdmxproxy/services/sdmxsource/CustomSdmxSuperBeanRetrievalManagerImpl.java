@@ -1,5 +1,6 @@
 package com.epam.sdmxproxy.services.sdmxsource;
 
+import com.epam.sdmxproxy.exception.UnexpectedStateException;
 import io.sdmx.api.sdmx.manager.structure.SdmxBeanRetrievalManager;
 import io.sdmx.api.sdmx.model.beans.base.ISdmxVersion;
 import io.sdmx.api.sdmx.model.beans.base.IURN;
@@ -57,13 +58,13 @@ public class CustomSdmxSuperBeanRetrievalManagerImpl extends SdmxSuperBeanRetrie
 
     private static MaintainableSuperBean safeResolveReference(Collection<? extends MaintainableSuperBean> maintainables, IMaintainableRef ref) {
         if (ref == null) {
-            throw new IllegalArgumentException("Ref is null");
+            throw new UnexpectedStateException("Ref is null");
         }
         if (!ref.hasAgencyId()) {
-            throw new IllegalArgumentException("Ref is missing AgencyId");
+            throw new UnexpectedStateException("Ref is missing AgencyId");
         }
         if (!ref.hasMaintainableId()) {
-            throw new IllegalArgumentException("Ref is missing Id");
+            throw new UnexpectedStateException("Ref is missing Id");
         }
         if (!ObjectUtil.validCollection(maintainables)) {
             return null;

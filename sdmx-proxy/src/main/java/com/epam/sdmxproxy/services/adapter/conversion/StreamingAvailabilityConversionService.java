@@ -8,6 +8,7 @@ import com.epam.sdmxproxy.common.data.SdmxMediaType;
 import com.epam.sdmxproxy.common.mapping.StructureMapperImpl;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
+import com.epam.sdmxproxy.exception.UnsupportedConversionException;
 import com.epam.sdmxproxy.services.sdmxsource.JsonV1StructureReaderFactory;
 import com.epam.sdmxproxy.services.sdmxsource.JsonV2StructureReaderFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,12 +70,12 @@ public class StreamingAvailabilityConversionService {
         }
 
         if (isXmlMediaType(targetMediaType)) {
-            throw new UnsupportedOperationException(
+            throw new UnsupportedConversionException(
                     String.format("Availability conversion to XML format (%s) is not supported in MVP", targetMediaType)
             );
         }
 
-        throw new UnsupportedOperationException(
+        throw new UnsupportedConversionException(
                 String.format("Availability conversion to %s is not supported", targetMediaType)
         );
     }
@@ -109,11 +110,11 @@ public class StreamingAvailabilityConversionService {
                 writerFactory.newInstance(outputStream).write(artefacts);
             }
             case SDMX_2_1 -> {
-                throw new UnsupportedOperationException(
+                throw new UnsupportedConversionException(
                         String.format("Availability conversion for SDMX 2.1 is not supported in MVP")
                 );
             }
-            default -> throw new UnsupportedOperationException(
+            default -> throw new UnsupportedConversionException(
                     String.format("Unsupported SDMX version for availability conversion: %s", extractedVersion)
             );
         }
@@ -131,7 +132,7 @@ public class StreamingAvailabilityConversionService {
             case JSON_1_0_0 -> jsonV1StructureReaderFactory;
             case JSON_STRUCTURE_2_0_0 -> jsonV2StructureReaderFactory;
             default ->
-                    throw new UnsupportedOperationException("Unsupported return format for parsing: " + returnFormat);
+                    throw new UnsupportedConversionException("Unsupported return format for parsing: " + returnFormat);
         };
     }
 

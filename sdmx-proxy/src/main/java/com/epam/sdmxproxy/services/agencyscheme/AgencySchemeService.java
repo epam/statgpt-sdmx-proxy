@@ -3,6 +3,7 @@ package com.epam.sdmxproxy.services.agencyscheme;
 import com.epam.sdmxproxy.configuration.data.AgencyConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
+import com.epam.sdmxproxy.exception.UnexpectedStateException;
 import com.epam.sdmxproxy.registry.configuration.ProxyConfigurationProvider;
 import com.epam.sdmxproxy.services.adapter.AdapterRouter;
 import com.epam.sdmxproxy.services.cache.CacheService;
@@ -128,7 +129,7 @@ public class AgencySchemeService {
 
             return objectMapper.writeValueAsBytes(root);
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to serialize AgencyScheme", e);
+            throw new UnexpectedStateException("Failed to serialize AgencyScheme", e);
         }
     }
 

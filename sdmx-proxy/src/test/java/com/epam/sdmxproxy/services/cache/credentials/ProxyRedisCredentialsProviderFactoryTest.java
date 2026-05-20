@@ -1,5 +1,6 @@
 package com.epam.sdmxproxy.services.cache.credentials;
 
+import com.epam.sdmxproxy.exception.IllegalRegistryConfigurationException;
 import com.epam.sdmxproxy.services.cache.config.AwsRedisProperties;
 import com.epam.sdmxproxy.services.cache.config.CacheProperties;
 import com.epam.sdmxproxy.services.cache.config.GcpRedisProperties;
@@ -84,7 +85,7 @@ class ProxyRedisCredentialsProviderFactoryTest {
         cacheProperties.getRedis().getAws().setUserId("");
         ProxyRedisCredentialsProviderFactory factory = new ProxyRedisCredentialsProviderFactory(cacheProperties);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, factory::create);
+        IllegalRegistryConfigurationException ex = assertThrows(IllegalRegistryConfigurationException.class, factory::create);
         assertTrue(ex.getMessage().contains("REDIS_AWS_USER_ID"));
     }
 
@@ -94,7 +95,7 @@ class ProxyRedisCredentialsProviderFactoryTest {
         cacheProperties.getRedis().getAws().setRegion(null);
         ProxyRedisCredentialsProviderFactory factory = new ProxyRedisCredentialsProviderFactory(cacheProperties);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, factory::create);
+        IllegalRegistryConfigurationException ex = assertThrows(IllegalRegistryConfigurationException.class, factory::create);
         assertTrue(ex.getMessage().contains("REDIS_AWS_REGION"));
     }
 
@@ -104,7 +105,7 @@ class ProxyRedisCredentialsProviderFactoryTest {
         cacheProperties.getRedis().getGcp().setServiceAccount("");
         ProxyRedisCredentialsProviderFactory factory = new ProxyRedisCredentialsProviderFactory(cacheProperties);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, factory::create);
+        IllegalRegistryConfigurationException ex = assertThrows(IllegalRegistryConfigurationException.class, factory::create);
         assertTrue(ex.getMessage().contains("REDIS_GCP_SERVICE_ACCOUNT"));
     }
 }
