@@ -8,6 +8,7 @@ import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.common.utils.FormatSupportChecker;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
+import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistrySelectionResult;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
@@ -18,6 +19,7 @@ import com.epam.sdmxproxy.exception.FilterValidationException;
 import com.epam.sdmxproxy.exception.IllegalRegistryConfigurationException;
 import com.epam.sdmxproxy.exception.UnsupportedAgencyWildcardException;
 import com.epam.sdmxproxy.exception.UnsupportedContextException;
+import com.epam.sdmxproxy.registry.configuration.ProxyConfigurationProvider;
 import com.epam.sdmxproxy.services.filter.FilterTranslator;
 import com.epam.sdmxproxy.services.filter.FilterValidator;
 import com.epam.sdmxproxy.services.misc.DimensionService;
@@ -56,6 +58,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
     private final FilterValidator filterValidationService;
     private final FilterTranslator filterTranslator;
     private final DimensionService dimensionService;
+    private final ProxyConfigurationProvider configurationProvider;
 
     private static String getVersionSpecificQueryId(String id, VersionSpecificRegistryConfiguration versionConfig) {
         String queryId = id;
@@ -206,6 +209,86 @@ public class QueryTranslatorImpl implements QueryTranslator {
                 .registryReturnFormat(returnFormat)
                 .build();
 
+    }
+
+    @Override
+    public List<TranslatedStructureQuery> translateWildcardStructureFanOut(
+            String structureType,
+            String resourceId,
+            String version,
+            String references,
+            String detail,
+            String acceptHeader
+    ) {
+        MediaTypeParseResult parsedMediaType = parseMediaType(acceptHeader);
+        ProxyConfiguration configuration = configurationProvider.getConfiguration();
+        List<RegistryConfiguration> registries = configuration.getConfigs();
+        if (registries == null || registries.isEmpty()) {
+            return List.of();
+        }
+
+        List<TranslatedStructureQuery> queries = new ArrayList<>();
+        for (RegistryConfiguration registryConfig : registries) {
+            VersionSpecificRegistryConfiguration versionConfig = selectVersionForStructureType(registryConfig, structureType, parsedMediaType.getSdmxVersion());
+            if (versionConfig == null) {
+                continue;
+            }
+
+            RegistrySelectionResult selected = RegistrySelectionResult.builder()
+                    .registryConfiguration(registryConfig)
+                    .versionConfiguration(versionConfig)
+                    .build();
+            ReturnFormat returnFormat = determineStructureReturnFormat(selected, parsedMediaType);
+
+            String queryAgencyId = getVersionSpecificQueryId(SDMX_30_ALL_WILDCARD, versionConfig);
+            String queryResourceId = getVersionSpecificQueryId(resourceId, versionConfig);
+            String queryVersion = getVersionSpecificQueryId(version, versionConfig);
+
+            queries.add(TranslatedStructureQuery.builder()
+                    .registryConfiguration(registryConfig)
+                    .versionConfiguration(versionConfig)
+                    .structure(getStructure(versionConfig, structureType, queryAgencyId, queryResourceId, queryVersion))
+                    .references(references)
+                    .detail(detail)
+                    .contentType(parsedMediaType.getMediaType())
+                    .registryReturnFormat(returnFormat)
+                    .build());
+        }
+        return queries;
+    }
+
+    /**
+     * Selects a version configuration on the given registry that supports the requested structure type.
+     * Prefers the desired version (from the parsed Accept header) when available; otherwise prefers
+     * SDMX 3.0, then SDMX 2.1. Returns {@code null} when no version of this registry supports the type --
+     * the caller should treat that as "skip this registry in the fan-out", not a failure.
+     */
+    @Nullable
+    private VersionSpecificRegistryConfiguration selectVersionForStructureType(
+            RegistryConfiguration registryConfig,
+            String structureType,
+            @Nullable SdmxVersion desiredVersion
+    ) {
+        if (desiredVersion != null) {
+            VersionSpecificRegistryConfiguration v = registryConfig.getVersionConfiguration(desiredVersion);
+            if (v != null && supportsStructureType(v, structureType)) {
+                return v;
+            }
+        }
+        VersionSpecificRegistryConfiguration v30 = registryConfig.getVersionConfiguration(SdmxVersion.SDMX_3_0);
+        if (v30 != null && supportsStructureType(v30, structureType)) {
+            return v30;
+        }
+        VersionSpecificRegistryConfiguration v21 = registryConfig.getVersionConfiguration(SdmxVersion.SDMX_2_1);
+        if (v21 != null && supportsStructureType(v21, structureType)) {
+            return v21;
+        }
+        return null;
+    }
+
+    private static boolean supportsStructureType(VersionSpecificRegistryConfiguration versionConfig, String structureType) {
+        StructureEndpointConfiguration cfg = versionConfig.getStructureEndpointConfig();
+        return cfg != null && cfg.getSupportedStructures() != null && cfg.getSupportedStructures().contains(structureType);
     }
 
     private void validateFilters(MultiValueMap<String, String> filters, VersionSpecificRegistryConfiguration versionConfig, SdmxBeans sdmxBeans, String agencyID, String resourceID, String version) {
