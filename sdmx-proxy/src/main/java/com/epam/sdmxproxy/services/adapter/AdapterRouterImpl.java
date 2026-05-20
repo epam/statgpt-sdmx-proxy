@@ -4,9 +4,13 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import com.epam.sdmxproxy.common.data.TranslatedAvailabilityQuery;
@@ -22,6 +26,8 @@ import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import com.epam.sdmxproxy.exception.AvailabilityConversionException;
 import com.epam.sdmxproxy.exception.DataConversionException;
 import com.epam.sdmxproxy.exception.StructureConversionException;
+import com.epam.sdmxproxy.exception.StructureFanOutException;
+import com.epam.sdmxproxy.exception.UnexpectedStateException;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingAvailabilityConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingDataConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
@@ -222,6 +228,68 @@ public class AdapterRouterImpl implements AdapterRouter {
         } catch (IOException e) {
             throw new StructureConversionException("Failed to read structures", e);
         }
+    }
+
+    @Override
+    public StreamingResponseBody getStructuresWithFanOut(List<TranslatedStructureQuery> queries, String responseKey) {
+        if (queries == null || queries.isEmpty()) {
+            throw new UnexpectedStateException("getStructuresWithFanOut called with empty queries");
+        }
+        MediaType contentType = queries.getFirst().getContentType();
+        return outputStream -> {
+            try (ExecutorService executor = Executors.newFixedThreadPool(queries.size())) {
+                FanOutLegResult legs = runFanOutLegs(queries, executor);
+                SdmxBeans merged = mergeFanOutResults(legs.successes());
+
+                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                streamingStructureConversionService.convert(merged, buffer, contentType);
+                byte[] bytes = buffer.toByteArray();
+                outputStream.write(bytes);
+
+                if (legs.failedRegistries().isEmpty()) {
+                    cacheService.putReadyResponse(responseKey, bytes);
+                } else {
+                    log.debug("Fan-out response NOT cached for {} -- {} leg(s) failed: {}", responseKey, legs.failedRegistries().size(), legs.failedRegistries());
+                }
+            }
+        };
+    }
+
+    private FanOutLegResult runFanOutLegs(List<TranslatedStructureQuery> queries, ExecutorService executor) {
+        List<CompletableFuture<Optional<SdmxBeans>>> futures = queries.stream()
+                .map(q -> CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return Optional.of(getSdmxBeans(q));
+                    } catch (Exception e) {
+                        log.warn("Fan-out leg failed for registry {}: {}", q.getRegistryConfiguration().getName(), e.getMessage(), e);
+                        return Optional.<SdmxBeans>empty();
+                    }
+                }, executor))
+                .toList();
+
+        List<SdmxBeans> ok = new ArrayList<>();
+        List<String> failed = new ArrayList<>();
+        for (int i = 0; i < futures.size(); i++) {
+            Optional<SdmxBeans> result = futures.get(i).join();
+            if (result.isPresent()) {
+                ok.add(result.get());
+            } else {
+                failed.add(queries.get(i).getRegistryConfiguration().getName());
+            }
+        }
+        if (ok.isEmpty()) {
+            throw new StructureFanOutException("Structure fan-out failed: every registry leg failed (" + String.join(", ", failed) + ")", failed);
+        }
+        return new FanOutLegResult(ok, failed);
+    }
+
+    private static SdmxBeans mergeFanOutResults(List<SdmxBeans> partials) {
+        SdmxBeans merged = new SdmxBeansImpl();
+        partials.forEach(merged::merge);
+        return merged;
+    }
+
+    private record FanOutLegResult(List<SdmxBeans> successes, List<String> failedRegistries) {
     }
 
     @Override

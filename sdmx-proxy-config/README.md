@@ -21,10 +21,11 @@ fields default to `false` when omitted.
 
 ### Root: `ProxyConfiguration`
 
-| Field      | Required | Description                                                             | Available Values                 | Default |
-|------------|:--------:|-------------------------------------------------------------------------|----------------------------------|---------|
-| `configs`  |   Yes    | List of registries the proxy can route to                               | Array of `RegistryConfiguration` |         |
-| `agencies` |    No    | Explicit agency-to-registry routing overrides and sub-agency allowances | Array of `AgencyConfiguration`   | (empty) |
+| Field                    | Required | Description                                                                                                                                                            | Available Values                 | Default |
+|--------------------------|:--------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------|---------|
+| `configs`                |   Yes    | List of registries the proxy can route to                                                                                                                              | Array of `RegistryConfiguration` |         |
+| `agencies`               |    No    | Explicit agency-to-registry routing overrides and sub-agency allowances                                                                                                | Array of `AgencyConfiguration`   | (empty) |
+| `structureFanOutEnabled` |    No    | When true, `GET /structure/{type}/*/.../...` is fanned out to every registry that supports the requested structure type and the parsed structures are merged into one response. Comma-separated agency IDs remain rejected with HTTP 501 | `true`, `false`                  | `false` |
 
 ### `RegistryConfiguration`
 

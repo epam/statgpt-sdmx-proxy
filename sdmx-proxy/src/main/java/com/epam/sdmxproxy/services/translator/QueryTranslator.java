@@ -7,6 +7,7 @@ import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import org.springframework.util.MultiValueMap;
 
 import java.time.Instant;
+import java.util.List;
 
 public interface QueryTranslator {
 
@@ -54,6 +55,32 @@ public interface QueryTranslator {
      */
     TranslatedStructureQuery translateStructureQueryForAgencySchemaDiscovery(
             String agencyID
+    );
+
+    /**
+     * Translates a wildcard structure query ({@code agencyId="*"}) into one
+     * {@link TranslatedStructureQuery} per configured registry that supports the
+     * requested {@code structureType}. Caller is responsible for checking the
+     * {@code structureFanOutEnabled} toggle before invoking.
+     * <p>
+     * Returns an empty list if no configured registry supports the structure type.
+     * Callers should treat that as an empty merged response, not a failure.
+     *
+     * @param structureType structure type (e.g. "datastructure", "codelist")
+     * @param resourceID    resource ID (may be {@code null} or {@code "*"})
+     * @param version       version (may be {@code null} or {@code "*"})
+     * @param references    references parameter, pass-through
+     * @param detail        detail parameter, pass-through
+     * @param acceptHeader  client Accept header (drives content type and version selection)
+     * @return one translated query per participating registry; possibly empty
+     */
+    List<TranslatedStructureQuery> translateWildcardStructureFanOut(
+            String structureType,
+            String resourceID,
+            String version,
+            String references,
+            String detail,
+            String acceptHeader
     );
 
     TranslatedDataQuery translateDataQuery(

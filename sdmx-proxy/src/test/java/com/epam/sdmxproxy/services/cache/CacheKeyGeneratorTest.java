@@ -5,6 +5,7 @@ import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -91,6 +92,58 @@ class CacheKeyGeneratorTest {
         String key = CacheKeyGenerator.generateLimitEmulationKey(
                 baseQuery("*", new LinkedMultiValueMap<>(), 80));
         assertThat(key).startsWith("limit_emu:TEST:AGY:RES:1.0:");
+    }
+
+    @Test
+    void generateFanOutResponseKey_isStableForSameInputs() {
+        String k1 = CacheKeyGenerator.generateFanOutResponseKey("dataflow", "*", "*", null, "full", MediaType.APPLICATION_JSON, 42);
+        String k2 = CacheKeyGenerator.generateFanOutResponseKey("dataflow", "*", "*", null, "full", MediaType.APPLICATION_JSON, 42);
+        assertThat(k1).isEqualTo(k2);
+    }
+
+    @Test
+    void generateFanOutResponseKey_differsByStructureType() {
+        String k1 = CacheKeyGenerator.generateFanOutResponseKey("dataflow", "*", "*", null, "full", MediaType.APPLICATION_JSON, 42);
+        String k2 = CacheKeyGenerator.generateFanOutResponseKey("codelist", "*", "*", null, "full", MediaType.APPLICATION_JSON, 42);
+        assertThat(k1).isNotEqualTo(k2);
+    }
+
+    @Test
+    void generateFanOutResponseKey_differsByMediaType() {
+        String k1 = CacheKeyGenerator.generateFanOutResponseKey("dataflow", "*", "*", null, "full", MediaType.APPLICATION_JSON, 42);
+        String k2 = CacheKeyGenerator.generateFanOutResponseKey("dataflow", "*", "*", null, "full", MediaType.APPLICATION_XML, 42);
+        assertThat(k1).isNotEqualTo(k2);
+    }
+
+    @Test
+    void generateFanOutResponseKey_differsByConfigsHash() {
+        String k1 = CacheKeyGenerator.generateFanOutResponseKey("dataflow", "*", "*", null, "full", MediaType.APPLICATION_JSON, 42);
+        String k2 = CacheKeyGenerator.generateFanOutResponseKey("dataflow", "*", "*", null, "full", MediaType.APPLICATION_JSON, 4242);
+        assertThat(k1).isNotEqualTo(k2);
+    }
+
+    @Test
+    void generateFanOutResponseKey_differsByResourceVersionRefDetail() {
+        String base = CacheKeyGenerator.generateFanOutResponseKey("dataflow", "*", "*", null, "full", MediaType.APPLICATION_JSON, 42);
+        assertThat(CacheKeyGenerator.generateFanOutResponseKey("dataflow", "ABC", "*", null, "full", MediaType.APPLICATION_JSON, 42)).isNotEqualTo(base);
+        assertThat(CacheKeyGenerator.generateFanOutResponseKey("dataflow", "*", "1.0", null, "full", MediaType.APPLICATION_JSON, 42)).isNotEqualTo(base);
+        assertThat(CacheKeyGenerator.generateFanOutResponseKey("dataflow", "*", "*", "all", "full", MediaType.APPLICATION_JSON, 42)).isNotEqualTo(base);
+        assertThat(CacheKeyGenerator.generateFanOutResponseKey("dataflow", "*", "*", null, "allstubs", MediaType.APPLICATION_JSON, 42)).isNotEqualTo(base);
+    }
+
+    @Test
+    void generateFanOutResponseKey_handlesNullOptionalFields() {
+        // Nulls in optional positions become empty segments, not "null" strings.
+        String key = CacheKeyGenerator.generateFanOutResponseKey("dataflow", "*", "*", null, null, MediaType.APPLICATION_JSON, 0);
+        assertThat(key).startsWith("response:structure:fanout:dataflow:*:*:::");
+    }
+
+    @Test
+    void generateFanOutResponseKey_keyShapeStartsWithFanOutPrefix() {
+        String key = CacheKeyGenerator.generateFanOutResponseKey("codelist", "*", "*", "all", "full", MediaType.APPLICATION_JSON, 42);
+        assertThat(key).startsWith("response:structure:fanout:codelist:*:*:all:full:");
+        // Distinguishable from single-registry response keys (which would start with "response:structure:{type}:{registryName}:...").
+        assertThat(key).doesNotStartWith("response:structure:codelist:");
     }
 
     private static MultiValueMap<String, String> filtersOf(String dim, String value) {
