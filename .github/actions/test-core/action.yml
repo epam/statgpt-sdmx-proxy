@@ -1,4 +1,4 @@
-name: test-statgpt-sdmx-proxy
+name: test-core
 description: Run statgpt-sdmx-proxy E2E tests from this repo against the review DIAL Core URL
 inputs:
   environment-url:
@@ -27,7 +27,7 @@ inputs:
     default: ${{ github.run_id }}
   working-directory:
     description: Working directory to run tests in
-    default: .
+    default: tests
 
 runs:
   using: composite
@@ -36,7 +36,8 @@ runs:
       with:
         repository: ${{ inputs.test-repository }}
         ref: ${{ inputs.test-branch }}
-        lfs: true
+        path: ${{ inputs.working-directory }}
+        lfs: false
         persist-credentials: false
     - uses: epam/ai-dial-ci/actions/java_prepare@3.2.0
       with:
