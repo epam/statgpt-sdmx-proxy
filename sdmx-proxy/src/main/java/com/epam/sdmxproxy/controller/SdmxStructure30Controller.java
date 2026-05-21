@@ -58,6 +58,10 @@ public class SdmxStructure30Controller implements SdmxStructure30Api {
             accept = ACCEPT_HEADER_FALLBACK;
         }
 
+        agencyId = queryTranslator.normalizePathSlot(agencyId);
+        resourceId = queryTranslator.normalizePathSlot(resourceId);
+        version = queryTranslator.normalizePathSlot(version);
+
         ProxyConfiguration config = configurationProvider.getConfiguration();
         if (WILDCARD_AGENCY.equals(agencyId) && config.isStructureFanOutEnabled()) {
             return fanOutResponse(structureType, resourceId, version, references, detail, accept, config);

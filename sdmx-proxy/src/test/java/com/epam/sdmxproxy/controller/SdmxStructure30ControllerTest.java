@@ -15,6 +15,7 @@ import com.epam.sdmxproxy.services.translator.QueryTranslator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -62,6 +63,13 @@ class SdmxStructure30ControllerTest {
                 configurationProvider,
                 cacheService
         );
+
+        // Controller calls normalizePathSlot on every request; default the mock to the real semantics
+        // (rewrite "all" -> "*", pass everything else through).
+        when(queryTranslator.normalizePathSlot(anyString())).thenAnswer(inv -> {
+            String slot = inv.getArgument(0);
+            return "all".equals(slot) ? "*" : slot;
+        });
 
         // ControllerUtils.logRequestUrl reads from RequestContextHolder; supply a mock request
         // so the controller's first call doesn't blow up with "No thread-bound request found".
@@ -176,6 +184,61 @@ class SdmxStructure30ControllerTest {
         verify(queryTranslator, times(1)).translateStructureQuery("dataflow", "BIS", "TEST", "1.0", null, "full", JSON_2_0_0, null);
         verify(queryTranslator, never()).translateWildcardStructureFanOut(anyString(), anyString(), anyString(), any(), anyString(), any());
         verifyNoInteractions(cacheService);
+    }
+
+    @Test
+    void allAgency_toggleOn_engagesFanOut() {
+        when(configurationProvider.getConfiguration()).thenReturn(proxyConfig(true));
+        when(cacheService.getReadyResponse(anyString())).thenReturn(Optional.empty());
+        List<TranslatedStructureQuery> queries = List.of(fanOutQuery("BIS"));
+        when(queryTranslator.translateWildcardStructureFanOut(anyString(), anyString(), anyString(), any(), anyString(), any()))
+                .thenReturn(queries);
+        when(adapterRouter.getStructuresWithFanOut(eq(queries), anyString())).thenReturn(out -> {
+        });
+
+        ResponseEntity<StreamingResponseBody> response = controller.getResources(
+                "dataflow", "all", "*", "*", null, "full", JSON_2_0_0, null);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        // The fan-out translator received the canonical "*" path slots, not "all".
+        verify(queryTranslator, times(1)).translateWildcardStructureFanOut("dataflow", "*", "*", null, "full", JSON_2_0_0);
+        verify(queryTranslator, never()).translateStructureQuery(anyString(), anyString(), anyString(), anyString(), any(), anyString(), any(), any());
+    }
+
+    @Test
+    void allAgency_toggleOff_routesToSingleAgencyTranslatorWhichThrows501() {
+        when(configurationProvider.getConfiguration()).thenReturn(proxyConfig(false));
+        when(queryTranslator.translateStructureQuery(anyString(), eq("*"), anyString(), anyString(), any(), anyString(), any(), any()))
+                .thenThrow(new UnsupportedAgencyWildcardException("blocked"));
+
+        assertThatThrownBy(() -> controller.getResources(
+                "dataflow", "all", "*", "*", null, "full", JSON_2_0_0, null))
+                .isInstanceOf(UnsupportedAgencyWildcardException.class);
+
+        // After normalisation the translator was called with "*", not "all".
+        verify(queryTranslator, times(1)).translateStructureQuery("dataflow", "*", "*", "*", null, "full", JSON_2_0_0, null);
+        verify(queryTranslator, never()).translateWildcardStructureFanOut(anyString(), anyString(), anyString(), any(), anyString(), any());
+    }
+
+    @Test
+    void allInResourceAndVersion_toggleOn_cacheKeyMatchesStarForm() {
+        when(configurationProvider.getConfiguration()).thenReturn(proxyConfig(true));
+        when(cacheService.getReadyResponse(anyString())).thenReturn(Optional.empty());
+        List<TranslatedStructureQuery> queries = List.of(fanOutQuery("BIS"));
+        when(queryTranslator.translateWildcardStructureFanOut(anyString(), anyString(), anyString(), any(), anyString(), any()))
+                .thenReturn(queries);
+        when(adapterRouter.getStructuresWithFanOut(eq(queries), anyString())).thenReturn(out -> {
+        });
+
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+
+        controller.getResources("dataflow", "*", "*", "*", null, "full", JSON_2_0_0, null);
+        controller.getResources("dataflow", "all", "all", "all", null, "full", JSON_2_0_0, null);
+
+        verify(cacheService, times(2)).getReadyResponse(keyCaptor.capture());
+        List<String> keys = keyCaptor.getAllValues();
+        assertThat(keys).hasSize(2);
+        assertThat(keys.get(0)).isEqualTo(keys.get(1));
     }
 
     private static ProxyConfiguration proxyConfig(boolean fanOutEnabled) {

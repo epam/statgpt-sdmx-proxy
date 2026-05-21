@@ -68,6 +68,11 @@ public class QueryTranslatorImpl implements QueryTranslator {
         return queryId;
     }
 
+    @Override
+    public String normalizePathSlot(String slot) {
+        return SDMX_21_ALL_WILDCARD.equals(slot) ? SDMX_30_ALL_WILDCARD : slot;
+    }
+
     private static MultiValueMap<String, String> copyFiltersWithout(MultiValueMap<String, String> filters, String excludeKey) {
         MultiValueMap<String, String> result = new LinkedMultiValueMap<>();
         for (Map.Entry<String, List<String>> entry : filters.entrySet()) {
@@ -161,6 +166,10 @@ public class QueryTranslatorImpl implements QueryTranslator {
             String acceptHeader,
             String sourceArtefactUrn
     ) {
+        agencyId = normalizePathSlot(agencyId);
+        resourceId = normalizePathSlot(resourceId);
+        version = normalizePathSlot(version);
+
         if ("*".equals(agencyId) || (agencyId != null && agencyId.contains(","))) {
             throw new UnsupportedAgencyWildcardException("Wildcard and comma-separated agency queries are not supported. Use /structure/agencyscheme to discover agencies.");
         }
@@ -220,6 +229,9 @@ public class QueryTranslatorImpl implements QueryTranslator {
             String detail,
             String acceptHeader
     ) {
+        resourceId = normalizePathSlot(resourceId);
+        version = normalizePathSlot(version);
+
         MediaTypeParseResult parsedMediaType = parseMediaType(acceptHeader);
         ProxyConfiguration configuration = configurationProvider.getConfiguration();
         List<RegistryConfiguration> registries = configuration.getConfigs();

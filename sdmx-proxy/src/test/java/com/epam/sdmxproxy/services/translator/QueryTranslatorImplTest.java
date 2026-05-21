@@ -1075,6 +1075,96 @@ class QueryTranslatorImplTest {
                 ));
     }
 
+    // ========== `all` Keyword Normalisation Tests ==========
+
+    @Test
+    void normalizePathSlot_rewritesAllToStar() {
+        assertEquals("*", queryTranslator.normalizePathSlot("all"));
+    }
+
+    @Test
+    void normalizePathSlot_passesThroughStar() {
+        assertEquals("*", queryTranslator.normalizePathSlot("*"));
+    }
+
+    @Test
+    void normalizePathSlot_passesThroughLiteral() {
+        assertEquals("BIS", queryTranslator.normalizePathSlot("BIS"));
+        assertEquals("TEST_FLOW", queryTranslator.normalizePathSlot("TEST_FLOW"));
+        assertEquals("1.0", queryTranslator.normalizePathSlot("1.0"));
+    }
+
+    @Test
+    void normalizePathSlot_caseVariantsTreatedAsLiterals() {
+        assertEquals("ALL", queryTranslator.normalizePathSlot("ALL"));
+        assertEquals("All", queryTranslator.normalizePathSlot("All"));
+    }
+
+    @Test
+    void normalizePathSlot_passesThroughCommaList() {
+        // Substring match is intentionally not done; the 501 gate handles comma lists.
+        assertEquals("all,IMF", queryTranslator.normalizePathSlot("all,IMF"));
+        assertEquals("BIS,IMF", queryTranslator.normalizePathSlot("BIS,IMF"));
+    }
+
+    @Test
+    void normalizePathSlot_passesThroughNull() {
+        assertNull(queryTranslator.normalizePathSlot(null));
+    }
+
+    @Test
+    void translateStructureQuery_allInAgencySlot_throws501LikeWildcard() {
+        // The translator normalises `all` to `*` at entry, then the 501 gate fires.
+        assertThrows(UnsupportedAgencyWildcardException.class,
+                () -> queryTranslator.translateStructureQuery(
+                        "dataflow", "all", "TEST_FLOW", "1.0", null, "full", null, null
+                ));
+    }
+
+    @Test
+    void translateStructureQuery_allInResourceOrVersion_carriesWildcardInStructure() {
+        RegistryConfiguration bis = createRegistryWithBothVersions("BIS");
+        when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(bis);
+
+        TranslatedStructureQuery query = queryTranslator.translateStructureQuery(
+                "dataflow", "BIS", "all", "all", null, "full", null, null
+        );
+
+        // BIS resolved at SDMX 3.0 (preferred); outbound IDs are the canonical `*`.
+        assertEquals("BIS", query.getStructure().agency());
+        assertEquals("*", query.getStructure().id());
+        assertEquals("*", query.getStructure().version());
+    }
+
+    @Test
+    void translateStructureQuery_caseVariantALLTreatedAsLiteral() {
+        // Case-sensitive: "ALL" stays a literal artefact ID; the request is a single-agency lookup.
+        RegistryConfiguration bis = createRegistryWithBothVersions("BIS");
+        when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(bis);
+
+        TranslatedStructureQuery query = queryTranslator.translateStructureQuery(
+                "dataflow", "BIS", "TEST_FLOW", "ALL", null, "full", null, null
+        );
+
+        assertEquals("ALL", query.getStructure().version());
+    }
+
+    @Test
+    void translateWildcardStructureFanOut_allInResourceAndVersion_normalised() {
+        RegistryConfiguration bis = createRegistryWithBothVersions("BIS");
+        when(configurationProvider.getConfiguration()).thenReturn(proxyConfig(List.of(bis)));
+
+        List<TranslatedStructureQuery> queries = queryTranslator.translateWildcardStructureFanOut(
+                "dataflow", "all", "all", null, "full", null
+        );
+
+        assertEquals(1, queries.size());
+        TranslatedStructureQuery query = queries.getFirst();
+        assertEquals("*", query.getStructure().agency());
+        assertEquals("*", query.getStructure().id());
+        assertEquals("*", query.getStructure().version());
+    }
+
     // ========== Helper Methods ==========
 
     private ProxyConfiguration proxyConfig(List<RegistryConfiguration> configs) {
