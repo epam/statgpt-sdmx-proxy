@@ -2,6 +2,7 @@ package com.epam.sdmxproxy.services.cache.credentials;
 
 import com.azure.core.credential.AccessToken;
 import com.azure.identity.DefaultAzureCredential;
+import com.epam.sdmxproxy.exception.CredentialProvisioningException;
 import io.lettuce.core.RedisCredentials;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -138,7 +139,7 @@ class AzureRedisCredentialsProviderTest {
 
     @Test
     void shouldThrowOnMalformedToken() {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(CredentialProvisioningException.class,
                 () -> AzureRedisCredentialsProvider.extractUsernameFromToken("no-dots-here"));
     }
 }

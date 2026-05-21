@@ -14,7 +14,10 @@ import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.exception.AgencyRoutingException;
 import com.epam.sdmxproxy.exception.FilterValidationException;
+import com.epam.sdmxproxy.exception.IllegalRegistryConfigurationException;
 import com.epam.sdmxproxy.exception.UnsupportedAgencyWildcardException;
+import com.epam.sdmxproxy.exception.UnsupportedContextException;
+import com.epam.sdmxproxy.registry.configuration.ProxyConfigurationProvider;
 import com.epam.sdmxproxy.services.filter.FilterTranslator;
 import com.epam.sdmxproxy.services.filter.FilterValidationResult;
 import com.epam.sdmxproxy.services.filter.FilterValidator;
@@ -54,6 +57,7 @@ class QueryTranslatorImplTest {
     private FilterValidator filterValidator;
     private FilterTranslator filterTranslator;
     private DimensionService dimensionService;
+    private ProxyConfigurationProvider configurationProvider;
     private QueryTranslatorImpl queryTranslator;
 
     @BeforeEach
@@ -62,6 +66,7 @@ class QueryTranslatorImplTest {
         filterValidator = mock(FilterValidator.class);
         filterTranslator = mock(FilterTranslator.class);
         dimensionService = mock(DimensionService.class);
+        configurationProvider = mock(ProxyConfigurationProvider.class);
 
         // Setup default mock behavior
         when(filterValidator.validateFilters(any(), any(), any(), anyString(), anyString(), anyString()))
@@ -73,7 +78,8 @@ class QueryTranslatorImplTest {
                 agencyRoutingService,
                 filterValidator,
                 filterTranslator,
-                dimensionService
+                dimensionService,
+                configurationProvider
         );
     }
 
@@ -179,7 +185,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("EMPTY"), isNull())).thenReturn(registryConfig);
 
         // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        IllegalRegistryConfigurationException exception = assertThrows(IllegalRegistryConfigurationException.class, () -> {
             queryTranslator.translateStructureQuery(
                     "dataflow", "EMPTY", "TEST_FLOW", "1.0", null, "full", null, null
             );
@@ -354,7 +360,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
 
         // When/Then - Requesting unsupported structure type
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        UnsupportedContextException exception = assertThrows(UnsupportedContextException.class, () -> {
             queryTranslator.translateStructureQuery(
                     "unsupported", "BIS", "TEST_FLOW", "1.0", null, "full", null, null
             );
@@ -821,7 +827,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), any())).thenReturn(registryConfig);
 
         // When/Then - Should throw exception
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(IllegalRegistryConfigurationException.class, () ->
                 queryTranslator.translateStructureQuery(
                         "dataflow", "BIS", "TEST_FLOW", "1.0", null, "full", "application/xml", null
                 )
@@ -864,7 +870,7 @@ class QueryTranslatorImplTest {
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
 
         // When/Then
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(IllegalRegistryConfigurationException.class, () ->
                 queryTranslator.translateDataQuery(
                         "dataflow", "BIS", "TEST_FLOW", "1.0", "all",
                         null, null, null, null, null, null, null, null, null, null, false,
@@ -913,7 +919,7 @@ class QueryTranslatorImplTest {
                 .thenReturn(Set.of("FREQ", "REF_AREA"));
 
         // When/Then
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(IllegalRegistryConfigurationException.class, () ->
                 queryTranslator.translateAvailabilityQuery(
                         "dataflow", "BIS", "TEST_FLOW", "1.0", "all", "FREQ",
                         null, null, "exact", "all", null, null, null,
@@ -946,6 +952,217 @@ class QueryTranslatorImplTest {
                 () -> queryTranslator.translateStructureQuery(
                         "dataflow", "BIS, IMF", "TEST_FLOW", "1.0", null, "full", null, null
                 ));
+    }
+
+    // ========== Wildcard Fan-Out Translation Tests ==========
+
+    @Test
+    void translateWildcardStructureFanOut_returnsOneQueryPerSupportingRegistry() {
+        RegistryConfiguration bis = createRegistryWithBothVersions("BIS");
+        RegistryConfiguration imf = createRegistryWithBothVersions("IMF");
+        RegistryConfiguration narrow = createRegistryWithSingleVersion("ECB", SdmxVersion.SDMX_3_0);
+        narrow.getVersionConfiguration(SdmxVersion.SDMX_3_0).getStructureEndpointConfig()
+                .setSupportedStructures(Set.of("codelist"));
+        when(configurationProvider.getConfiguration()).thenReturn(proxyConfig(List.of(bis, imf, narrow)));
+
+        List<TranslatedStructureQuery> queries = queryTranslator.translateWildcardStructureFanOut(
+                "dataflow", "*", "*", null, "full", null
+        );
+
+        assertEquals(2, queries.size());
+        Set<String> registryNames = queries.stream()
+                .map(q -> q.getRegistryConfiguration().getName())
+                .collect(java.util.stream.Collectors.toSet());
+        assertEquals(Set.of("BIS", "IMF"), registryNames);
+        for (TranslatedStructureQuery query : queries) {
+            assertEquals("*", query.getStructure().agency());
+            assertEquals("dataflow", query.getStructure().type());
+        }
+    }
+
+    @Test
+    void translateWildcardStructureFanOut_returnsEmptyWhenNoRegistrySupportsType() {
+        RegistryConfiguration bis = createRegistryWithBothVersions("BIS");
+        when(configurationProvider.getConfiguration()).thenReturn(proxyConfig(List.of(bis)));
+
+        List<TranslatedStructureQuery> queries = queryTranslator.translateWildcardStructureFanOut(
+                "hierarchy", "*", "*", null, "full", null
+        );
+
+        assertTrue(queries.isEmpty());
+    }
+
+    @Test
+    void translateWildcardStructureFanOut_returnsEmptyWhenConfigsIsNullOrEmpty() {
+        ProxyConfiguration empty = new ProxyConfiguration();
+        when(configurationProvider.getConfiguration()).thenReturn(empty);
+
+        List<TranslatedStructureQuery> queries = queryTranslator.translateWildcardStructureFanOut(
+                "dataflow", "*", "*", null, "full", null
+        );
+
+        assertTrue(queries.isEmpty());
+    }
+
+    @Test
+    void translateWildcardStructureFanOut_prefers30WhenNoAcceptVersionPin() {
+        RegistryConfiguration bis = createRegistryWithBothVersions("BIS");
+        when(configurationProvider.getConfiguration()).thenReturn(proxyConfig(List.of(bis)));
+
+        List<TranslatedStructureQuery> queries = queryTranslator.translateWildcardStructureFanOut(
+                "dataflow", "*", "*", null, "full", null
+        );
+
+        assertEquals(1, queries.size());
+        assertEquals(SdmxVersion.SDMX_3_0, queries.getFirst().getVersionConfiguration().getSdmxVersion());
+    }
+
+    @Test
+    void translateWildcardStructureFanOut_honoursAcceptVersion21() {
+        RegistryConfiguration bis = createRegistryWithBothVersions("BIS");
+        when(configurationProvider.getConfiguration()).thenReturn(proxyConfig(List.of(bis)));
+
+        List<TranslatedStructureQuery> queries = queryTranslator.translateWildcardStructureFanOut(
+                "dataflow", "*", "*", null, "full",
+                "application/vnd.sdmx.draft-sdmx-json+json; version=2.1"
+        );
+
+        assertEquals(1, queries.size());
+        assertEquals(SdmxVersion.SDMX_2_1, queries.getFirst().getVersionConfiguration().getSdmxVersion());
+    }
+
+    @Test
+    void translateWildcardStructureFanOut_translatesAllWildcardForV21Registry() {
+        RegistryConfiguration imf21 = createRegistryWithSingleVersion("IMF", SdmxVersion.SDMX_2_1);
+        when(configurationProvider.getConfiguration()).thenReturn(proxyConfig(List.of(imf21)));
+
+        List<TranslatedStructureQuery> queries = queryTranslator.translateWildcardStructureFanOut(
+                "dataflow", "*", "*", null, "full", null
+        );
+
+        assertEquals(1, queries.size());
+        TranslatedStructureQuery query = queries.getFirst();
+        // SDMX 2.1 uses "all" instead of "*"
+        assertEquals("all", query.getStructure().agency());
+        assertEquals("all", query.getStructure().id());
+        assertEquals("all", query.getStructure().version());
+    }
+
+    @Test
+    void translateWildcardStructureFanOut_keepsLiteralResourceAndVersion() {
+        RegistryConfiguration bis = createRegistryWithBothVersions("BIS");
+        when(configurationProvider.getConfiguration()).thenReturn(proxyConfig(List.of(bis)));
+
+        List<TranslatedStructureQuery> queries = queryTranslator.translateWildcardStructureFanOut(
+                "dataflow", "TEST_FLOW", "1.0", "all", "full", null
+        );
+
+        assertEquals(1, queries.size());
+        TranslatedStructureQuery query = queries.getFirst();
+        assertEquals("*", query.getStructure().agency());
+        assertEquals("TEST_FLOW", query.getStructure().id());
+        assertEquals("1.0", query.getStructure().version());
+        assertEquals("all", query.getReferences());
+        assertEquals("full", query.getDetail());
+    }
+
+    @Test
+    void translateStructureQuery_stillThrows501ForWildcardAgency() {
+        // Sanity: the existing rejection path is untouched; controller routes around it when toggle is on.
+        assertThrows(UnsupportedAgencyWildcardException.class,
+                () -> queryTranslator.translateStructureQuery(
+                        "dataflow", "*", "*", "*", null, "full", null, null
+                ));
+    }
+
+    // ========== `all` Keyword Normalisation Tests ==========
+
+    @Test
+    void normalizePathSlot_rewritesAllToStar() {
+        assertEquals("*", queryTranslator.normalizePathSlot("all"));
+    }
+
+    @Test
+    void normalizePathSlot_passesThroughStar() {
+        assertEquals("*", queryTranslator.normalizePathSlot("*"));
+    }
+
+    @Test
+    void normalizePathSlot_passesThroughLiteral() {
+        assertEquals("BIS", queryTranslator.normalizePathSlot("BIS"));
+        assertEquals("TEST_FLOW", queryTranslator.normalizePathSlot("TEST_FLOW"));
+        assertEquals("1.0", queryTranslator.normalizePathSlot("1.0"));
+    }
+
+    @Test
+    void normalizePathSlot_caseVariantsTreatedAsLiterals() {
+        assertEquals("ALL", queryTranslator.normalizePathSlot("ALL"));
+        assertEquals("All", queryTranslator.normalizePathSlot("All"));
+    }
+
+    @Test
+    void normalizePathSlot_passesThroughCommaList() {
+        // Substring match is intentionally not done; the 501 gate handles comma lists.
+        assertEquals("all,IMF", queryTranslator.normalizePathSlot("all,IMF"));
+        assertEquals("BIS,IMF", queryTranslator.normalizePathSlot("BIS,IMF"));
+    }
+
+    @Test
+    void normalizePathSlot_passesThroughNull() {
+        assertNull(queryTranslator.normalizePathSlot(null));
+    }
+
+    @Test
+    void translateStructureQuery_allInAgencySlot_throws501LikeWildcard() {
+        // The translator normalises `all` to `*` at entry, then the 501 gate fires.
+        assertThrows(UnsupportedAgencyWildcardException.class,
+                () -> queryTranslator.translateStructureQuery(
+                        "dataflow", "all", "TEST_FLOW", "1.0", null, "full", null, null
+                ));
+    }
+
+    @Test
+    void translateStructureQuery_allInResourceOrVersion_carriesWildcardInStructure() {
+        RegistryConfiguration bis = createRegistryWithBothVersions("BIS");
+        when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(bis);
+
+        TranslatedStructureQuery query = queryTranslator.translateStructureQuery(
+                "dataflow", "BIS", "all", "all", null, "full", null, null
+        );
+
+        // BIS resolved at SDMX 3.0 (preferred); outbound IDs are the canonical `*`.
+        assertEquals("BIS", query.getStructure().agency());
+        assertEquals("*", query.getStructure().id());
+        assertEquals("*", query.getStructure().version());
+    }
+
+    @Test
+    void translateStructureQuery_caseVariantALLTreatedAsLiteral() {
+        // Case-sensitive: "ALL" stays a literal artefact ID; the request is a single-agency lookup.
+        RegistryConfiguration bis = createRegistryWithBothVersions("BIS");
+        when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(bis);
+
+        TranslatedStructureQuery query = queryTranslator.translateStructureQuery(
+                "dataflow", "BIS", "TEST_FLOW", "ALL", null, "full", null, null
+        );
+
+        assertEquals("ALL", query.getStructure().version());
+    }
+
+    @Test
+    void translateWildcardStructureFanOut_allInResourceAndVersion_normalised() {
+        RegistryConfiguration bis = createRegistryWithBothVersions("BIS");
+        when(configurationProvider.getConfiguration()).thenReturn(proxyConfig(List.of(bis)));
+
+        List<TranslatedStructureQuery> queries = queryTranslator.translateWildcardStructureFanOut(
+                "dataflow", "all", "all", null, "full", null
+        );
+
+        assertEquals(1, queries.size());
+        TranslatedStructureQuery query = queries.getFirst();
+        assertEquals("*", query.getStructure().agency());
+        assertEquals("*", query.getStructure().id());
+        assertEquals("*", query.getStructure().version());
     }
 
     // ========== Helper Methods ==========

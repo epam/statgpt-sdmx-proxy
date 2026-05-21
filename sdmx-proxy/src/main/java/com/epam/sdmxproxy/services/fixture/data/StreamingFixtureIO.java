@@ -1,5 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.data;
 
+import com.epam.sdmxproxy.exception.UnexpectedStateException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -52,7 +53,7 @@ public class StreamingFixtureIO {
             pos = new PipedOutputStream();
             pis = new PipedInputStream(pos, DEFAULT_PIPE_BUFFER_BYTES);
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to set up piped streams for data fixture", e);
+            throw new UnexpectedStateException("Failed to set up piped streams for data fixture", e);
         }
 
         String threadName = threadNamePrefix + "-" + threadCounter.getAndIncrement();

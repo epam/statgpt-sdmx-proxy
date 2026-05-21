@@ -2,6 +2,7 @@ package com.epam.sdmxproxy.registry.configuration.extractor;
 
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfigurationSourceType;
+import com.epam.sdmxproxy.exception.ConfigurationLoadException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -33,7 +34,7 @@ public class FileSystemConfigExtractorProxy implements ProxyConfigurationExtract
         Path configPath = Path.of(fileName);
         if (!Files.exists(configPath)) {
             log.error("Configuration file does not exist: {}", fileName);
-            throw new IllegalStateException("Configuration file not found: " + fileName);
+            throw new ConfigurationLoadException("Configuration file not found: " + fileName);
         }
         byte[] fileBytes = Files.readAllBytes(configPath);
 

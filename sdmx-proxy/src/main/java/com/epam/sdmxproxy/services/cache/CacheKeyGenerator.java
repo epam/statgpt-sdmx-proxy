@@ -4,6 +4,7 @@ import com.epam.sdmxproxy.common.data.Structure;
 import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
+import com.epam.sdmxproxy.exception.UnexpectedStateException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
@@ -27,6 +28,7 @@ public class CacheKeyGenerator {
 
     private static final String STRUCTURE_KEY_PREFIX = "structure:";
     private static final String RESPONSE_KEY_PREFIX = "response:structure:";
+    private static final String FAN_OUT_RESPONSE_KEY_PREFIX = "response:structure:fanout:";
     private static final String LIMIT_EMULATION_PREFIX = "limit_emu:";
     private static final String KEY_SEPARATOR = ":";
 
@@ -95,6 +97,46 @@ public class CacheKeyGenerator {
         String hash = md5Hash(fingerprint.toString());
 
         return RESPONSE_KEY_PREFIX + baseKey.substring(STRUCTURE_KEY_PREFIX.length()) + KEY_SEPARATOR + hash;
+    }
+
+    /**
+     * Generate cache key for the merged response of a wildcard fan-out structure query.
+     * Format: {@code response:structure:fanout:{type}:{resourceId}:{version}:{references}:{detail}:{md5(Accept + configsHash)}}.
+     * <p>
+     * {@code configsHash} reflects the set of configured registries (typically
+     * {@code configurationProvider.getConfiguration().getConfigs().hashCode()}). When the
+     * operator updates the registry list the hash changes and existing entries become
+     * unreachable by new requests; they expire on TTL.
+     *
+     * @param structureType      structure type (e.g. "datastructure")
+     * @param resourceId         resource ID (path slot; may be {@code "*"})
+     * @param version            version (path slot; may be {@code "*"})
+     * @param references         references parameter (may be {@code null})
+     * @param detail             detail parameter (may be {@code null})
+     * @param requestedMediaType client Accept media type after fallback resolution
+     * @param configsHash        deterministic hash over the configured registry list
+     * @return cache key for the merged fan-out response
+     */
+    public static String generateFanOutResponseKey(
+            String structureType,
+            String resourceId,
+            String version,
+            String references,
+            String detail,
+            MediaType requestedMediaType,
+            int configsHash) {
+
+        String accept = requestedMediaType != null ? requestedMediaType.toString() : "";
+        String fingerprint = "Accept:" + accept + "&configsHash:" + configsHash;
+        String hash = md5Hash(fingerprint);
+
+        return FAN_OUT_RESPONSE_KEY_PREFIX
+                + structureType + KEY_SEPARATOR
+                + (resourceId != null ? resourceId : "") + KEY_SEPARATOR
+                + (version != null ? version : "") + KEY_SEPARATOR
+                + (references != null ? references : "") + KEY_SEPARATOR
+                + (detail != null ? detail : "") + KEY_SEPARATOR
+                + hash;
     }
 
     /**
@@ -177,7 +219,7 @@ public class CacheKeyGenerator {
             return bytesToHex(hashBytes);
         } catch (NoSuchAlgorithmException e) {
             log.error("MD5 algorithm not available", e);
-            throw new RuntimeException("MD5 hashing not available", e);
+            throw new UnexpectedStateException("MD5 hashing not available", e);
         }
     }
 

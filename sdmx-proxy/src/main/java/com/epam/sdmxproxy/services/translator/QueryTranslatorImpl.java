@@ -8,6 +8,7 @@ import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.common.utils.FormatSupportChecker;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
+import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistrySelectionResult;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
@@ -15,7 +16,10 @@ import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.exception.FilterValidationException;
+import com.epam.sdmxproxy.exception.IllegalRegistryConfigurationException;
 import com.epam.sdmxproxy.exception.UnsupportedAgencyWildcardException;
+import com.epam.sdmxproxy.exception.UnsupportedContextException;
+import com.epam.sdmxproxy.registry.configuration.ProxyConfigurationProvider;
 import com.epam.sdmxproxy.services.filter.FilterTranslator;
 import com.epam.sdmxproxy.services.filter.FilterValidator;
 import com.epam.sdmxproxy.services.misc.DimensionService;
@@ -54,6 +58,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
     private final FilterValidator filterValidationService;
     private final FilterTranslator filterTranslator;
     private final DimensionService dimensionService;
+    private final ProxyConfigurationProvider configurationProvider;
 
     private static String getVersionSpecificQueryId(String id, VersionSpecificRegistryConfiguration versionConfig) {
         String queryId = id;
@@ -61,6 +66,11 @@ public class QueryTranslatorImpl implements QueryTranslator {
             queryId = versionConfig.getSdmxVersion() == SdmxVersion.SDMX_2_1 ? SDMX_21_ALL_WILDCARD : SDMX_30_ALL_WILDCARD;
         }
         return queryId;
+    }
+
+    @Override
+    public String normalizePathSlot(String slot) {
+        return SDMX_21_ALL_WILDCARD.equals(slot) ? SDMX_30_ALL_WILDCARD : slot;
     }
 
     private static MultiValueMap<String, String> copyFiltersWithout(MultiValueMap<String, String> filters, String excludeKey) {
@@ -142,7 +152,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
                     .build();
         }
 
-        throw new IllegalArgumentException(String.format("No suitable SDMX version found for registry: %s, agency: %s", registryConfig.getName(), agencyID));
+        throw new IllegalRegistryConfigurationException(String.format("No suitable SDMX version found for registry: %s, agency: %s", registryConfig.getName(), agencyID));
     }
 
     @Override
@@ -156,6 +166,10 @@ public class QueryTranslatorImpl implements QueryTranslator {
             String acceptHeader,
             String sourceArtefactUrn
     ) {
+        agencyId = normalizePathSlot(agencyId);
+        resourceId = normalizePathSlot(resourceId);
+        version = normalizePathSlot(version);
+
         if ("*".equals(agencyId) || (agencyId != null && agencyId.contains(","))) {
             throw new UnsupportedAgencyWildcardException("Wildcard and comma-separated agency queries are not supported. Use /structure/agencyscheme to discover agencies.");
         }
@@ -204,6 +218,89 @@ public class QueryTranslatorImpl implements QueryTranslator {
                 .registryReturnFormat(returnFormat)
                 .build();
 
+    }
+
+    @Override
+    public List<TranslatedStructureQuery> translateWildcardStructureFanOut(
+            String structureType,
+            String resourceId,
+            String version,
+            String references,
+            String detail,
+            String acceptHeader
+    ) {
+        resourceId = normalizePathSlot(resourceId);
+        version = normalizePathSlot(version);
+
+        MediaTypeParseResult parsedMediaType = parseMediaType(acceptHeader);
+        ProxyConfiguration configuration = configurationProvider.getConfiguration();
+        List<RegistryConfiguration> registries = configuration.getConfigs();
+        if (registries == null || registries.isEmpty()) {
+            return List.of();
+        }
+
+        List<TranslatedStructureQuery> queries = new ArrayList<>();
+        for (RegistryConfiguration registryConfig : registries) {
+            VersionSpecificRegistryConfiguration versionConfig = selectVersionForStructureType(registryConfig, structureType, parsedMediaType.getSdmxVersion());
+            if (versionConfig == null) {
+                continue;
+            }
+
+            RegistrySelectionResult selected = RegistrySelectionResult.builder()
+                    .registryConfiguration(registryConfig)
+                    .versionConfiguration(versionConfig)
+                    .build();
+            ReturnFormat returnFormat = determineStructureReturnFormat(selected, parsedMediaType);
+
+            String queryAgencyId = getVersionSpecificQueryId(SDMX_30_ALL_WILDCARD, versionConfig);
+            String queryResourceId = getVersionSpecificQueryId(resourceId, versionConfig);
+            String queryVersion = getVersionSpecificQueryId(version, versionConfig);
+
+            queries.add(TranslatedStructureQuery.builder()
+                    .registryConfiguration(registryConfig)
+                    .versionConfiguration(versionConfig)
+                    .structure(getStructure(versionConfig, structureType, queryAgencyId, queryResourceId, queryVersion))
+                    .references(references)
+                    .detail(detail)
+                    .contentType(parsedMediaType.getMediaType())
+                    .registryReturnFormat(returnFormat)
+                    .build());
+        }
+        return queries;
+    }
+
+    /**
+     * Selects a version configuration on the given registry that supports the requested structure type.
+     * Prefers the desired version (from the parsed Accept header) when available; otherwise prefers
+     * SDMX 3.0, then SDMX 2.1. Returns {@code null} when no version of this registry supports the type --
+     * the caller should treat that as "skip this registry in the fan-out", not a failure.
+     */
+    @Nullable
+    private VersionSpecificRegistryConfiguration selectVersionForStructureType(
+            RegistryConfiguration registryConfig,
+            String structureType,
+            @Nullable SdmxVersion desiredVersion
+    ) {
+        if (desiredVersion != null) {
+            VersionSpecificRegistryConfiguration v = registryConfig.getVersionConfiguration(desiredVersion);
+            if (v != null && supportsStructureType(v, structureType)) {
+                return v;
+            }
+        }
+        VersionSpecificRegistryConfiguration v30 = registryConfig.getVersionConfiguration(SdmxVersion.SDMX_3_0);
+        if (v30 != null && supportsStructureType(v30, structureType)) {
+            return v30;
+        }
+        VersionSpecificRegistryConfiguration v21 = registryConfig.getVersionConfiguration(SdmxVersion.SDMX_2_1);
+        if (v21 != null && supportsStructureType(v21, structureType)) {
+            return v21;
+        }
+        return null;
+    }
+
+    private static boolean supportsStructureType(VersionSpecificRegistryConfiguration versionConfig, String structureType) {
+        StructureEndpointConfiguration cfg = versionConfig.getStructureEndpointConfig();
+        return cfg != null && cfg.getSupportedStructures() != null && cfg.getSupportedStructures().contains(structureType);
     }
 
     private void validateFilters(MultiValueMap<String, String> filters, VersionSpecificRegistryConfiguration versionConfig, SdmxBeans sdmxBeans, String agencyID, String resourceID, String version) {
@@ -292,7 +389,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
     private String checkStructureTypeIsSupported(String structureType, VersionSpecificRegistryConfiguration versionConfig) {
         Set<String> supportedStructures = versionConfig.getStructureEndpointConfig().getSupportedStructures();
         if (supportedStructures == null || !supportedStructures.contains(structureType)) {
-            throw new IllegalArgumentException(
+            throw new UnsupportedContextException(
                     String.format("%s structure type is not supported by SDMX version %s; Supported structures: %s",
                             structureType,
                             versionConfig.getSdmxVersion(),
@@ -489,7 +586,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         VersionSpecificRegistryConfiguration versionConfig = selectedRegistry.getVersionConfiguration();
         StructureEndpointConfiguration structureConfig = versionConfig.getStructureEndpointConfig();
         if (structureConfig == null) {
-            throw new IllegalArgumentException(
+            throw new IllegalRegistryConfigurationException(
                     String.format("Structure endpoint configuration is missing for registry %s (version %s)",
                             selectedRegistry.getRegistryConfiguration().getName(),
                             versionConfig.getSdmxVersion())
@@ -513,7 +610,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         // Use default format
         ReturnFormat defaultFormat = structureConfig.getDefaultFormat();
         if (defaultFormat == null) {
-            throw new IllegalArgumentException(
+            throw new IllegalRegistryConfigurationException(
                     String.format("Registry %s (version %s) does not support structure format %s and no default format is configured",
                             selectedRegistry.getRegistryConfiguration().getName(),
                             versionConfig.getSdmxVersion(),
@@ -536,7 +633,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         VersionSpecificRegistryConfiguration versionConfig = selectedRegistry.getVersionConfiguration();
         DataEndpointConfiguration dataConfig = versionConfig.getDataEndpointConfig();
         if (dataConfig == null) {
-            throw new IllegalArgumentException(
+            throw new IllegalRegistryConfigurationException(
                     String.format("Data endpoint configuration is missing for registry %s (version %s)",
                             selectedRegistry.getRegistryConfiguration().getName(),
                             versionConfig.getSdmxVersion())
@@ -568,7 +665,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         // Use default format
         ReturnFormat defaultFormat = dataConfig.getDefaultFormat();
         if (defaultFormat == null) {
-            throw new IllegalArgumentException(
+            throw new IllegalRegistryConfigurationException(
                     String.format("Registry %s (version %s) does not support data format %s and no default format is configured",
                             selectedRegistry.getRegistryConfiguration().getName(),
                             versionConfig.getSdmxVersion(),
@@ -592,7 +689,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         VersionSpecificRegistryConfiguration versionConfig = selectedRegistry.getVersionConfiguration();
         AvailabilityEndpointConfiguration availabilityConfig = versionConfig.getAvailabilityEndpointConfig();
         if (availabilityConfig == null) {
-            throw new IllegalArgumentException(
+            throw new IllegalRegistryConfigurationException(
                     String.format("Availability endpoint configuration is missing for registry %s (version %s)",
                             selectedRegistry.getRegistryConfiguration().getName(),
                             versionConfig.getSdmxVersion())
@@ -616,7 +713,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         // Use default format
         ReturnFormat defaultFormat = availabilityConfig.getDefaultFormat();
         if (defaultFormat == null) {
-            throw new IllegalArgumentException(
+            throw new IllegalRegistryConfigurationException(
                     String.format("Registry %s (version %s) does not support availability format %s and no default format is configured",
                             selectedRegistry.getRegistryConfiguration().getName(),
                             versionConfig.getSdmxVersion(),

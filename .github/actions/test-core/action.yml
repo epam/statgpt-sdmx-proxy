@@ -1,8 +1,8 @@
 name: test-statgpt-sdmx-proxy
-description: Run statgpt-sdmx-proxy E2E tests against a deployed review environment
+description: Run statgpt-sdmx-proxy E2E tests from this repo against the review DIAL Core URL
 inputs:
   environment-url:
-    description: Application URL of the environment, e.g. `https://chat-statgpt-sdmx-proxy-pr-1.example.com`
+    description: Application URL of the environment, e.g. `https://core-statgpt-sdmx-proxy-pr-1.example.com`
     required: true
   test-repository:
     description: GitHub repository with E2E test sources
@@ -47,8 +47,7 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       env:
         E2E_HOST: ${{ inputs.environment-url }}
-        GPR_USERNAME: ${{ env.GPR_USERNAME }}
-        GPR_PASSWORD: ${{ env.GPR_PASSWORD }}
+        E2E_PASSWORD: ${{ env.E2E_PASSWORD }}
       run: |
         echo "URL to run e2e tests against: ${E2E_HOST}"
         ./gradlew ${{ inputs.gradle-task }} --tests "${{ inputs.test-filter }}"
