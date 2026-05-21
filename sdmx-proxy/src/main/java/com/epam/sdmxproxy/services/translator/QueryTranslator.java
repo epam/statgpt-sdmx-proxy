@@ -12,6 +12,20 @@ import java.util.List;
 public interface QueryTranslator {
 
     /**
+     * Normalises a structure-endpoint path slot (one of {@code agencyId}, {@code resourceId},
+     * {@code version}). The SDMX 2.1 wildcard keyword {@code all} is rewritten to the SDMX 3.0
+     * form {@code *}; every other value is returned unchanged.
+     * <p>
+     * Exact lowercase {@code all} only -- {@code ALL}, {@code All}, etc. are treated as literal
+     * artefact IDs. Comma-separated values like {@code "all,IMF"} are returned unchanged; the
+     * 501 gate inside {@link #translateStructureQuery} handles comma lists.
+     *
+     * @param slot path-slot value as it arrived from the client (may be {@code null})
+     * @return canonical form ({@code *} for wildcard, otherwise the input)
+     */
+    String normalizePathSlot(String slot);
+
+    /**
      * Translates structure query parameters into a {@link TranslatedStructureQuery} bound to a specific registry.
      * <p>
      * Registry selection uses {@code sourceArtefactUrn} for cross-reference routing when present,

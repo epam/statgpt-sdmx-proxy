@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -93,6 +94,22 @@ class StructureFanOutE2ETest {
         byte[] body = response.getBody().asByteArray();
         assertThat(body.length)
                 .as("Fan-out response body must not be empty (type=%s)", structureType)
+                .isGreaterThan(0);
+    }
+
+    @Test
+    @DisplayName("`all` keyword in agency/resource/version path slots engages fan-out (design 024)")
+    void allKeywordAliasEngagesFanOut() {
+        String path = BASE_PATH + "/sdmx/3.0/structure/dataflow/all/all/all?detail=full";
+        String acceptHeader = "application/vnd.sdmx.structure+json;version=2.0.0";
+
+        Response response = restClient.getResponseWithAccept(path, acceptHeader);
+
+        assertThat(response.getStatusCode())
+                .as("`all/all/all` must engage fan-out and return HTTP 200, identically to `*/*/*`")
+                .isEqualTo(200);
+        assertThat(response.getBody().asByteArray().length)
+                .as("Fan-out response body via the `all` alias must not be empty")
                 .isGreaterThan(0);
     }
 }
