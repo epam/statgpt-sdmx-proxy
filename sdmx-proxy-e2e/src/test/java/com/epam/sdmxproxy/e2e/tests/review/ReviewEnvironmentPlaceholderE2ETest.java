@@ -9,11 +9,16 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Smoke test for the review deploy pipeline. The review workflow currently supplies
- * the ai-dial-chat base URL via {@code E2E_HOST}, not the sdmx-proxy service URL.
+ * Review deploy smoke: DIAL Core fronts SDMX routes; {@code E2E_HOST} is the Core origin
+ * (e.g. {@code https://core-statgpt-sdmx-proxy-pr-124.example.com}).
+ * <p>
+ * DIAL {@code Api-Key} is read from {@code E2E_PASSWORD} (same secret ai-dial-ci passes for E2E).
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Review environment placeholder E2E")
@@ -21,8 +26,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("review")
 class ReviewEnvironmentPlaceholderE2ETest {
 
-    private static final String HEALTH_ENDPOINT = "/api/health";
-    private static final String EXPECTED_HEALTH_RESPONSE = "Healthy";
+    private static final String DATA_PATH =
+            "/statgpt/sdmx-proxy/api/v0/sdmx/3.0/data/dataflow/BIS/WS_EER/1.0/*.N.B.US";
 
     private RestClient restClient;
 
@@ -32,16 +37,32 @@ class ReviewEnvironmentPlaceholderE2ETest {
     }
 
     @Test
-    @DisplayName("Review chat health endpoint is reachable")
-    void reviewChatHealthEndpointIsReachable() {
-        Response response = restClient.getResponse(HEALTH_ENDPOINT);
+    @DisplayName("BIS WS_EER data query via Core returns HTTP 200")
+    void bisWsEerDataQueryViaCoreReturnsOk() {
+        String apiKey = System.getenv("E2E_PASSWORD");
+        assertThat(apiKey)
+                .as("E2E_PASSWORD must be set to the DIAL API key (sent as Api-Key header)")
+                .isNotBlank();
+
+        Map<String, String> headers = Map.of(
+                "Api-Key", apiKey,
+                "Content-Type", "application/json");
+
+        Map<String, Object> queryParams = new LinkedHashMap<>();
+        queryParams.put("c[TIME_PERIOD]", "ge:2024-05-01+le:2026-05-31");
+        queryParams.put("includeHistory", "false");
+        queryParams.put("limit", "1000");
+        queryParams.put("attributes", "all");
+        queryParams.put("dimensionAtObservation", "TIME_PERIOD");
+
+        Response response = restClient.get(DATA_PATH)
+                .headers(headers)
+                .queryParams(queryParams)
+                .when()
+                .get();
 
         assertThat(response.getStatusCode())
-                .as("Chat health endpoint should return HTTP 200")
+                .as("SDMX data endpoint should return HTTP 200")
                 .isEqualTo(200);
-
-        assertThat(response.getBody().asString())
-                .as("Chat health endpoint should return Healthy")
-                .contains(EXPECTED_HEALTH_RESPONSE);
     }
 }
