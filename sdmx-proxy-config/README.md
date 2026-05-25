@@ -152,11 +152,13 @@ Fixtures are applied as a chain of responsibility in the order listed.
 
 #### `StructureFixtureType`
 
-| Value                                   | Description                                                               |
-|-----------------------------------------|---------------------------------------------------------------------------|
-| `DSD_ATTRIBUTE_ATTACHMENT_LEVEL`        | Repair invalid DSD attribute attachment levels                            |
-| `VERSION_WILDCARD`                      | Patch wildcard version handling on structure responses                    |
-| `METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE` | Convert `metadataAttributeUsage` references to plain attribute references |
+| Value                                   | Description                                                                                                                                                                                                                                              |
+|-----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `DSD_ATTRIBUTE_ATTACHMENT_LEVEL`        | Repair invalid DSD attribute attachment levels                                                                                                                                                                                                           |
+| `VERSION_WILDCARD`                      | Patch wildcard version handling on structure responses                                                                                                                                                                                                   |
+| `METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE` | Convert `metadataAttributeUsage` references to plain attribute references                                                                                                                                                                                |
+| `ANNOTATION_VALUE_TO_TEXT`              | Rewrite annotation `value` (non-localised string) into `text` so sdmx-core's SDMX-JSON 2.0 reader preserves the field. Applied only when `text`/`texts` is absent on the annotation                                                                      |
+| `PRESERVE_METADATA_ATTRIBUTE_USAGES`    | Capture raw `metadataAttributeUsages` arrays before conversion and re-inject them onto the matching DSD in the converted output. Works on the single-leg structure path; restores the field that sdmx-core's bean model has no slot for                  |
 
 #### `AvailabilityFixtureType`
 

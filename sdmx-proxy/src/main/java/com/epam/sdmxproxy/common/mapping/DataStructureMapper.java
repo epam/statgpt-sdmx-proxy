@@ -56,6 +56,10 @@ public class DataStructureMapper implements Mapper<DataStructureBean> {
         dsd.setDescription(textMapper.map(dataStructure.getDescriptions()));
         dsd.setAnnotations(annotationMapper.map(dataStructure.getAnnotations()));
 
+        if (dataStructure.getMSDRef() != null) {
+            dsd.setMetadataStructure(referenceMapper.mapMaintainable(dataStructure.getMSDRef(), StructureClassImpl.METADATA_STRUCTURE));
+        }
+
         var dimensionDescriptor = new DimensionDescriptorImpl();
         dimensionDescriptor.setId("DimensionDescriptor");
         dsd.setDimensionDescriptor(dimensionDescriptor);
@@ -107,7 +111,19 @@ public class DataStructureMapper implements Mapper<DataStructureBean> {
                 ? new TimeDimensionImpl()
                 : new DimensionImpl();
         mapComponent(dim, dimensionBean);
+        if (dim instanceof DimensionImpl dimensionImpl) {
+            mapDimensionConceptRoles(dimensionImpl, dimensionBean);
+        }
         return dim;
+    }
+
+    private void mapDimensionConceptRoles(DimensionImpl dim, DimensionBean bean) {
+        if (bean.getConceptRole() == null || bean.getConceptRole().isEmpty()) {
+            return;
+        }
+        dim.setConceptRoles(bean.getConceptRole().stream()
+                .map(role -> referenceMapper.mapItem(role, StructureClassImpl.CONCEPT))
+                .toList());
     }
 
     private void mapComponent(ComponentImpl component, ComponentBean componentBean) {
@@ -153,7 +169,17 @@ public class DataStructureMapper implements Mapper<DataStructureBean> {
         var a = new DataAttributeImpl();
         mapComponent(a, attributeBean);
         mapRelationship(a, attributeBean, dataStructure);
+        mapAttributeConceptRoles(a, attributeBean);
         return a;
+    }
+
+    private void mapAttributeConceptRoles(DataAttributeImpl attr, AttributeBean bean) {
+        if (bean.getConceptRoles() == null || bean.getConceptRoles().isEmpty()) {
+            return;
+        }
+        attr.setConceptRoles(bean.getConceptRoles().stream()
+                .map(role -> referenceMapper.mapItem(role, StructureClassImpl.CONCEPT))
+                .toList());
     }
 
     private void mapRelationship(DataAttributeImpl a, AttributeBean attributeBean, DataStructureBean dataStructure) {

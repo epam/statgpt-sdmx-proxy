@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -23,6 +24,7 @@ import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
+import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 import com.epam.sdmxproxy.exception.AvailabilityConversionException;
 import com.epam.sdmxproxy.exception.DataConversionException;
 import com.epam.sdmxproxy.exception.StructureConversionException;
@@ -36,12 +38,14 @@ import com.epam.sdmxproxy.services.cache.CacheService;
 import com.epam.sdmxproxy.services.filter.FilterNormalizer;
 import com.epam.sdmxproxy.services.fixture.availability.AvailabilityFixtureService;
 import com.epam.sdmxproxy.services.fixture.data.DataFixtureService;
+import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsagePreserver;
 import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
 import com.epam.sdmxproxy.services.limit.CachedShrinkResult;
 import com.epam.sdmxproxy.services.limit.LimitEmulationService;
 import com.epam.sdmxproxy.services.limit.truncate.SeriesLimitTruncator;
 import com.epam.sdmxproxy.services.limit.truncate.SeriesLimitTruncatorProvider;
 import com.epam.sdmxproxy.services.translator.QueryTranslator;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
@@ -70,6 +74,7 @@ public class AdapterRouterImpl implements AdapterRouter {
     private final QueryTranslator queryTranslator;
     private final CacheService cacheService;
     private final StructureFixtureService fixtureService;
+    private final MetadataAttributeUsagePreserver metadataAttributeUsagePreserver;
     private final AvailabilityFixtureService availabilityFixtureService;
     private final DataFixtureService dataFixtureService;
     private final LimitEmulationService limitEmulationService;
@@ -159,22 +164,39 @@ public class AdapterRouterImpl implements AdapterRouter {
 
     private StreamingResponseBody getStructuresConversion(TranslatedStructureQuery query, ReturnFormat returnFormat, MediaType requestedMediaType, String responseKey) {
         return outputStream -> {
-            try (InputStream inputStream = getFixedStructureStream(query)) {
-                if (inputStream == null) {
+            try (InputStream rawStream = genericRegistryAdapter.getStructures(query)) {
+                if (rawStream == null) {
                     return;
                 }
-                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                List<FixtureConfiguration<StructureFixtureType>> fixtures = query.getVersionConfiguration().getStructureEndpointConfig().getFixtures();
+                boolean preserveUsages = metadataAttributeUsagePreserver.isEnabled(fixtures);
 
-                streamingStructureConversionService.convert(
-                        inputStream,
-                        buffer,
-                        returnFormat,
-                        requestedMediaType
-                );
+                Map<String, JsonNode> capturedUsages = Map.of();
+                InputStream forFixtures;
+                if (preserveUsages) {
+                    byte[] rawBytes = rawStream.readAllBytes();
+                    capturedUsages = metadataAttributeUsagePreserver.capture(rawBytes);
+                    forFixtures = new ByteArrayInputStream(rawBytes);
+                } else {
+                    forFixtures = rawStream;
+                }
 
-                byte[] convertedBytes = buffer.toByteArray();
-                outputStream.write(convertedBytes);
-                cacheService.putReadyResponse(responseKey, convertedBytes);
+                try (InputStream postFixtureStream = fixtureService.applyFixtures(forFixtures, query.getRegistryReturnFormat(), fixtures)) {
+                    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                    streamingStructureConversionService.convert(
+                            postFixtureStream,
+                            buffer,
+                            returnFormat,
+                            requestedMediaType
+                    );
+
+                    byte[] convertedBytes = buffer.toByteArray();
+                    if (preserveUsages && !capturedUsages.isEmpty()) {
+                        convertedBytes = metadataAttributeUsagePreserver.inject(convertedBytes, capturedUsages);
+                    }
+                    outputStream.write(convertedBytes);
+                    cacheService.putReadyResponse(responseKey, convertedBytes);
+                }
             } catch (FeignException e) {
                 log.warn("Failure on registry side.", e);
                 throw e;

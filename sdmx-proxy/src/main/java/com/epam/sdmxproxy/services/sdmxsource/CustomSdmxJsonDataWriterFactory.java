@@ -12,7 +12,6 @@ import io.sdmx.api.sdmx.model.header.DatasetStructureReferenceBean;
 import io.sdmx.core.data.engine.writer.GroupDataWriterEngine;
 import io.sdmx.core.data.factory.format.MetadataAwareDataWriterFactory;
 import io.sdmx.format.json.engine.data.writer.sdmxjson.SdmxJsonDataWriterEngine;
-import io.sdmx.format.json.engine.data.writer.sdmxjson.SdmxJsonDataWriterEngineV2;
 import io.sdmx.format.json.model.SdmxJsonDataFormat;
 import io.sdmx.utils.core.object.ObjectUtil;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +52,7 @@ public class CustomSdmxJsonDataWriterFactory extends MetadataAwareDataWriterFact
             if (format == DATA_TYPE.SDMXJSON_1_0_0) {
                 dwe = new SdmxJsonDataWriterEngine(dataFormat, out, superBeanRetrievalManager, beanRetrievalManager, forceFlat);
             } else if (format == DATA_TYPE.SDMXJSON_2_0_0) {
-                dwe = new SdmxJsonDataWriterEngineV2(dataFormat, out, superBeanRetrievalManager, beanRetrievalManager, forceFlat);
+                dwe = new CustomSdmxJsonDataWriterEngineV2(dataFormat, out, superBeanRetrievalManager, beanRetrievalManager, forceFlat);
             }
             return new GroupDataWriterEngine(dwe);
         }

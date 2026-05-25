@@ -23,11 +23,19 @@
             ],
             "fixtures": [
               {
-                "type": "VERSION_WILDCARD",
+                "type": "PRESERVE_METADATA_ATTRIBUTE_USAGES",
                 "config": {}
               },
               {
                 "type": "METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE",
+                "config": {}
+              },
+              {
+                "type": "ANNOTATION_VALUE_TO_TEXT",
+                "config": {}
+              },
+              {
+                "type": "VERSION_WILDCARD",
                 "config": {}
               }
             ]

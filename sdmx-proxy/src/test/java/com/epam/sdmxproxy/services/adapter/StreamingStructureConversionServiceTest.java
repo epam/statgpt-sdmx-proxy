@@ -5,6 +5,7 @@ import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
+import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsagePreserver;
 import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,8 @@ public class StreamingStructureConversionServiceTest {
     private StreamingStructureConversionService sut;
     @Autowired
     private StructureFixtureService fixtureService;
+    @Autowired
+    private MetadataAttributeUsagePreserver metadataAttributeUsagePreserver;
 
     @Test
     @SneakyThrows
@@ -302,6 +305,93 @@ public class StreamingStructureConversionServiceTest {
         JsonNode codelists = dataNode.get("codelists");
         assertNotNull(codelists, "codelists from descendants must be present");
         assertTrue(codelists.isArray() && !codelists.isEmpty(), "codelists must be a non-empty array");
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldPreserveDsdMetadataConceptRolesAnnotationValueAndUsages_issue79() {
+        //GIVEN
+        byte[] rawBytes;
+        try (InputStream input = getClass().getResourceAsStream("structure_conversion/imf/3.0/dsd_weo_issue_79.json")) {
+            assertNotNull(input, "test resource dsd_weo_issue_79.json must be present");
+            rawBytes = input.readAllBytes();
+        }
+
+        FixtureConfiguration preserveFixture = new FixtureConfiguration();
+        preserveFixture.setType(StructureFixtureType.PRESERVE_METADATA_ATTRIBUTE_USAGES);
+        preserveFixture.setConfig(new HashMap<>());
+
+        FixtureConfiguration metadataAttributeFixture = new FixtureConfiguration();
+        metadataAttributeFixture.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
+        metadataAttributeFixture.setConfig(new HashMap<>());
+
+        FixtureConfiguration annotationValueFixture = new FixtureConfiguration();
+        annotationValueFixture.setType(StructureFixtureType.ANNOTATION_VALUE_TO_TEXT);
+        annotationValueFixture.setConfig(new HashMap<>());
+
+        FixtureConfiguration versionWildcardFixture = new FixtureConfiguration();
+        versionWildcardFixture.setType(StructureFixtureType.VERSION_WILDCARD);
+        versionWildcardFixture.setConfig(new HashMap<>());
+
+        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs =
+                List.of(preserveFixture, metadataAttributeFixture, annotationValueFixture, versionWildcardFixture);
+
+        Map<String, com.fasterxml.jackson.databind.JsonNode> capturedUsages = metadataAttributeUsagePreserver.capture(rawBytes);
+        InputStream fixedInputStream = fixtureService.applyFixtures(
+                new java.io.ByteArrayInputStream(rawBytes), ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MediaType targetMediaType = MediaType.valueOf(SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE);
+
+        //WHEN
+        sut.convert(fixedInputStream, outputStream, ReturnFormat.JSON_STRUCTURE_2_0_0, targetMediaType);
+        byte[] convertedBytes = metadataAttributeUsagePreserver.inject(outputStream.toByteArray(), capturedUsages);
+
+        //THEN
+        JsonNode root = new ObjectMapper().readTree(convertedBytes);
+        JsonNode dsd = root.path("data").path("dataStructures").get(0);
+        assertNotNull(dsd, "dataStructures[0] must be present");
+
+        // Issue 3: DSD metadata URN preserved
+        String metadataUrn = dsd.path("metadata").asText();
+        assertTrue(metadataUrn.contains("MetadataStructure=IMF.RES:MSD_WEO_METADATA_EXTERNAL"),
+                "DSD metadata URN must be preserved, got: " + metadataUrn);
+
+        // Issue 4: FREQUENCY dimension conceptRoles preserved
+        JsonNode dimensions = dsd.path("dataStructureComponents").path("dimensionList").path("dimensions");
+        assertTrue(dimensions.isArray() && !dimensions.isEmpty(), "dimensions must be a non-empty array");
+        JsonNode frequency = null;
+        for (JsonNode dim : dimensions) {
+            if ("FREQUENCY".equals(dim.path("id").asText())) {
+                frequency = dim;
+                break;
+            }
+        }
+        assertNotNull(frequency, "FREQUENCY dimension must be present");
+        JsonNode conceptRoles = frequency.path("conceptRoles");
+        assertTrue(conceptRoles.isArray() && conceptRoles.size() == 1,
+                "FREQUENCY conceptRoles must contain one entry, got: " + conceptRoles);
+        assertTrue(conceptRoles.get(0).asText().endsWith("SDMX_CONCEPT_ROLES(1.0).FREQ"),
+                "FREQUENCY conceptRoles[0] must end with SDMX_CONCEPT_ROLES(1.0).FREQ, got: " + conceptRoles.get(0).asText());
+
+        // Issue 1: annotation `value` survives (rewritten as `text`)
+        JsonNode annotations = dsd.path("annotations");
+        assertTrue(annotations.isArray() && !annotations.isEmpty(), "annotations must be non-empty");
+        JsonNode origin = null;
+        for (JsonNode a : annotations) {
+            if ("origin".equals(a.path("id").asText())) {
+                origin = a;
+                break;
+            }
+        }
+        assertNotNull(origin, "origin annotation must be present");
+        assertEquals("INTEGRATION", origin.path("text").asText(),
+                "origin annotation text must carry value=INTEGRATION (rewritten from `value`)");
+
+        // Issue 2: metadataAttributeUsages restored on the attribute list
+        JsonNode usages = dsd.path("dataStructureComponents").path("attributeList").path("metadataAttributeUsages");
+        assertTrue(usages.isArray() && !usages.isEmpty(),
+                "metadataAttributeUsages must be restored as a non-empty array");
     }
 
     @Test
