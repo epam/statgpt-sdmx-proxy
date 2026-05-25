@@ -21,7 +21,7 @@ inputs:
     default: :sdmx-proxy-e2e:e2eTest
   test-filter:
     description: Gradle --tests filter for the E2E suite
-    default: "*.ReviewEnvironmentPlaceholderE2ETest"
+    default: "*"
   report-prefix:
     description: Test report name prefix
     default: ${{ github.run_id }}
