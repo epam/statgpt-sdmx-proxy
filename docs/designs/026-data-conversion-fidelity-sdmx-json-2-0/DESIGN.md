@@ -3,9 +3,14 @@
 **Status:** Stage 1 implemented (2026-05-22) — `roles` plural array and
 non-coded TIME_PERIOD value shape via `CustomSdmxJsonDataWriterEngineV2`
 and the `SdmxJsonV2WriterOverrides` helper, wired in
-`CustomSdmxJsonDataWriterFactory`. Stages 2–4 proposed below, deferred
-pending review and (for Stage 2) the design 025 Stage 2 Step 2 rescue
-infrastructure. The misroute reproducer test
+`CustomSdmxJsonDataWriterFactory`. Stages 3–4 proposed below.
+Stage 2 (Group C: metadata-attribute usage over-promotion) is
+**resolved by [design 027](../027-remove-metadata-attribute-usage-to-attribute/DESIGN.md)**:
+the workaround that promoted usages into synthetic attributes during the
+DSD pre-fetch was removed, so the data response no longer carries phantom
+entries in `attributes.dataset/series/observation`. The Stage 2
+"rescue-and-strip" plan below is kept for historical context.
+The misroute reproducer test
 `shouldNotMisrouteSeriesAcrossIndicatorPositions_issue80` is in the
 test suite as a deliberate failing regression guard. Tracks
 issue [#80](https://github.com/epam/statgpt-sdmx-proxy/issues/80).
@@ -125,6 +130,12 @@ declares 17 dimension-group-attached attributes. The proxy emits zero
 of either.
 
 ### Group C — Metadata-attribute usages over-attached as a side effect of design 025 Stage 1
+
+> **Resolved by [design 027](../027-remove-metadata-attribute-usage-to-attribute/DESIGN.md)
+> (2026-05-25).** The `MetadataAttributeUsageToAttributeJsonFixture` was
+> removed. `PRESERVE_METADATA_ATTRIBUTE_USAGES` continues to keep the
+> structure response correct on its own. The historical analysis below is
+> retained for context.
 
 **Issue 4.** The `MetadataAttributeUsageToAttributeJsonFixture`
 (`MetadataAttributeUsageToAttributeJsonFixture.java:191-205`) runs on
@@ -503,13 +514,13 @@ infrastructure from design 025 Stage 2 Step 2 is in place. Stage 4
   JSON 1.0 and JSON 2.0. The Stage 3 design replaces it for JSON 2.0
   only; JSON 1.0 keeps the two-pass. Format selection at writer
   factory time.
-- **The Stage 2 rescue cache shape needs to be designed jointly with
-  design 025 Stage 2 Step 2.** Premature commit here risks design
-  drift.
-- **Issue 4's structure-fetch-time damage is the cleanest fix
+- ~~**The Stage 2 rescue cache shape needs to be designed jointly with
+  design 025 Stage 2 Step 2.**~~ Obsolete: Stage 2 is no longer needed
+  (design 027 removed the workaround at its source).
+- ~~**Issue 4's structure-fetch-time damage is the cleanest fix
   surface, but the proxy's design 025 Stage 1 already promotes the
   attributes**. Reverting Stage 1's fixture is not on the table
-  because the structure-endpoint use case depends on it. The Stage
-  2 design assumes "tag-and-strip" is feasible; this needs prototyping
-  to verify the AttributeBean lifecycle preserves the tag through
-  the conversion pipeline.
+  because the structure-endpoint use case depends on it.~~ Obsolete:
+  the workaround *was* reverted in design 027 because
+  `PRESERVE_METADATA_ATTRIBUTE_USAGES` covers the structure-endpoint
+  use case on its own, without forging synthetic attributes.

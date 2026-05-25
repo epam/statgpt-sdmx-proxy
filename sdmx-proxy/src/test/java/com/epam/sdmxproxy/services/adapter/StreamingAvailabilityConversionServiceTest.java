@@ -4,11 +4,9 @@ import com.epam.sdmxproxy.common.data.SdmxMediaType;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
-import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingAvailabilityConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
 import com.epam.sdmxproxy.services.fixture.availability.AvailabilityFixtureService;
-import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -43,9 +41,6 @@ public class StreamingAvailabilityConversionServiceTest {
     @Autowired
     private StreamingStructureConversionService streamingStructureConversionService;
 
-    @Autowired
-    private StructureFixtureService structureFixtureService;
-
     @Test
     @SneakyThrows
     void shouldConvertAvailabilityJsonFrom3_0_registry() {
@@ -55,15 +50,7 @@ public class StreamingAvailabilityConversionServiceTest {
         InputStream availabilityInput = getClass().getClassLoader().getResourceAsStream(
                 FIXTURE_AVAILABILITY_RESOURCE_PATH + "imf_weo_availability_response.json");
 
-        FixtureConfiguration<StructureFixtureType> structureFixtureConfig = new FixtureConfiguration<>();
-        structureFixtureConfig.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
-        structureFixtureConfig.setConfig(new HashMap<>());
-        InputStream fixedStructures = structureFixtureService.applyFixtures(
-                structuresInput,
-                ReturnFormat.JSON_STRUCTURE_2_0_0,
-                List.of(structureFixtureConfig));
-
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(fixedStructures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structuresInput, ReturnFormat.JSON_STRUCTURE_2_0_0);
 
         FixtureConfiguration<AvailabilityFixtureType> availabilityFixtureConfig = new FixtureConfiguration<>();
         availabilityFixtureConfig.setType(AvailabilityFixtureType.MOVE_CUBE_REGION_COMPONENTS_TO_KEY_VALUES);

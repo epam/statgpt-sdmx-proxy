@@ -20,12 +20,9 @@ import java.util.Map;
  * the matching DSD in the converted output, keyed by {@code agencyID|id|version}.
  * <p>
  * sdmx-core's bean model has no slot for {@code metadataAttributeUsages} on the DSD attribute
- * list, so the field is dropped during the parse-map-write roundtrip. The {@code
- * METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE} fixture only resolves usages when the referenced
- * {@code MetadataStructure} is included in the same response, which never happens on a bare
- * {@code GET /structure/datastructure/...} request. This preserver runs alongside that fixture:
- * it captures the wire bytes before fixtures mutate them, and re-attaches the usages onto the
- * converted output so the field survives.
+ * list, so the field is dropped during the parse-map-write roundtrip. This preserver is the sole
+ * mechanism by which the field survives: it reads the wire bytes before parsing, and re-attaches
+ * the usages onto the converted output after the writer has run.
  * <p>
  * JSON-to-JSON path only. XML output is left untouched.
  */

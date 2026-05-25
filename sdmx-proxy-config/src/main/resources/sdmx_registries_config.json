@@ -104,10 +104,6 @@
                 "config": {}
               },
               {
-                "type": "METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE",
-                "config": {}
-              },
-              {
                 "type": "ANNOTATION_VALUE_TO_TEXT",
                 "config": {}
               },

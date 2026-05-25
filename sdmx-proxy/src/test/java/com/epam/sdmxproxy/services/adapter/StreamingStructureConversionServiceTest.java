@@ -46,16 +46,11 @@ public class StreamingStructureConversionServiceTest {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         MediaType targetMediaType = MediaType.valueOf(SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE);
 
-
-        FixtureConfiguration metadataAttributeFixture = new FixtureConfiguration();
-        metadataAttributeFixture.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
-        metadataAttributeFixture.setConfig(new HashMap<>());
-
         FixtureConfiguration versionWildcardFixture = new FixtureConfiguration();
         versionWildcardFixture.setType(StructureFixtureType.VERSION_WILDCARD);
         versionWildcardFixture.setConfig(new HashMap<>());
 
-        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(metadataAttributeFixture, versionWildcardFixture);
+        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(versionWildcardFixture);
         InputStream fixedInputStream = fixtureService.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
 
         //WHEN
@@ -188,15 +183,11 @@ public class StreamingStructureConversionServiceTest {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         MediaType targetMediaType = MediaType.valueOf(SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE);
 
-        FixtureConfiguration metadataAttributeFixture = new FixtureConfiguration();
-        metadataAttributeFixture.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
-        metadataAttributeFixture.setConfig(new HashMap<>());
-
         FixtureConfiguration versionWildcardFixture = new FixtureConfiguration();
         versionWildcardFixture.setType(StructureFixtureType.VERSION_WILDCARD);
         versionWildcardFixture.setConfig(new HashMap<>());
 
-        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(metadataAttributeFixture, versionWildcardFixture);
+        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(versionWildcardFixture);
         InputStream fixedInputStream = fixtureService.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
 
         //WHEN
@@ -321,10 +312,6 @@ public class StreamingStructureConversionServiceTest {
         preserveFixture.setType(StructureFixtureType.PRESERVE_METADATA_ATTRIBUTE_USAGES);
         preserveFixture.setConfig(new HashMap<>());
 
-        FixtureConfiguration metadataAttributeFixture = new FixtureConfiguration();
-        metadataAttributeFixture.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
-        metadataAttributeFixture.setConfig(new HashMap<>());
-
         FixtureConfiguration annotationValueFixture = new FixtureConfiguration();
         annotationValueFixture.setType(StructureFixtureType.ANNOTATION_VALUE_TO_TEXT);
         annotationValueFixture.setConfig(new HashMap<>());
@@ -334,7 +321,7 @@ public class StreamingStructureConversionServiceTest {
         versionWildcardFixture.setConfig(new HashMap<>());
 
         List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs =
-                List.of(preserveFixture, metadataAttributeFixture, annotationValueFixture, versionWildcardFixture);
+                List.of(preserveFixture, annotationValueFixture, versionWildcardFixture);
 
         Map<String, com.fasterxml.jackson.databind.JsonNode> capturedUsages = metadataAttributeUsagePreserver.capture(rawBytes);
         InputStream fixedInputStream = fixtureService.applyFixtures(

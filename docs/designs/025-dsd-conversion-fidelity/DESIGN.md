@@ -9,6 +9,12 @@ state — capture and inject happen inside `AdapterRouterImpl.getStructuresConve
 with local variables, gated by a `PRESERVE_METADATA_ATTRIBUTE_USAGES`
 marker in the endpoint's fixture list).
 
+**Follow-up (2026-05-25, [design 027](../027-remove-metadata-attribute-usage-to-attribute/DESIGN.md)):**
+the legacy `METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE` fixture has been
+removed. `PRESERVE_METADATA_ATTRIBUTE_USAGES` is now the sole mechanism
+by which `metadataAttributeUsages` survives the round trip. References to
+the removed fixture below are kept for historical context only.
+
 ## Context
 
 Issue #79 reports four pieces of structural information that the proxy
