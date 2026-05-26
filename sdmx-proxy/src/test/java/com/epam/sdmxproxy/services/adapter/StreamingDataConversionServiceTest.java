@@ -2,11 +2,8 @@ package com.epam.sdmxproxy.services.adapter;
 
 import com.epam.sdmxproxy.common.data.SdmxMediaType;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
-import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
-import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingDataConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
-import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -20,7 +17,6 @@ import tools.jackson.databind.ObjectMapper;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -38,9 +34,6 @@ public class StreamingDataConversionServiceTest {
 
     @Autowired
     private StreamingDataConversionService streamingDataConversionService;
-
-    @Autowired
-    private StructureFixtureService fixtureService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -77,15 +70,7 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/NGDP_RPCH_currentStructureIndex_Null.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
 
-        FixtureConfiguration metadataUsageFixture = new FixtureConfiguration();
-        metadataUsageFixture.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
-        metadataUsageFixture.setConfig(new HashMap<>());
-
-        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(metadataUsageFixture);
-        InputStream fixedStructures = fixtureService.applyFixtures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0,
-                fixtureConfigs);
-
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(fixedStructures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -94,44 +79,13 @@ public class StreamingDataConversionServiceTest {
 
         //THEN
         JsonNode jsonNode = new ObjectMapper().readTree(outputStream.toByteArray());
-        JsonNode dataNode = jsonNode.path("data");
-        JsonNode dataSets = dataNode.path("dataSets");
-        JsonNode firstDataSet = dataSets.get(0);
+        JsonNode firstDataSet = jsonNode.path("data").path("dataSets").get(0);
 
-        // All observations are present
+        // Original regression: observations were dropped when currentStructureIndex was null.
         JsonNode observations = firstDataSet.path("series").path("0:0:0").get("observations");
         for (int i = 0; i < observations.size(); i++) {
             assertFalse(observations.get(String.valueOf(i)).get(0).isNull());
         }
-
-        // Dataset-level attributes are present and indexed in output
-        JsonNode dsAttributes = firstDataSet.path("attributes");
-        assertFalse(dsAttributes.isMissingNode(), "dataSets[0].attributes should be present");
-        assertTrue(dsAttributes.isArray(), "dataSets[0].attributes should be an array");
-
-        // FULL_DESCRIPTION should appear in output structure and be indexed in dataSets
-        JsonNode structuresNode = dataNode.path("structures");
-        assertFalse(structuresNode.isMissingNode() || structuresNode.isEmpty(), "data.structures should be present");
-        JsonNode firstStructure = structuresNode.get(0);
-        JsonNode attributesNode = firstStructure.path("attributes");
-        JsonNode dataSetAttributes = attributesNode.path("dataset");
-        boolean hasFullDescription = false;
-        for (JsonNode attr : dataSetAttributes) {
-            if ("FULL_DESCRIPTION".equals(attr.path("id").asText())) {
-                hasFullDescription = true;
-                break;
-            }
-        }
-        assertTrue(hasFullDescription, "FULL_DESCRIPTION should appear in output structure attributes");
-        // Attributes in dataSets should be integers (indexed) - at least some elements
-        boolean hasIndexedAttribute = false;
-        for (JsonNode attrVal : dsAttributes) {
-            if (attrVal.isNumber() && !attrVal.isNull()) {
-                hasIndexedAttribute = true;
-                break;
-            }
-        }
-        assertTrue(hasIndexedAttribute, "dataSets[0].attributes should contain indexed (integer) values");
     }
 
     @Test
@@ -141,15 +95,7 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/data_weo_no_query_params_to_proxy.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
 
-        FixtureConfiguration metadataUsageFixture = new FixtureConfiguration();
-        metadataUsageFixture.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
-        metadataUsageFixture.setConfig(new HashMap<>());
-
-        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(metadataUsageFixture);
-        InputStream fixedStructures = fixtureService.applyFixtures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0,
-                fixtureConfigs);
-
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(fixedStructures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -166,15 +112,7 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/data_weo_2026-2028_period.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
 
-        FixtureConfiguration metadataUsageFixture = new FixtureConfiguration();
-        metadataUsageFixture.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
-        metadataUsageFixture.setConfig(new HashMap<>());
-
-        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(metadataUsageFixture);
-        InputStream fixedStructures = fixtureService.applyFixtures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0,
-                fixtureConfigs);
-
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(fixedStructures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -249,14 +187,7 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/NGDP_RPCH_currentStructureIndex_Null.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
 
-        FixtureConfiguration metadataUsageFixture = new FixtureConfiguration();
-        metadataUsageFixture.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
-        metadataUsageFixture.setConfig(new HashMap<>());
-
-        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(metadataUsageFixture);
-        InputStream fixedStructures = fixtureService.applyFixtures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
-
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(fixedStructures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         //WHEN
@@ -280,14 +211,7 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/NGDP_RPCH_currentStructureIndex_Null.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
 
-        FixtureConfiguration metadataUsageFixture = new FixtureConfiguration();
-        metadataUsageFixture.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
-        metadataUsageFixture.setConfig(new HashMap<>());
-
-        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(metadataUsageFixture);
-        InputStream fixedStructures = fixtureService.applyFixtures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
-
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(fixedStructures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         //WHEN
@@ -306,14 +230,7 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/data_weo_empty_dataset.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
 
-        FixtureConfiguration metadataUsageFixture = new FixtureConfiguration();
-        metadataUsageFixture.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
-        metadataUsageFixture.setConfig(new HashMap<>());
-
-        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(metadataUsageFixture);
-        InputStream fixedStructures = fixtureService.applyFixtures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
-
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(fixedStructures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -330,11 +247,7 @@ public class StreamingDataConversionServiceTest {
         // bug was silently affecting WEO too.
         InputStream input = getClass().getResourceAsStream("data_conversion/NGDP_RPCH_currentStructureIndex_Null.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
-        FixtureConfiguration f = new FixtureConfiguration();
-        f.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
-        f.setConfig(new HashMap<>());
-        InputStream fixedStructures = fixtureService.applyFixtures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0, List.of(f));
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(fixedStructures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0,
@@ -498,14 +411,7 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/imf_fsic_data.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/imf_fsic_structures.json");
 
-        FixtureConfiguration metadataUsageFixture = new FixtureConfiguration();
-        metadataUsageFixture.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
-        metadataUsageFixture.setConfig(new HashMap<>());
-
-        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(metadataUsageFixture);
-        InputStream fixedStructures = fixtureService.applyFixtures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
-
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(fixedStructures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -534,6 +440,120 @@ public class StreamingDataConversionServiceTest {
         assertTrue(totalObs > 0, "total observations across series should be > 0");
     }
 
+    @Test
+    @SneakyThrows
+    void shouldEmitRolesPluralOnTimeDimension_issue80() {
+        // Issue #80 (#3): SDMX-JSON 2.0 schema defines `roles` (plural array of
+        // strings) on dimensions/measures/attributes. sdmx-core emits `role`
+        // (singular string-or-null). The custom V2 writer overrides this.
+        SdmxBeans sdmxBeans = loadWeoStructures();
+        InputStream input = getClass().getResourceAsStream("data_conversion/data_weo_misroute_3countries.json");
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+
+        JsonNode root = new ObjectMapper().readTree(outputStream.toByteArray());
+        JsonNode obsDims = root.path("data").path("structures").get(0).path("dimensions").path("observation");
+        JsonNode timeDim = obsDims.get(0);
+        assertEquals("TIME_PERIOD", timeDim.path("id").asText(), "Observation dim should be TIME_PERIOD");
+        assertTrue(timeDim.path("role").isMissingNode(), "Singular `role` field should not be emitted");
+        JsonNode roles = timeDim.path("roles");
+        assertTrue(roles.isArray(), "TIME_PERIOD should have `roles` array per SDMX-JSON 2.0 schema");
+        boolean hasTime = false;
+        for (JsonNode r : roles) {
+            if ("time".equals(r.asText())) {
+                hasTime = true;
+                break;
+            }
+        }
+        assertTrue(hasTime, "TIME_PERIOD `roles` array should contain \"time\"");
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldEmitNonCodedTimePeriodValueShape_issue80() {
+        // Issue #80 (#5): SDMX-JSON 2.0 schema allows two shapes for TIME_PERIOD
+        // value entries -- coded {"id","name","start","end"} when the dimension
+        // has an enumerated representation, or non-coded {"value":"1999"} for
+        // ObservationalTimePeriod. The IMF WEO DSD declares TIME_PERIOD with a
+        // text representation, so the non-coded shape applies. sdmx-core always
+        // emits the coded shape with fabricated date bounds.
+        SdmxBeans sdmxBeans = loadWeoStructures();
+        InputStream input = getClass().getResourceAsStream("data_conversion/data_weo_misroute_3countries.json");
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+
+        JsonNode root = new ObjectMapper().readTree(outputStream.toByteArray());
+        JsonNode timeValues = root.path("data").path("structures").get(0).path("dimensions").path("observation").get(0).path("values");
+        assertTrue(timeValues.isArray() && !timeValues.isEmpty(), "TIME_PERIOD values should be a non-empty array");
+        JsonNode firstValue = timeValues.get(0);
+        assertFalse(firstValue.path("value").isMissingNode(), "TIME_PERIOD value entry should have `value` key (non-coded ObservationalTimePeriod)");
+        assertTrue(firstValue.path("start").isMissingNode(), "Non-coded TIME_PERIOD must not fabricate `start` bound");
+        assertTrue(firstValue.path("end").isMissingNode(), "Non-coded TIME_PERIOD must not fabricate `end` bound");
+        assertTrue(firstValue.path("id").isMissingNode(), "Non-coded TIME_PERIOD must not emit `id`");
+        assertTrue(firstValue.path("name").isMissingNode(), "Non-coded TIME_PERIOD must not emit `name`");
+    }
+
+    @SneakyThrows
+    private SdmxBeans loadWeoStructures() {
+        InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
+        return streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldNotMisrouteSeriesAcrossIndicatorPositions_issue80() {
+        // Repro for issue #80 (#1): with the IMF WEO DSD (which has groups GROUP_INDICATOR
+        // and GROUP_COUNTRY__INDICATOR), three series in the upstream IMF response get
+        // silently relocated under a different INDICATOR code in the proxy output. The
+        // 3-country trimmed sample (AGO, MAC, VEN) keeps the conditions that trigger
+        // the misroute: MAC has GGX_NGDP but not GGXWDG_NGDP, and VEN has NGDPRPPPPC
+        // and NGDP_RPCH but not NGDPRPC / NGDP_R respectively. Each "lost" series ends
+        // up under the alphabetically-prior INDICATOR.
+        //
+        // Input: 111 series. Pre-fix expected output: 108 series (3 missing).
+        InputStream input = getClass().getResourceAsStream("data_conversion/data_weo_misroute_3countries.json");
+        InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
+
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+
+        JsonNode root = new ObjectMapper().readTree(outputStream.toByteArray());
+        JsonNode firstDataSet = root.path("data").path("dataSets").get(0);
+        JsonNode series = firstDataSet.path("series");
+        JsonNode struct = root.path("data").path("structures").get(0);
+        JsonNode dimsSeries = struct.path("dimensions").path("series");
+
+        java.util.Map<String, java.util.List<String>> dimValues = new java.util.HashMap<>();
+        for (JsonNode dim : dimsSeries) {
+            java.util.List<String> codes = new java.util.ArrayList<>();
+            for (JsonNode v : dim.path("values")) {
+                codes.add(v.path("id").asText());
+            }
+            dimValues.put(dim.path("id").asText(), codes);
+        }
+        java.util.List<String> countries = dimValues.get("COUNTRY");
+        java.util.List<String> indicators = dimValues.get("INDICATOR");
+        java.util.List<String> frequencies = dimValues.get("FREQUENCY");
+        java.util.Set<java.util.List<String>> outputLabels = new java.util.HashSet<>();
+        for (String key : series.propertyNames()) {
+            String[] parts = key.split(":");
+            outputLabels.add(java.util.List.of(
+                    countries.get(Integer.parseInt(parts[0])),
+                    indicators.get(Integer.parseInt(parts[1])),
+                    frequencies.get(Integer.parseInt(parts[2]))));
+        }
+
+        assertEquals(111, series.size(), "All 111 input series should be preserved (currently misroutes 3)");
+        assertTrue(outputLabels.contains(java.util.List.of("MAC", "GGX_NGDP", "A")),
+                "(MAC, GGX_NGDP, A) should be present (currently misrouted to GGXWDG_NGDP)");
+        assertTrue(outputLabels.contains(java.util.List.of("VEN", "NGDPRPPPPC", "A")),
+                "(VEN, NGDPRPPPPC, A) should be present (currently misrouted to NGDPRPC)");
+        assertTrue(outputLabels.contains(java.util.List.of("VEN", "NGDP_RPCH", "A")),
+                "(VEN, NGDP_RPCH, A) should be present (currently misrouted to NGDP_R)");
+    }
+
     // ---- helpers used by the issue #49 regression tests ----
 
     @SneakyThrows
@@ -544,11 +564,7 @@ public class StreamingDataConversionServiceTest {
     @SneakyThrows
     private SdmxBeans parseStructuresFixture(String resourcePath) {
         InputStream structures = getClass().getResourceAsStream(resourcePath);
-        FixtureConfiguration f = new FixtureConfiguration();
-        f.setType(StructureFixtureType.METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE);
-        f.setConfig(new HashMap<>());
-        InputStream fixed = fixtureService.applyFixtures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0, List.of(f));
-        return streamingStructureConversionService.parseStructures(fixed, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        return streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
     }
 
     /**

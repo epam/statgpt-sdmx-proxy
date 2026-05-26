@@ -100,7 +100,11 @@
             ],
             "fixtures": [
               {
-                "type": "METADATA_ATTRIBUTE_USAGE_TO_ATTRIBUTE",
+                "type": "PRESERVE_METADATA_ATTRIBUTE_USAGES",
+                "config": {}
+              },
+              {
+                "type": "ANNOTATION_VALUE_TO_TEXT",
                 "config": {}
               },
               {

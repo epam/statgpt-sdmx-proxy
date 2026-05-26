@@ -83,6 +83,10 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
     private Map<String, Set<String>> groupMap;
     private Map<String, Set<String>> groupMapMandatoryElements;
     private List<Keyable> groupAndSeriesStack = new ArrayList<>();
+    // Set by lazyLoadKey when the series object had no "observations" sub-object;
+    // tells moveNextObservationInternal to return false without consuming a token
+    // (the cursor is already at END_OBJECT of the empty series). See issue #80 (#1).
+    private boolean currentSeriesIsEmpty;
 
     private ReadableDataLocation dataLocation;
 
@@ -648,6 +652,14 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
                 return false;
             }
         } else {
+            // Issue #80 (#1): for an empty series, lazyLoadKey already exited the
+            // series object on END_OBJECT; consuming another moveNext here would
+            // step past the next series's START_OBJECT and cause moveNextKeyableInternal
+            // to miss it. The empty-series flag short-circuits this.
+            if (currentSeriesIsEmpty) {
+                currentSeriesIsEmpty = false;
+                return false;
+            }
             jReader.moveNext();
             if (jReader.isStartArray()) {
                 obsKey = Integer.parseInt(jReader.getCurrentFieldName());
@@ -792,6 +804,7 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
         List<KeyValue> key = decode(keyParts, currentDsStructuralMetadata.getSeriesList(), "series");
         List<KeyValue> attributes = new ArrayList<>();
         AnnotationBean[] annotations = null;
+        currentSeriesIsEmpty = false;
         if (!isFlat) {
             while (jReader.moveNext()) {
                 if (jReader.isStartArray()) {
@@ -803,6 +816,19 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
                     }
                 } else if (jReader.isStartObject()) {
                     if (jReader.getCurrentFieldName().equals("observations")) {
+                        break;
+                    }
+                } else if (jReader.isEndObject()) {
+                    // Issue #80 (#1): an empty series (writeKey but no observations key) was
+                    // leaking this loop into the next series, stealing its attributes and
+                    // observations. When the current series object ends, the popped stack
+                    // lands at the parent "series" map -- break, mark the series empty so
+                    // moveNextObservationInternal does not consume the next series's
+                    // START_OBJECT, and let moveNextKeyableInternal pick up cleanly from
+                    // the END_OBJECT cursor.
+                    JsonReader.JsonStackItem stackItem = jReader.getCurrentStackItem();
+                    if (stackItem != null && "series".equals(stackItem.getFieldName())) {
+                        currentSeriesIsEmpty = true;
                         break;
                     }
                 }
