@@ -2,6 +2,7 @@ package com.epam.sdmxproxy.e2e.tests;
 
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.e2e.support.url.BaseUrlProvider;
+import com.epam.sdmxproxy.e2e.support.util.ProxyConfigPusher;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.response.Response;
@@ -67,7 +68,7 @@ class StructureFanOutE2ETest {
                 ProxyConfiguration.class
         );
         config.setStructureFanOutEnabled(true);
-        restClient.postResponse(CONFIG_PATH, objectMapper.writeValueAsString(config));
+        ProxyConfigPusher.push(restClient, CONFIG_PATH, objectMapper.writeValueAsString(config));
     }
 
     static Stream<Arguments> fanOutCases() {

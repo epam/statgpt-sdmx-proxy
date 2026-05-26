@@ -85,6 +85,12 @@ Related overrides outside `services/sdmxsource/` (design 025):
 1. [`AnnotationValueToTextJsonFixture` (related — under `services/fixture/structure/`)](#27-annotationvaluetotextjsonfixture-related--services-fixture-structure)
 1. [`MetadataAttributeUsagePreserver` (related — under `services/fixture/structure/`)](#28-metadataattributeusagepreserver-related--services-fixture-structure)
 
+Related overrides outside `services/sdmxsource/` (designs 028 + the wildcard
+version fix):
+
+1. [`JsonDataV20SeriesLimitTruncator` path-aware match (related — under `services/limit/truncate/`)](#29-jsondatav20serieslimittruncator-path-aware-match-related--services-limit-truncate)
+1. [`DimensionServiceImpl` wildcard version resolution (related — under `services/misc/`)](#30-dimensionserviceimpl-wildcard-version-resolution-related--services-misc)
+
 After the per-file catalog, see the [Cross-cutting analysis](#cross-cutting-analysis) section.
 
 ---
@@ -1410,6 +1416,186 @@ reader update. Substantial; out of scope for a drive-by fix.
 
 ---
 
+### 29. `JsonDataV20SeriesLimitTruncator` path-aware match (related — `services/limit/truncate/`)
+
+**Override target:** not an override of an sdmx-core class. Streaming JSON
+filter that caps an SDMX-JSON 2.0 data response at the requested series
+count for the proxy-side limit-emulation path (design 014). Listed in
+this catalog because (a) it is kin to §27 / §28 — a Jackson-level filter
+that compensates for behaviour the proxy can't change inside sdmx-core, and
+(b) its first revision triggered a deep sdmx-core writer fault that is
+worth documenting here.
+
+**Mechanism:** Spring `@Component`. Streams the registry response through
+a Jackson `JsonParser` / `JsonGenerator` pair on a virtual thread, copying
+tokens through unchanged except inside the data series container, where
+the first `n` entries are emitted and the rest are skipped via
+`parser.skipChildren()`. A small `Deque<String>` records the field name
+that introduced each enclosing container — used to disambiguate the data
+series from other `series`-named JSON fields.
+
+**Wiring:** `SeriesLimitTruncatorProvider` selects this implementation for
+`ReturnFormat.JSON_DATA_2_0_0`; `AdapterRouterImpl.resolveRawDataStream`
+calls `truncator.truncate(rawData, n, sdmxBeans)` after the bisect /
+shrunk-query stage produces a registry response.
+
+**Behavioural difference vs no-truncator baseline:** two corrections layered
+on the original component, both shipped during this session:
+
+1. **`series` as JSON object handled.** The original implementation only
+   matched `series` as a `START_ARRAY`. SDMX-JSON 2.0 emits the data series
+   as a JSON object keyed by dimension positions (`"0:0:0"`, `"0:1:0"`,
+   ...), so the array branch never fired and the truncator was a no-op on
+   every real registry response. The sibling `JsonDataV10SeriesLimitTruncator`
+   handled the object form correctly via `copySeriesMap`; v2.0 just inherited
+   a copy-paste asymmetry. Symmetric `copySeriesObject` helper added and
+   wired from the `START_OBJECT` case. (Design 028 §"Solution".)
+2. **Path-aware match.** The first revision matched `lastField == "series"`
+   anywhere in the tree. SDMX-JSON 2.0 carries a *second* `series`-named
+   field at `data.structures[*].attributes.series` — a JSON array of
+   series-level attribute *definitions*, not the data series. Once the
+   data series counter had saturated, the truncator emptied that array
+   too, corrupting the DSD-derived attribute table the writer relies on.
+   Downstream effect: sdmx-core's `GroupDataWriterEngine` flushes buffered
+   series on close and hands each one to
+   `GroupAttributeValues.getAttributes(Keyable)`, which dereferences the
+   group dimension positions via `series.getShortCode().split(":")`. With
+   the definitions array emptied, the writer's internal state ends up
+   with a length-0 `shortCodeSplit`, and the next `shortCodeSplit[i] = ""`
+   throws `ArrayIndexOutOfBoundsException`. The exception surfaces from
+   `GroupDataWriterEngine.close` → `flushSeriesAndAddGroups` →
+   `DataTransformationUtil.copyData` and aborts the conversion with HTTP
+   500. The fix tracks the enclosing-container chain in a `Deque<String>`
+   (`ARRAY_ELEMENT` sentinel for anonymous array elements, the introducing
+   field name otherwise) and gates truncation on
+   `isInsideDataSetsElement(stack)` — i.e. the immediate parent is an
+   array element of `dataSets`. Any other location for `series` flows
+   through untouched. (Design 028 §"Path-aware match".)
+
+**Bug / limitation:** (1) was an internal proxy bug; (2) is also an
+internal proxy bug, but it exposed how brittle sdmx-core's
+`GroupDataWriterEngine` is when fed a structure response with truncated
+attribute metadata. See "Related sdmx-core finding" below.
+
+**Severity / blast radius:** the limit-emulation path for every
+SDMX-JSON 2.0 data response on a registry that doesn't honour native
+`limit`. IMF WEO is the documented offender; before the path-aware fix,
+`testLimitEmulationStrict(registryReturnFormat=JSON_DATA_2_0_0)` failed
+with HTTP 500.
+
+**Status against 2.4.0:** not applicable (proxy-side filter).
+
+**Risks of removal:** the limit-emulation path stops capping series for
+SDMX-JSON 2.0 (the failing test in design 028's "Verification" returns
+12 series for `limit=10`).
+
+**Related sdmx-core finding:** `GroupAttributeValues.getAttributes(Keyable)`
+assumes `series.getShortCode().split(":")` has at least as many entries
+as the DSD has dimensions. Empty / truncated keys trip
+`ArrayIndexOutOfBoundsException` inside the writer's closing pass, surfacing
+as `Failed to convert data` 500 from
+`AdapterRouterImpl.lambda$getData$1`. The proxy avoids this entirely by
+not corrupting `data.structures[*].attributes` in the first place, but
+the writer would benefit from a defensive length check upstream.
+
+**Related design:** 028-json-data-v20-truncator-series-object.
+
+**Upstream contribution candidate.** None for the truncator (proxy-side
+only). For sdmx-core: a length-guard in
+`GroupAttributeValues.getAttributes` that returns null rather than
+throwing on an undersized shortCode would convert silent breakage into a
+recoverable miss, but the real fix is "don't feed truncated metadata to
+the writer."
+
+`File: sdmx-proxy/src/main/java/com/epam/sdmxproxy/services/limit/truncate/JsonDataV20SeriesLimitTruncator.java`
+
+---
+
+### 30. `DimensionServiceImpl` wildcard version resolution (related — `services/misc/`)
+
+**Override target:** not an override of an sdmx-core class. A proxy-side
+service that resolves a DSD from a dataflow reference. Listed here because
+the original implementation used a literal `.equals()` on
+`dsdBean.getVersion().toString()`, which breaks against SDMX 3.0 wildcard
+versions in the dataflow's `structure` URN, and the fix uses jsdmx
+(`com.epam.jsdmx.infomodel.sdmx30.VersionReference` /
+`WildcardReferenceMatcher`) to resolve correctly. Sister entry to §22 and
+§26 — a proxy-side gap, not an upstream bug, but co-located with the
+sdmx-core-shaped concerns in this catalog because callers reach it on the
+SDMX 3.0 data emulation path.
+
+**Mechanism:** Spring `@Service`. Two public methods (`getDimensionIds`,
+`getTimeDimensionId`) and one previously-public method
+(`getDimensionIdsFromDsd`) now route through a shared
+`resolveDsd(beans, agency, id, versionRef)` helper.
+
+**Wiring:** `LimitEmulationServiceImpl.getShrunkQuery` (line 170) calls
+`getTimeDimensionId` during the bisect / shrunk-query stage of the
+limit-emulation path.
+
+**Behavioural difference vs prior proxy implementation:**
+
+1. **Wildcard-aware lookup.** When the dataflow's structure URN carries
+   a wildcard version (e.g.
+   `urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=IMF.RES:DSD_WEO(9.0+.0)`,
+   per SDMX 3.0 spec "any 9.0.x patch"), the helper parses the requested
+   version as a `VersionReference`. If `isSpecific()`, an exact
+   `VersionReference`-level equals is required; if wildcarded, a
+   `WildcardReferenceMatcher` filters DSDs whose own version matches the
+   wildcard scope and `VersionReference.getComparator()` selects the
+   *latest* match. Unparseable versions (e.g. legacy two-part `1.0`) fall
+   back to the original literal string equality, keeping the previously
+   working path intact.
+2. **Both lookup sites consolidated.** `getDsdFromDataflow` (used by
+   `getTimeDimensionId`) and `getDimensionIdsFromDsd` (used by
+   `getDimensionIds`) previously each did their own strict equals; both
+   now call `resolveDsd`.
+
+**Bug / limitation:** the proxy's own lookup did not honour SDMX 3.0
+version-wildcard semantics. IMF emits the WEO dataflow with a
+minor-wildcarded DSD reference; the matching DSD in the same
+`references=descendants` payload carries a concrete version. Literal
+equals never matched, so `LimitEmulationServiceImpl.getShrunkQuery` blew
+up with `IllegalArgumentException: DataStructure not found: DSD_WEO`
+inside the streamed-response lambda, surfacing as HTTP 500 on the
+emulation path. (The same broken equals shipped in the proxy from before
+SDMX 3.0 wildcard versions appeared in real registry responses; this
+session is the first time a test exercised it end-to-end.)
+
+**Severity / blast radius:** every SDMX 3.0 data emulation request whose
+dataflow's `structure` URN carries a wildcard version. IMF WEO is the
+documented offender. No effect on the native-`limit` (non-emulation) path
+because `getTimeDimensionId` is not on that codepath.
+
+**Status against 2.4.0:** not applicable (proxy-side service). jsdmx's
+`VersionReference` / `WildcardReferenceMatcher` are public API; no
+sdmx-core monkey-patching required.
+
+**Risks of removal:** `IllegalArgumentException: DataStructure not found`
+returns for any SDMX 3.0 dataflow with a wildcard `structure` URN on the
+emulation path.
+
+**Related findings:**
+
+- The proxy's existing `VERSION_WILDCARD` fixture
+  (`sdmx-proxy/.../services/fixture/structure/VersionWildcardJsonFixture.java`)
+  normalises *invalid* wildcard URNs (trailing non-zero after a
+  wildcarded part: `(1.5+.1)` -> `(1.5+.0)`) but does not help here —
+  IMF's URN is already in valid wildcard form.
+- jsdmx ships `WildcardReferenceMatcher` + `VersionReference.getComparator()`
+  as a complete implementation of the SDMX 3.0 version-management rules.
+  Any future proxy code that compares versions across artefact references
+  should route through these rather than `String.equals`.
+
+**Upstream contribution candidate.** None — jsdmx already provides the
+matcher. The candidate is a *proxy-side hygiene rule*: scan for
+`getVersion().toString().equals(...)` patterns elsewhere in the codebase
+that may have the same latent bug. (Not the subject of this design.)
+
+`File: sdmx-proxy/src/main/java/com/epam/sdmxproxy/services/misc/DimensionServiceImpl.java`
+
+---
+
 ## Cross-cutting analysis
 
 ### By category
@@ -1421,7 +1607,8 @@ reader update. Substantial; out of scope for a drive-by fix.
 | Writer engines (XML 2.1 serializers) | 3   | §15, §16, §17 |
 | Writer engines (JSON 2.0 data serializers) | 3 | §23, §24, §25 |
 | Mapper additions (proxy-side mapping fixes) | 2 | §22, §26 |
-| JSON-level fixtures (raw-stream rewrites for upstream gaps) | 2 | §27, §28 |
+| JSON-level fixtures and stream filters (raw-stream rewrites / truncations) | 3 | §27, §28, §29 |
+| Proxy-side service fixes (model gaps not in sdmx-core)                     | 1 | §30 |
 | Other (super-bean retrieval / data transform / stream filter / dead code) | 4 | §18, §19, §20, §21 |
 
 ### By upstream module touched
@@ -1437,6 +1624,8 @@ reader update. Substantial; out of scope for a drive-by fix.
 | `fusion-utils-core` (`io.sdmx.utils.core.csv.*`)        | §20 (stream-level workaround) |
 | (proxy-side mapper, no upstream class)                  | §26 |
 | (raw-stream fixture, no upstream class)                 | §27, §28 |
+| (raw-stream limit-emulation truncator, no upstream class) | §29 |
+| (proxy-side service using jsdmx wildcard matcher, no upstream class) | §30 |
 
 `fusion-sdmx-json` dominates by a wide margin — 11 of 28 files. The
 JSON V2 data + structure parsing **and** writing surface is by far the
@@ -1456,6 +1645,9 @@ model gaps entirely.
 | Workarounds for IM private-field accessibility                                          | §22 |
 | Bean-model gaps (field exists on the wire but not in sdmx-core's IM)                    | §27 (annotation `value`), §28 (DSD `metadataAttributeUsages`) |
 | Proxy-side mapping fixes (not upstream bugs — gaps in the proxy's own mapper)           | §22 (level reference via reflection), §26 (MSD URN and conceptRoles never read) |
+| Proxy-side stream filters with path / shape pitfalls                                    | §29 (path-collision on `series` between `data.dataSets[*]` and `data.structures[*].attributes`) |
+| Proxy-side equality bugs against SDMX 3.0 wildcard semantics                            | §30 (strict `.equals()` on version string vs SDMX 3.0 wildcards like `9.0+.0`) |
+| sdmx-core writer brittleness exposed but not patched                                    | §29 (`GroupAttributeValues.getAttributes` AIOOBE on undersized shortCode — surfaces as HTTP 500 from `GroupDataWriterEngine.close`) |
 | Format / version-drift (proxy ahead of or behind upstream)                              | §11 (intentionally-missing not mirrored), §15 (HIERARCHICAL_CODELIST not mirrored) |
 | Dead code                                                                               | §21 |
 
@@ -1499,6 +1691,13 @@ Ranked by maintenance benefit (most worthwhile first):
     upstream surface of the contribution candidates.
 14. **§20 — RFC 4180 multi-line quoted fields in `CSVColumnReaderEngineImpl`.**
     Bigger change but worth doing right.
+15. **§29 (sdmx-core side) — defensive length check in
+    `GroupAttributeValues.getAttributes`.** A null / undersized shortCode
+    should fail gracefully (return null and let the writer omit group
+    attributes for that series) rather than throwing
+    `ArrayIndexOutOfBoundsException` mid-flush. Two-line guard. Not a
+    full fix for the upstream brittleness, but converts a 500 into a
+    recoverable miss.
 
 Of these, §11, §18, §17, and §19 are the highest-leverage: each is small,
 clearly correct, and confirmed present in 2.4.0 production. §11 is the
@@ -1550,6 +1749,15 @@ empty-output failures), so it tops the list.
 6. **§15 — copy-pasted abstract structure writer.** ~300 lines copied;
    anything upstream changes (e.g. the 2.4.0 HIERARCHICAL_CODELIST addition,
    already flagged) is missed.
+7. **§29 — path-aware match in the v2.0 limit truncator.** The `ARRAY_ELEMENT`
+   sentinel + `isInsideDataSetsElement` check assumes the wire shape stays
+   `data.dataSets[*].series` and that the data series is the only `series`
+   inside an `dataSets` array element. Future SDMX-JSON 2.0 schema additions
+   that move the data series or introduce a third `series`-named field
+   would need the predicate updated in lock-step. Failing to do so either
+   passes the data series through untruncated (the first-revision bug) or
+   clobbers something else (the second-revision bug). Both have failure
+   modes that are visible only on the limit-emulation path.
 
 ### Maintenance burden
 

@@ -13,6 +13,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.HeaderWriterFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -34,12 +35,22 @@ public class ResourceServerConfig implements WebMvcConfigurer {
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http.cors(Customizer.withDefaults())
+        SecurityFilterChain chain = http.cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .build();
+        // Workaround for spring-projects/spring-security#15510: the default HeaderWriterFilter races
+        // with StreamingResponseBody on cache-hit-fast-path responses, occasionally corrupting
+        // Tomcat's MimeHeaders byte buffer so the client reads a malformed header line. Writing the
+        // security headers before the controller dispatches avoids the race. The 7.0.5 DSL does not
+        // expose this flag, so we flip it on the filter instance after the chain is built.
+        chain.getFilters().stream()
+                .filter(HeaderWriterFilter.class::isInstance)
+                .map(HeaderWriterFilter.class::cast)
+                .forEach(filter -> filter.setShouldWriteHeadersEagerly(true));
+        return chain;
     }
 
     @Bean

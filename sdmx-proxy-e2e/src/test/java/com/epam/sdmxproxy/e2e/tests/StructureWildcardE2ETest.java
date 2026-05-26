@@ -4,6 +4,7 @@ import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.e2e.support.sdmx.StructureQueryDetail;
 import com.epam.sdmxproxy.e2e.support.sdmx.StructureReferenceDetail;
 import com.epam.sdmxproxy.e2e.support.url.BaseUrlProvider;
+import com.epam.sdmxproxy.e2e.support.util.ProxyConfigPusher;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.response.Response;
@@ -62,7 +63,10 @@ class StructureWildcardE2ETest {
                 ).readAllBytes(),
                 ProxyConfiguration.class
         );
-        restClient.postResponse(CONFIG_PATH, objectMapper.writeValueAsString(config));
+        // Set explicitly so the suite does not silently depend on whichever default the
+        // classpath sdmx_registries_config.json happens to ship (which currently is true).
+        config.setStructureFanOutEnabled(false);
+        ProxyConfigPusher.push(restClient, CONFIG_PATH, objectMapper.writeValueAsString(config));
     }
 
     static Stream<Arguments> wildcardCases() {
