@@ -98,6 +98,10 @@ public class CustomSdmxStructureIterator extends AbstractIterator {
             } else {
                 currentLevel = LEVEL.SERIES;
             }
+        } else if ("dimensionGroup".equals(fieldName)) {
+            if (inAttributes) {
+                currentLevel = LEVEL.DIMENSION_GROUP_ATTR;
+            }
         } else if ("observation".equals(fieldName)) {
             if (inAttributes) {
                 currentLevel = LEVEL.OBS_ATTR;
@@ -130,7 +134,8 @@ public class CustomSdmxStructureIterator extends AbstractIterator {
         DATASET_ATTR,
         SERIES_ATTR,
         OBS_ATTR,
-        OBS_MEASURES
+        OBS_MEASURES,
+        DIMENSION_GROUP_ATTR
     }
 
     public class JsonDatasetStructuralMetadata {
@@ -139,6 +144,7 @@ public class CustomSdmxStructureIterator extends AbstractIterator {
         private List<AttraMapping> datasetAttributeList;
         private List<AttraMapping> seriesAttributeList;
         private List<AttraMapping> obsAttributeList;
+        private List<AttraMapping> dimensionGroupAttributeList;
         private List<AttraMapping> seriesList;  //Series keys
         private List<String> obsIds;  //All the concepts at the observation level
         private List<String> measureIds = new ArrayList<>();  // multiple measure concepts
@@ -149,6 +155,7 @@ public class CustomSdmxStructureIterator extends AbstractIterator {
             datasetAttributeList = getList(LEVEL.DATASET_ATTR);
             seriesAttributeList = getList(LEVEL.SERIES_ATTR);
             obsAttributeList = getList(LEVEL.OBS_ATTR);
+            dimensionGroupAttributeList = getList(LEVEL.DIMENSION_GROUP_ATTR);
             seriesList = getList(LEVEL.SERIES);
 
             // extract measure ids from component iterators
@@ -263,6 +270,10 @@ public class CustomSdmxStructureIterator extends AbstractIterator {
 
         public List<AttraMapping> getObsAttributeList() {
             return obsAttributeList;
+        }
+
+        public List<AttraMapping> getDimensionGroupAttributeList() {
+            return dimensionGroupAttributeList;
         }
 
         public List<AttraMapping> getSeriesList() {

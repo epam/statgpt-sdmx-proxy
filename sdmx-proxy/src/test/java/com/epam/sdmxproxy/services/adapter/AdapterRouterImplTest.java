@@ -15,6 +15,7 @@ import com.epam.sdmxproxy.services.cache.CacheService;
 import com.epam.sdmxproxy.services.filter.FilterNormalizer;
 import com.epam.sdmxproxy.services.fixture.availability.AvailabilityFixtureService;
 import com.epam.sdmxproxy.services.fixture.data.DataFixtureService;
+import com.epam.sdmxproxy.services.fixture.data.MetadataAttributesPreserver;
 import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsagePreserver;
 import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
 import com.epam.sdmxproxy.services.limit.LimitEmulationService;
@@ -66,6 +67,7 @@ public class AdapterRouterImplTest {
         cacheService = mock(CacheService.class);
         structureFixtureService = mock(StructureFixtureService.class);
         MetadataAttributeUsagePreserver metadataAttributeUsagePreserver = mock(MetadataAttributeUsagePreserver.class);
+        MetadataAttributesPreserver metadataAttributesPreserver = mock(MetadataAttributesPreserver.class);
         AvailabilityFixtureService availabilityFixtureService = mock(AvailabilityFixtureService.class);
         DataFixtureService dataFixtureService = mock(DataFixtureService.class);
         LimitEmulationService limitEmulationService = mock(LimitEmulationService.class);
@@ -82,6 +84,7 @@ public class AdapterRouterImplTest {
                 cacheService,
                 structureFixtureService,
                 metadataAttributeUsagePreserver,
+                metadataAttributesPreserver,
                 availabilityFixtureService,
                 dataFixtureService,
                 limitEmulationService,

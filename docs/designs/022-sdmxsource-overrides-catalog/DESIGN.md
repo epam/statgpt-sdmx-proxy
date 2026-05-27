@@ -91,6 +91,10 @@ version fix):
 1. [`JsonDataV20SeriesLimitTruncator` path-aware match (related — under `services/limit/truncate/`)](#29-jsondatav20serieslimittruncator-path-aware-match-related--services-limit-truncate)
 1. [`DimensionServiceImpl` wildcard version resolution (related — under `services/misc/`)](#30-dimensionserviceimpl-wildcard-version-resolution-related--services-misc)
 
+Related overrides outside `services/sdmxsource/` (design 031):
+
+1. [`MetadataAttributesPreserver` (related — under `services/fixture/data/`)](#31-metadataattributespreserver-related--services-fixture-data)
+
 After the per-file catalog, see the [Cross-cutting analysis](#cross-cutting-analysis) section.
 
 ---
@@ -1596,6 +1600,111 @@ that may have the same latent bug. (Not the subject of this design.)
 
 ---
 
+### 31. `MetadataAttributesPreserver` (related — `services/fixture/data/`)
+
+**Override target:** not an override of an sdmx-core class; like §28
+(`MetadataAttributeUsagePreserver`) it sidesteps the bean-model gap by
+caching the upstream JSON wire bytes and re-injecting them after the
+data conversion has finished. §28 does this on the structure endpoint;
+§31 does it on the data endpoint.
+
+**Mechanism:** Spring `@Service` with two operations, used by
+`AdapterRouterImpl.getData`:
+
+1. **`capture(byte[] rawJson) → Snapshot`** — parses the raw upstream
+   JSON, walks `data.structures[*]` and deep-copies each structure's
+   `attributes` object (all four buckets — `dataSet`,
+   `dimensionGroup`, `series`, `observation`). Walks
+   `data.dataSets[*]` and deep-copies each dataset's
+   `attributes` value array and `dimensionGroupAttributes` value
+   object. Stashes both lists in a `Snapshot`, indexed by upstream
+   order.
+2. **`inject(byte[] convertedJson, Snapshot) → byte[]`** — parses the
+   proxy's own converted JSON output, walks the same paths in the
+   same order, and overwrites each section with the captured deep
+   copy. Other fields are untouched.
+
+`AdapterRouterImpl.getData` orchestrates the round trip when the
+`PRESERVE_METADATA_ATTRIBUTES` toggle is enabled AND
+`returnFormat == JSON_DATA_2_0_0` AND the requested media type is
+SDMX-JSON 2.0. It buffers the post-fixture upstream bytes, captures,
+runs `streamingDataConversionService.convert` into a `ByteArrayOutputStream`,
+calls `inject`, and writes the result. Streaming is preserved for
+every registry that does not opt in. Both calls are best-effort —
+parse failures log a warning and the conversion is returned
+unmodified.
+
+**Wiring:** new enum value
+`DataFixtureType.PRESERVE_METADATA_ATTRIBUTES` (toggle, not a
+fixture-chain entry — the preserver runs in the router, not via
+`DataFixtureService.applyFixtures`). Enabled in
+`sdmx_registries_config.json` and the E2E IMF SDMX 3.0
+`imf_3_0_registry_config.json` for the IMF SDMX 3.0 data endpoint.
+
+**Behavioural difference vs no-preserver baseline:** sdmx-core's
+`DataStructureBean` has no slot for `metadataAttributeUsages` (also
+documented at §28 for the structure path and in design 027). The
+data writer iterates the bean model
+(`dsd.getDatasetAttributes()`, `dsd.getSeriesAttributes(...)`,
+`dsd.getGroupAttributes()`, `dsd.getObservationAttributes(...)`) and
+never surfaces the usages. The preserver re-attaches the upstream's
+`attributes` blocks and value sections verbatim on the way out.
+For IMF.RES:WEO with `attributes=all`:
+`attributes.dataSet` grows from 0 → 18, `attributes.dimensionGroup`
+from 17 → 37, `dimensionGroupAttributes` values grow from
+≤20-element to 37-element positional arrays, and the 6 MSD-derived
+usages previously misrouted into `attributes.series` are moved back
+to `attributes.dimensionGroup` (returning `attributes.series` to its
+upstream count of 4).
+
+**Bug / limitation:** same double gap as §28 — sdmx-core's reader
+drops `metadataAttributeUsages` *and* the bean model has no slot.
+Inherited on the data endpoint because the same `DataStructureBean`
+backs both endpoints.
+
+**Severity / blast radius:** every SDMX-JSON 2.0 → SDMX-JSON 2.0 data
+response whose DSD declares `metadataAttributeUsages` and the request
+asks for `attributes=all` (the only mode where upstream embeds them
+in the data response). IMF SDMX 3.0 DSDs make heavy use of usages
+(39 on `IMF.RES:DSD_WEO(9.0.0)`).
+
+**Status against 2.4.0:** still required; upstream reader and bean
+model unchanged.
+
+**Risks of removal:** `attributes.dataSet: []`,
+`attributes.dimensionGroup` truncated to DSD-declared partial-dim
+attrs only, MSD-derived dataset-level values dropped from
+`data.dataSets[*].attributes`. A previous iteration (rejected) shared
+the declared concept list reader→writer via a `ThreadLocal` and
+synthesized stubs inside the writer; rejected because it forked the
+sdmx-core bean model conceptually and would block future upstream
+upgrades. See design 031's "Why not extend the proxy writer to
+synthesize stubs" section.
+
+**Trade-offs vs alternative designs:**
+
+- The "extend the bean model" path was rejected as too invasive
+  (synchronized IM + reader + writer change in sdmx-core; forks the
+  tree).
+- The "synthesize stubs via reader→writer ThreadLocal" path was
+  prototyped and rejected (silent coupling; bean-model fork in
+  effect).
+- The wire-byte capture+inject path was chosen for parity with §28
+  on the structure endpoint. Cost is one extra parse + serialize of
+  the data response when the toggle is enabled; streaming is
+  preserved for every registry that does not opt in.
+
+**Related design:** 031-data-metadata-attributes-preservation. Sister
+to §28 (design 027) on the structure endpoint.
+
+**Upstream contribution candidate.** Same as §28: would require an IM
+model change (add `metadataAttributeUsages` to `AttributeListBean`)
+and a reader update. Substantial; out of scope for a drive-by fix.
+
+`File: sdmx-proxy/src/main/java/com/epam/sdmxproxy/services/fixture/data/MetadataAttributesPreserver.java`
+
+---
+
 ## Cross-cutting analysis
 
 ### By category
@@ -1607,7 +1716,7 @@ that may have the same latent bug. (Not the subject of this design.)
 | Writer engines (XML 2.1 serializers) | 3   | §15, §16, §17 |
 | Writer engines (JSON 2.0 data serializers) | 3 | §23, §24, §25 |
 | Mapper additions (proxy-side mapping fixes) | 2 | §22, §26 |
-| JSON-level fixtures and stream filters (raw-stream rewrites / truncations) | 3 | §27, §28, §29 |
+| JSON-level fixtures and stream filters (raw-stream rewrites / truncations) | 4 | §27, §28, §29, §31 |
 | Proxy-side service fixes (model gaps not in sdmx-core)                     | 1 | §30 |
 | Other (super-bean retrieval / data transform / stream filter / dead code) | 4 | §18, §19, §20, §21 |
 
@@ -1746,6 +1855,11 @@ empty-output failures), so it tops the list.
    path. If sdmx-core ever starts emitting a different shape (e.g.
    moves usages to a different container), the preserver silently
    captures nothing and the field disappears again.
+
+   The same risk applies to **§31 — `MetadataAttributesPreserver`** on
+   the data endpoint, which hard-codes
+   `data.structures[].attributes` and the per-dataset `attributes`
+   / `dimensionGroupAttributes` paths.
 6. **§15 — copy-pasted abstract structure writer.** ~300 lines copied;
    anything upstream changes (e.g. the 2.4.0 HIERARCHICAL_CODELIST addition,
    already flagged) is missed.
@@ -1776,13 +1890,15 @@ Three recurring patterns suggest a thin abstraction layer would pay off:
   hook. An upstream PR to widen visibility / expose a stable factory in
   both reader and writer paths is the right long-term fix.
 - **Raw-JSON fixtures sidestepping bean-model gaps.** §27 (annotation
-  `value`) and §28 (DSD `metadataAttributeUsages`) both work around fields
-  the SDMX-JSON 2.0 spec defines but sdmx-core's IM does not model. As more
-  SDMX-JSON 2.0 fields land in real registry responses, expect this list to
-  grow. A general "captured-bytes" infrastructure (a request-scoped store
-  keyed by URN, with a clear contract for capture-on-input and re-inject-on-output)
-  would let new fixtures of this kind ship without each one re-inventing the
-  parse/round-trip pattern.
+  `value`), §28 (DSD `metadataAttributeUsages` on the structure endpoint), and
+  §31 (the same usages surfaced inside data responses) all work around fields
+  the SDMX-JSON 2.0 spec defines but sdmx-core's IM does not model. §28 and
+  §31 are direct sister fixtures — the same bean-model gap manifesting on two
+  endpoints. As more SDMX-JSON 2.0 fields land in real registry responses,
+  expect this list to grow. A general "captured-bytes" infrastructure (a
+  request-scoped store keyed by URN, with a clear contract for capture-on-input
+  and re-inject-on-output) would let new fixtures of this kind ship without
+  each one re-inventing the parse/round-trip pattern.
 
 If none of these happen, the next sdmx-core upgrade should at a minimum add
 a diff-check step: run a `diff` of each Custom* file against the

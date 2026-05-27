@@ -23,6 +23,7 @@ import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
+import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 import com.epam.sdmxproxy.exception.AvailabilityConversionException;
@@ -38,6 +39,7 @@ import com.epam.sdmxproxy.services.cache.CacheService;
 import com.epam.sdmxproxy.services.filter.FilterNormalizer;
 import com.epam.sdmxproxy.services.fixture.availability.AvailabilityFixtureService;
 import com.epam.sdmxproxy.services.fixture.data.DataFixtureService;
+import com.epam.sdmxproxy.services.fixture.data.MetadataAttributesPreserver;
 import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsagePreserver;
 import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
 import com.epam.sdmxproxy.services.limit.CachedShrinkResult;
@@ -75,6 +77,7 @@ public class AdapterRouterImpl implements AdapterRouter {
     private final CacheService cacheService;
     private final StructureFixtureService fixtureService;
     private final MetadataAttributeUsagePreserver metadataAttributeUsagePreserver;
+    private final MetadataAttributesPreserver metadataAttributesPreserver;
     private final AvailabilityFixtureService availabilityFixtureService;
     private final DataFixtureService dataFixtureService;
     private final LimitEmulationService limitEmulationService;
@@ -340,22 +343,46 @@ public class AdapterRouterImpl implements AdapterRouter {
         boolean emulateLimit = query.getLimit() != null
                 && dataConfig != null
                 && !dataConfig.isSupportsLimit();
+        List<FixtureConfiguration<DataFixtureType>> dataFixtures = dataConfig != null ? dataConfig.getFixtures() : null;
+        boolean preserveMetadataAttrs = metadataAttributesPreserver.isEnabled(dataFixtures)
+                && returnFormat == ReturnFormat.JSON_DATA_2_0_0
+                && isJson20Output(requestedMediaType);
         return outputStream -> {
             SdmxBeans sdmxBeans = getSdmxBeans(getStructureQuery(query));
             try (InputStream raw = resolveRawDataStream(query, sdmxBeans, emulateLimit);
-                 InputStream inputStream = dataFixtureService.applyFixtures(
+                 InputStream postFixtures = dataFixtureService.applyFixtures(
                          raw,
                          returnFormat,
                          sdmxBeans,
-                         dataConfig != null ? dataConfig.getFixtures() : null
+                         dataFixtures
                  )) {
-                streamingDataConversionService.convert(
-                        inputStream,
-                        outputStream,
-                        sdmxBeans,
-                        returnFormat,
-                        requestedMediaType
-                );
+                if (preserveMetadataAttrs) {
+                    // Buffer the upstream bytes to capture sections sdmx-core drops
+                    // (MSD-derived metadataAttributeUsages across all four buckets and
+                    // their value-side counterparts), then re-inject them after
+                    // conversion. See MetadataAttributesPreserver for rationale.
+                    byte[] rawBytes = postFixtures.readAllBytes();
+                    MetadataAttributesPreserver.Snapshot captured =
+                            metadataAttributesPreserver.capture(rawBytes);
+                    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                    streamingDataConversionService.convert(
+                            new ByteArrayInputStream(rawBytes),
+                            buffer,
+                            sdmxBeans,
+                            returnFormat,
+                            requestedMediaType
+                    );
+                    byte[] convertedBytes = metadataAttributesPreserver.inject(buffer.toByteArray(), captured);
+                    outputStream.write(convertedBytes);
+                } else {
+                    streamingDataConversionService.convert(
+                            postFixtures,
+                            outputStream,
+                            sdmxBeans,
+                            returnFormat,
+                            requestedMediaType
+                    );
+                }
             } catch (FeignException e) {
                 log.warn("Failure on registry side.", e);
                 throw e;
@@ -364,6 +391,17 @@ public class AdapterRouterImpl implements AdapterRouter {
                 throw new DataConversionException("Failed to convert data", e);
             }
         };
+    }
+
+    private static boolean isJson20Output(MediaType mediaType) {
+        if (mediaType == null) {
+            return false;
+        }
+        if (!mediaType.getSubtype().toLowerCase().contains("json")) {
+            return false;
+        }
+        String version = mediaType.getParameter("version");
+        return version != null && version.startsWith("2.0");
     }
 
     /**
