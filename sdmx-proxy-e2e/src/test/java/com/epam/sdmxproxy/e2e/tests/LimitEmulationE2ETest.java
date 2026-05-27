@@ -3,6 +3,7 @@ package com.epam.sdmxproxy.e2e.tests;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.e2e.support.url.BaseUrlProvider;
+import com.epam.sdmxproxy.e2e.support.util.ProxyConfigPusher;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -62,7 +63,7 @@ class LimitEmulationE2ETest {
                     }
                 })
         );
-        restClient.postResponse(CONFIG_PATH, objectMapper.writeValueAsString(config));
+        ProxyConfigPusher.push(restClient, CONFIG_PATH, objectMapper.writeValueAsString(config));
     }
 
     @Test

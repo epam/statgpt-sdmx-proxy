@@ -1,5 +1,6 @@
 package com.epam.sdmxproxy.e2e.support.util;
 
+import com.epam.sdmxproxy.e2e.support.url.ApiKeyProvider;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -11,9 +12,15 @@ import java.util.Map;
 /**
  * Wrapper around RestAssured for making HTTP requests to the containerized application.
  * Provides convenience methods for common HTTP operations.
+ * <p>
+ * If {@link ApiKeyProvider#getApiKey()} returns a non-null value (i.e. {@code E2E_PASSWORD}
+ * is set), every request built by this client carries an {@code Api-Key} header so suites
+ * pass through a DIAL-fronted proxy. When unset, no auth header is added.
  */
 @Slf4j
 public class RestClient {
+
+    private static final String API_KEY_HEADER = "Api-Key";
 
     private final String baseUrl;
 
@@ -21,6 +28,14 @@ public class RestClient {
         this.baseUrl = baseUrl;
         // Configure RestAssured to use the base URL
         RestAssured.baseURI = baseUrl;
+    }
+
+    private static RequestSpecification withApiKey(RequestSpecification spec) {
+        String apiKey = ApiKeyProvider.getApiKey();
+        if (apiKey != null) {
+            spec.header(API_KEY_HEADER, apiKey);
+        }
+        return spec;
     }
 
     /**
@@ -31,8 +46,7 @@ public class RestClient {
      */
     public RequestSpecification get(String path) {
         log.debug("GET {}{}", baseUrl, path);
-        return RestAssured.given()
-                .basePath(path);
+        return withApiKey(RestAssured.given().basePath(path));
     }
 
     /**
@@ -111,8 +125,7 @@ public class RestClient {
      */
     public RequestSpecification post(String path) {
         log.debug("POST {}{}", baseUrl, path);
-        return RestAssured.given()
-                .basePath(path);
+        return withApiKey(RestAssured.given().basePath(path));
     }
 
     /**
@@ -193,6 +206,6 @@ public class RestClient {
      * @return RequestSpecification builder
      */
     public RequestSpecification given() {
-        return RestAssured.given();
+        return withApiKey(RestAssured.given());
     }
 }

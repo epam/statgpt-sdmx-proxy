@@ -10,6 +10,7 @@ import com.epam.sdmxproxy.e2e.support.fixtures.ResponseValidator;
 import com.epam.sdmxproxy.e2e.support.sdmx.StructureQueryDetail;
 import com.epam.sdmxproxy.e2e.support.sdmx.StructureReferenceDetail;
 import com.epam.sdmxproxy.e2e.support.url.BaseUrlProvider;
+import com.epam.sdmxproxy.e2e.support.util.ProxyConfigPusher;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import com.epam.sdmxproxy.e2e.tests.framework.config.DataflowKeyCase;
 import com.epam.sdmxproxy.e2e.tests.framework.config.LimitTestSuitConfiguration;
@@ -179,7 +180,7 @@ public abstract class BaseRegistryTestSuite {
         dataCases = getDataCases().build().getGeneratedCases();
         availabilityCases = getAvailabilityCases().build().getGeneratedCases();
 
-        restClient.postResponse(CONFIG_PATH, objectMapper.writeValueAsString(proxyConfig));
+        ProxyConfigPusher.push(restClient, CONFIG_PATH, objectMapper.writeValueAsString(proxyConfig));
     }
 
     /**
@@ -235,9 +236,18 @@ public abstract class BaseRegistryTestSuite {
                 .as("Response body should not be empty")
                 .isNotEmpty();
 
-        assertThat(responseBody)
-                .as("Response should contain %s element", artefact.getType())
-                .containsIgnoringCase(artefact.getType());
+        if ("hierarchy".equalsIgnoreCase(artefact.getType())) {
+            // SDMX-JSON 2.0 emits 3.0 Hierarchy under "hierarchies"; SDMX-ML 2.1 downgrades it into
+            // <str:HierarchicalCodelist>. Neither plural form contains the bare "hierarchy" substring,
+            // so accept either marker.
+            assertThat(responseBody.toLowerCase())
+                    .as("Response should carry the SDMX-JSON or SDMX-ML 2.1 hierarchy marker")
+                    .containsAnyOf("hierarchies", "hierarchicalcodelist");
+        } else {
+            assertThat(responseBody)
+                    .as("Response should contain %s element", artefact.getType())
+                    .containsIgnoringCase(artefact.getType());
+        }
     }
 
     Stream<Arguments> dataCases() {

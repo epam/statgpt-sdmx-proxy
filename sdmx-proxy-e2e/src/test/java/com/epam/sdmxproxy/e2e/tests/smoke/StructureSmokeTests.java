@@ -1,10 +1,14 @@
 package com.epam.sdmxproxy.e2e.tests.smoke;
 
+import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.e2e.support.fixtures.ResponseValidator;
 import com.epam.sdmxproxy.e2e.support.fixtures.TestDataProvider;
 import com.epam.sdmxproxy.e2e.support.url.BaseUrlProvider;
+import com.epam.sdmxproxy.e2e.support.util.ProxyConfigPusher;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.response.Response;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -29,9 +33,17 @@ class StructureSmokeTests {
     private ResponseValidator responseValidator;
 
     @BeforeAll
+    @SneakyThrows
     void setUp() {
         this.restClient = new RestClient(BaseUrlProvider.getBaseUrl());
         this.responseValidator = new ResponseValidator();
+        ProxyConfiguration config = new ObjectMapper().readValue(
+                getClass().getResourceAsStream(
+                        "/com/epam/sdmxproxy/e2e/tests/registry/bis/3_0/bis_3_0_registry_config.json"
+                ).readAllBytes(),
+                ProxyConfiguration.class
+        );
+        ProxyConfigPusher.push(restClient, TestDataProvider.CONFIG_ENDPOINT, new ObjectMapper().writeValueAsString(config));
     }
 
     @Test

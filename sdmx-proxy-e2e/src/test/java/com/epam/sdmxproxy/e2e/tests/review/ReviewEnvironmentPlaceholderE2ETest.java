@@ -1,8 +1,10 @@
 package com.epam.sdmxproxy.e2e.tests.review;
 
+import com.epam.sdmxproxy.e2e.support.url.ApiKeyProvider;
 import com.epam.sdmxproxy.e2e.support.url.BaseUrlProvider;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import io.restassured.response.Response;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -39,14 +41,8 @@ class ReviewEnvironmentPlaceholderE2ETest {
     @Test
     @DisplayName("BIS WS_EER data query via Core returns HTTP 200")
     void bisWsEerDataQueryViaCoreReturnsOk() {
-        String apiKey = System.getenv("E2E_PASSWORD");
-        assertThat(apiKey)
-                .as("E2E_PASSWORD must be set to the DIAL API key (sent as Api-Key header)")
-                .isNotBlank();
-
-        Map<String, String> headers = Map.of(
-                "Api-Key", apiKey,
-                "Content-Type", "application/json");
+        Assumptions.assumeTrue(ApiKeyProvider.getApiKey() != null,
+                "E2E_PASSWORD not set -- review-env test skipped (only runs against a DIAL-fronted deploy)");
 
         Map<String, Object> queryParams = new LinkedHashMap<>();
         queryParams.put("c[TIME_PERIOD]", "ge:2024-05-01+le:2026-05-31");
@@ -56,7 +52,7 @@ class ReviewEnvironmentPlaceholderE2ETest {
         queryParams.put("dimensionAtObservation", "TIME_PERIOD");
 
         Response response = restClient.get(DATA_PATH)
-                .headers(headers)
+                .header("Content-Type", "application/json")
                 .queryParams(queryParams)
                 .when()
                 .get();
