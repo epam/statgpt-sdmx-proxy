@@ -47,14 +47,22 @@ public class CustomSdmxJsonDataWriterFactory extends MetadataAwareDataWriterFact
 
             boolean forceFlat = DatasetStructureReferenceBean.ALL_DIMENSIONS.equalsIgnoreCase(dimAtObs);
 
-            ISeriesObsDataWriterEngine dwe = null;
             DATA_TYPE format = ((SdmxJsonDataFormat) dataFormat).getSdmxDataFormat();
             if (format == DATA_TYPE.SDMXJSON_1_0_0) {
-                dwe = new SdmxJsonDataWriterEngine(dataFormat, out, superBeanRetrievalManager, beanRetrievalManager, forceFlat);
-            } else if (format == DATA_TYPE.SDMXJSON_2_0_0) {
-                dwe = new CustomSdmxJsonDataWriterEngineV2(dataFormat, out, superBeanRetrievalManager, beanRetrievalManager, forceFlat);
+                // JSON 1.0 has no dimensionGroupAttributes concept; the GroupDataWriterEngine
+                // wrapper folds group keyables into series, which is the spec-correct shape.
+                ISeriesObsDataWriterEngine dwe = new SdmxJsonDataWriterEngine(dataFormat, out, superBeanRetrievalManager, beanRetrievalManager, forceFlat);
+                return new GroupDataWriterEngine(dwe);
             }
-            return new GroupDataWriterEngine(dwe);
+            if (format == DATA_TYPE.SDMXJSON_2_0_0) {
+                // Issue #83 / design 030: the custom SDMX-JSON 2.0 writer emits group
+                // keyables natively under data.dataSets[*].dimensionGroupAttributes
+                // and splits the structure sidecar into four buckets (dataset /
+                // dimensionGroup / series / observation). Wrapping it in
+                // GroupDataWriterEngine would re-fold groups into series and erase
+                // the buffered group keyables, so the wrapper is omitted here.
+                return new CustomSdmxJsonDataWriterEngineV2(dataFormat, out, superBeanRetrievalManager, beanRetrievalManager, forceFlat);
+            }
         }
         return null;
     }

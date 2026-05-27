@@ -294,6 +294,86 @@ public abstract class BaseRegistryTestSuite {
                 .isNotEmpty();
     }
 
+    /**
+     * Conditional pin for SDMX-JSON 2.0 dimension-group attribute round-trip
+     * (issue #83 / design 030). Runs the data endpoint with {@code attributes=all}
+     * and {@code Accept: application/vnd.sdmx.data+json;version=2.0.0}, then for
+     * every dataflow whose response carries {@code data.structures[0].attributes.dimensionGroup}
+     * asserts:
+     *
+     * <ul>
+     *   <li>{@code attributes.dimensionGroup} is non-empty (registries that
+     *       expose group-level attribute definitions must not have them
+     *       silently dropped).</li>
+     *   <li>None of the {@code attributes.dimensionGroup} attribute IDs leak
+     *       into {@code attributes.series} (the pre-fix folding behaviour).</li>
+     *   <li>If the response carries {@code data.dataSets[0].dimensionGroupAttributes},
+     *       it is a non-empty object.</li>
+     * </ul>
+     *
+     * Dataflows whose DSD has no group attributes return an empty
+     * {@code attributes.dimensionGroup} (or omit it) — the test softly skips
+     * those via {@code Assumptions.assumeTrue}.
+     */
+    @ParameterizedTest(name = "dataflow: {0}, key: {1}, registryReturnFormat: {2}")
+    @DisplayName("Data Endpoint preserves dimensionGroupAttributes (SDMX-JSON 2.0)")
+    @MethodSource("dataCases")
+    @SneakyThrows
+    void testDataDimensionGroupAttributesPreserved(String dataflowUrn, String key, ReturnFormat registryReturnFormat, String proxyFormat) {
+        Assumptions.assumeTrue(
+                "application/vnd.sdmx.data+json;version=2.0.0".equals(proxyFormat),
+                "dimension-group assertion runs only for SDMX-JSON 2.0 output"
+        );
+        updateDataConfigToMatchRegistryReturnType(registryReturnFormat);
+
+        String[] urnParts = parseUrn(dataflowUrn);
+        String path = String.format("%s/sdmx/3.0/data/dataflow/%s/%s/%s/%s?attributes=all",
+                BASE_PATH, urnParts[0], urnParts[1], urnParts[2], key);
+
+        Response response = restClient.getResponseWithAccept(path, proxyFormat);
+        assertThat(response.getStatusCode())
+                .as("Data endpoint should return HTTP 200")
+                .isEqualTo(200);
+
+        JsonNode root = objectMapper.readTree(response.getBody().asString());
+        JsonNode structure = root.path("data").path("structures").get(0);
+        Assumptions.assumeTrue(structure != null && !structure.isMissingNode(),
+                "Response has no structure sidecar");
+        JsonNode attrs = structure.path("attributes");
+        JsonNode dimensionGroup = attrs.path("dimensionGroup");
+
+        Assumptions.assumeTrue(dimensionGroup.isArray() && !dimensionGroup.isEmpty(),
+                "DSD has no dimension-group attributes for this dataflow");
+
+        List<String> dimensionGroupAttrIds = new ArrayList<>();
+        for (JsonNode attr : dimensionGroup) {
+            dimensionGroupAttrIds.add(attr.path("id").asText());
+        }
+        assertThat(dimensionGroupAttrIds)
+                .as("attributes.dimensionGroup must be populated when the DSD declares group attrs")
+                .isNotEmpty();
+
+        JsonNode series = attrs.path("series");
+        if (series.isArray()) {
+            for (JsonNode attr : series) {
+                String id = attr.path("id").asText();
+                assertThat(dimensionGroupAttrIds)
+                        .as("Group-attached attribute %s must not leak into attributes.series", id)
+                        .doesNotContain(id);
+            }
+        }
+
+        JsonNode dga = root.path("data").path("dataSets").get(0).path("dimensionGroupAttributes");
+        if (!dga.isMissingNode() && !dga.isNull()) {
+            assertThat(dga.isObject())
+                    .as("dimensionGroupAttributes must be an object when present")
+                    .isTrue();
+            assertThat(dga.size())
+                    .as("dimensionGroupAttributes must be non-empty when present")
+                    .isGreaterThan(0);
+        }
+    }
+
     Stream<Arguments> availabilityCases() {
         return availabilityCases.stream()
                 .map(testCase -> {

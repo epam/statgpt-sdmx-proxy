@@ -43,7 +43,13 @@
             ],
             "defaultFormat": "JSON_DATA_2_0_0",
             "bypassEnabled": false,
-            "replaceEmptyDimensionsWithWildcard": true
+            "replaceEmptyDimensionsWithWildcard": true,
+            "fixtures": [
+              {
+                "type": "PRESERVE_METADATA_ATTRIBUTES",
+                "config": {}
+              }
+            ]
           },
           "availabilityEndpointConfig": {
             "url": "https://api.imf.org/external/sdmx/3.0/availability/",

@@ -51,6 +51,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -79,6 +80,9 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
     private List<Integer> structureIndexes = new ArrayList<>();
     private List<AttributeValue> currentDsAttributeValues;
     private List<List<AttributeValue>> dsAttributeValues = new ArrayList<>();
+    private Map<String, List<AttributeValue>> currentDimensionGroupAttributeValues;
+    private List<Map<String, List<AttributeValue>>> dimensionGroupAttributeValues = new ArrayList<>();
+    private boolean groupKeysEmittedForDataset;
 
     private Map<String, Set<String>> groupMap;
     private Map<String, Set<String>> groupMapMandatoryElements;
@@ -131,12 +135,39 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
                         dsAttributeValues.add(readMixedAttributeArray());
                     }
                     break;
+                case "dimensionGroupAttributes":
+                    if (jReader.isStartObject()) {
+                        dimensionGroupAttributeValues.add(readGroupAttributeMap());
+                    }
+                    break;
                 default:
                     break;
             }
         }
         currentStructureIndex = structureIndexes.isEmpty() ? 0 : structureIndexes.get(0);
         currentDsAttributeValues = dsAttributeValues.isEmpty() ? new ArrayList<>() : dsAttributeValues.get(0);
+        currentDimensionGroupAttributeValues = dimensionGroupAttributeValues.isEmpty()
+                ? new LinkedHashMap<>()
+                : dimensionGroupAttributeValues.get(0);
+    }
+
+    /**
+     * Reads a dimensionGroupAttributes object into a map keyed by the partial-dimension-value-
+     * combination string (e.g. "0::", ":0::"). Each entry's value is a positional list of
+     * AttributeValue aligned with the structures-side attributes.dimensionGroup definitions.
+     */
+    private Map<String, List<AttributeValue>> readGroupAttributeMap() {
+        Map<String, List<AttributeValue>> result = new LinkedHashMap<>();
+        while (jReader.moveNext() && !jReader.isEndObject()) {
+            String key = jReader.getCurrentFieldName();
+            if (key == null) {
+                continue;
+            }
+            if (jReader.isStartArray()) {
+                result.put(key, readMixedAttributeArray());
+            }
+        }
+        return result;
     }
 
     /**
@@ -326,6 +357,10 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
         currentDsAttributeValues = dsAttributeValues.size() > getDatasetPosition()
                 ? dsAttributeValues.get(getDatasetPosition())
                 : new ArrayList<>();
+        currentDimensionGroupAttributeValues = dimensionGroupAttributeValues.size() > getDatasetPosition()
+                ? dimensionGroupAttributeValues.get(getDatasetPosition())
+                : new LinkedHashMap<>();
+        groupKeysEmittedForDataset = false;
         currentDsAttributes = decodeMixed(currentDsAttributeValues, currentDsStructuralMetadata.getDatasetAttributeList(), "attribute");
         this.currentDatasetAttributes = lazyLoadDatasetAttributes();
         IDatasetStructures dsStructures = new DatasetStructures(
@@ -353,7 +388,90 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
                 }
             }
         }
+        emitDimensionGroupKeyables();
         return result;
+    }
+
+    /**
+     * Decodes the pre-parsed dimensionGroupAttributes map into Group {@link Keyable}s and
+     * pushes them onto {@link #groupAndSeriesStack} ahead of any series keyables. The
+     * downstream writer (with the new GroupDataWriterEngine wrapper removed for SDMX-JSON 2.0)
+     * captures these and emits them under data.dataSets[*].dimensionGroupAttributes.
+     */
+    private void emitDimensionGroupKeyables() {
+        if (groupKeysEmittedForDataset) {
+            return;
+        }
+        groupKeysEmittedForDataset = true;
+        if (currentDimensionGroupAttributeValues == null || currentDimensionGroupAttributeValues.isEmpty()) {
+            return;
+        }
+        List<AttraMapping> groupAttrDefs = currentDsStructuralMetadata.getDimensionGroupAttributeList();
+        for (Map.Entry<String, List<AttributeValue>> entry : currentDimensionGroupAttributeValues.entrySet()) {
+            List<KeyValue> dimensions = decodeGroupKey(entry.getKey());
+            List<KeyValue> attributes = decodeMixed(entry.getValue(), groupAttrDefs, "dimensionGroup");
+            if (attributes.isEmpty() && dimensions.isEmpty()) {
+                continue;
+            }
+            String groupName = resolveGroupName(dimensions);
+            groupAndSeriesStack.add(KeyableImpl.groupKey(currentDataflow, currentDsd, groupName, dimensions, attributes));
+        }
+    }
+
+    /**
+     * Decodes a partial-dimension-value-combination key (e.g. "0:0::") into KeyValues by
+     * looking each position's integer index up in the series-list component map. Empty
+     * positions are skipped — they signal that dimension is not part of the group.
+     */
+    private List<KeyValue> decodeGroupKey(String encoded) {
+        List<KeyValue> result = new ArrayList<>();
+        if (encoded == null || encoded.isEmpty()) {
+            return result;
+        }
+        String[] parts = encoded.split(":", -1);
+        List<AttraMapping> seriesList = currentDsStructuralMetadata.getSeriesList();
+        for (int i = 0; i < parts.length && i < seriesList.size(); i++) {
+            if (parts[i].isEmpty()) {
+                continue;
+            }
+            int idx;
+            try {
+                idx = Integer.parseInt(parts[i]);
+            } catch (NumberFormatException e) {
+                continue;
+            }
+            AttraMapping m = seriesList.get(i);
+            KeyValue kv = m.componentMap.get(idx);
+            if (kv != null) {
+                result.add(kv);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Finds the formal DSD &lt;Group&gt; whose dimensionRefs match the decoded group
+     * dimensions exactly. Falls back to a synthesised name when there is no matching
+     * group bean — e.g. metadata-attribute usages declared with dimensionGroup
+     * relationship that don't correspond to a formal Group. The group name is not
+     * emitted in JSON output (the partial-combination key is the encoding), so the
+     * value just needs to be stable for the writer's buffer key.
+     */
+    private String resolveGroupName(List<KeyValue> groupDimensions) {
+        Set<String> dimIds = new HashSet<>();
+        for (KeyValue kv : groupDimensions) {
+            dimIds.add(kv.getConcept());
+        }
+        for (GroupBean group : currentDsd.getGroups()) {
+            if (dimIds.equals(new HashSet<>(group.getDimensionRefs()))) {
+                return group.getId();
+            }
+        }
+        StringBuilder synth = new StringBuilder("DimensionGroup");
+        for (KeyValue kv : groupDimensions) {
+            synth.append("_").append(kv.getConcept());
+        }
+        return synth.toString();
     }
 
     @Override
@@ -401,6 +519,13 @@ public class CustomSdmxJsonDataReaderEngineV2 extends AbstractDataReaderEngine {
                             // misread an inner `observations` field as the dataset-level one.
                             if (jReader.isStartArray()) {
                                 jReader.moveToEndArray();
+                            }
+                            break;
+                        case "dimensionGroupAttributes":
+                            // Pre-parsed by preParseForDatasetAttributes; skip the object body
+                            // for the same reason as `attributes` above.
+                            if (jReader.isStartObject()) {
+                                jReader.moveToEndCurrentObject();
                             }
                             break;
                         case "action":
