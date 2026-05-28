@@ -18,4 +18,16 @@ public class RegistryTestSuitConfiguration {
      * {@link com.epam.sdmxproxy.e2e.tests.framework.BaseRegistryTestSuite}.
      */
     private LimitTestSuitConfiguration limitTestSuitConfiguration;
+
+    /**
+     * Optional. When present, enables the generic MSD-derived metadata-attribute
+     * preservation pin in {@link com.epam.sdmxproxy.e2e.tests.framework.BaseRegistryTestSuite}.
+     */
+    private MetadataPreservationTestSuitConfiguration metadataPreservationTestSuitConfiguration;
+
+    /**
+     * Optional. When present, enables the generic DSD round-trip fidelity pin in
+     * {@link com.epam.sdmxproxy.e2e.tests.framework.BaseRegistryTestSuite}.
+     */
+    private DsdFidelityTestSuitConfiguration dsdFidelityTestSuitConfiguration;
 }
