@@ -158,6 +158,21 @@
       "JSON_DATA_2_0_0"
     ]
   },
+  "metadataPreservationTestSuitConfiguration": {
+    "dataflowUrn": "IMF.RES:WEO(9.0.0)",
+    "key": "USA.LP.*"
+  },
+  "dsdFidelityTestSuitConfiguration": {
+    "dsdUrn": "IMF.RES:DSD_WEO(9.0.0)",
+    "expectedMetadataUrnContains": "MetadataStructure=IMF.RES:MSD_WEO_METADATA_EXTERNAL",
+    "dimensionConceptRoleSuffixes": {
+      "FREQUENCY": "SDMX_CONCEPT_ROLES(1.0).FREQ"
+    },
+    "expectedAnnotationsWithText": [
+      "origin"
+    ],
+    "expectNonEmptyMetadataAttributeUsages": true
+  },
   "availabilityTestSuitConfiguration": {
     "dataflowConfigs": [
       {

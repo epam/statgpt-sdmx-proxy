@@ -13,7 +13,9 @@ import com.epam.sdmxproxy.e2e.support.url.BaseUrlProvider;
 import com.epam.sdmxproxy.e2e.support.util.ProxyConfigPusher;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import com.epam.sdmxproxy.e2e.tests.framework.config.DataflowKeyCase;
+import com.epam.sdmxproxy.e2e.tests.framework.config.DsdFidelityTestSuitConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.config.LimitTestSuitConfiguration;
+import com.epam.sdmxproxy.e2e.tests.framework.config.MetadataPreservationTestSuitConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.config.RegistryTestSuitConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.config.StructureTypeAndUrn;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,6 +37,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -371,6 +374,242 @@ public abstract class BaseRegistryTestSuite {
             assertThat(dga.size())
                     .as("dimensionGroupAttributes must be non-empty when present")
                     .isGreaterThan(0);
+        }
+    }
+
+    /**
+     * Pin for the PRESERVE_METADATA_ATTRIBUTES data fixture (design 031): the proxy must
+     * surface MSD-derived metadata attribute usages exactly when the client opts in via
+     * {@code attributes=all}, and must keep them out of the default response.
+     * <p>
+     * Gated by {@code metadataPreservationTestSuitConfiguration} in the registry test
+     * config -- registries that have no MSD usages, or whose data fixture is not yet
+     * configured, omit the block and the test softly aborts. When the block is present,
+     * the assertions are hard:
+     * <ul>
+     *   <li>{@code attributes=all} attribute IDs are a superset of the default-response
+     *       IDs (no metadata attribute IDs leak when {@code attributes} is absent),</li>
+     *   <li>the {@code attributes=all} response carries at least one attribute ID not in
+     *       the default response (proves the fixture is surfacing something, not no-op),</li>
+     *   <li>at least one of those metadata-only attributes carries a non-null value
+     *       somewhere in {@code dataSets[0]} (the fixture's value-injection path runs,
+     *       not just the structure-side definitions).</li>
+     * </ul>
+     */
+    @Test
+    @DisplayName("Data Endpoint: MSD-derived metadata attributes preserved only with attributes=all")
+    @SneakyThrows
+    void testDataMetadataAttributesPreservation() {
+        MetadataPreservationTestSuitConfiguration cfg = testConfig.getMetadataPreservationTestSuitConfiguration();
+        Assumptions.assumeTrue(cfg != null,
+                "No metadataPreservationTestSuitConfiguration -- skipping metadata-attribute preservation pin");
+
+        String[] urnParts = parseUrn(cfg.getDataflowUrn());
+        String basePath = String.format("%s/sdmx/3.0/data/dataflow/%s/%s/%s/%s",
+                BASE_PATH, urnParts[0], urnParts[1], urnParts[2], cfg.getKey() == null ? "*" : cfg.getKey());
+        String accept = cfg.getMediaType() != null ? cfg.getMediaType() : "application/vnd.sdmx.data+json;version=2.0.0";
+
+        Response noAttrsResp = restClient.getResponseWithAccept(basePath, accept);
+        assertThat(noAttrsResp.getStatusCode())
+                .as("Data endpoint must return HTTP 200 without attributes param (dataflow=%s, key=%s)", cfg.getDataflowUrn(), cfg.getKey())
+                .isEqualTo(200);
+
+        Response allAttrsResp = restClient.getResponseWithAccept(basePath, accept, Map.of("attributes", "all"));
+        assertThat(allAttrsResp.getStatusCode())
+                .as("Data endpoint must return HTTP 200 with attributes=all (dataflow=%s, key=%s)", cfg.getDataflowUrn(), cfg.getKey())
+                .isEqualTo(200);
+
+        JsonNode allAttrsRoot = objectMapper.readTree(allAttrsResp.getBody().asByteArray());
+        Set<String> noAttrsIds = collectDataAttributeIds(objectMapper.readTree(noAttrsResp.getBody().asByteArray()));
+        Set<String> allAttrsIds = collectDataAttributeIds(allAttrsRoot);
+
+        assertThat(allAttrsIds)
+                .as("attributes=all attribute IDs must be a superset of the default-attrs IDs -- a metadata attribute leaking into the default response would break this")
+                .containsAll(noAttrsIds);
+
+        Set<String> metadataOnlyIds = new HashSet<>(allAttrsIds);
+        metadataOnlyIds.removeAll(noAttrsIds);
+        assertThat(metadataOnlyIds)
+                .as("attributes=all must surface MSD-derived metadata attribute usages absent from the default response. "
+                        + "If the configured dataflow has no MSD usages, point metadataPreservationTestSuitConfiguration at one that does -- or drop the config block to skip this pin.")
+                .isNotEmpty();
+
+        JsonNode allStructAttrs = allAttrsRoot.path("data").path("structures").get(0).path("attributes");
+        JsonNode allDataset = allAttrsRoot.path("data").path("dataSets").get(0);
+        assertThat(hasPopulatedMetadataAttrValue(allDataset, allStructAttrs, metadataOnlyIds))
+                .as("At least one MSD-derived metadata attribute must carry a non-null value in the attributes=all response. "
+                        + "Empty values across the board would mean the fixture's value-injection path is broken.")
+                .isTrue();
+    }
+
+    private static Set<String> collectDataAttributeIds(JsonNode dataResponseRoot) {
+        Set<String> ids = new HashSet<>();
+        JsonNode attrs = dataResponseRoot.path("data").path("structures").get(0).path("attributes");
+        for (String bucket : List.of("dataSet", "dimensionGroup", "series", "observation")) {
+            JsonNode arr = attrs.path(bucket);
+            if (!arr.isArray()) {
+                continue;
+            }
+            for (JsonNode a : arr) {
+                String id = a.path("id").asText(null);
+                if (id != null) {
+                    ids.add(id);
+                }
+            }
+        }
+        return ids;
+    }
+
+    /**
+     * Scans {@code dataSets[0]} for any non-null attribute value whose definition ID is in
+     * {@code metadataOnlyIds}. Covers dataset-level ({@code attributes}), dimension-group-level
+     * ({@code dimensionGroupAttributes}), and series-level ({@code series[k].attributes}); the
+     * observation bucket is intentionally skipped here because its value layout depends on the
+     * {@code dimensionAtObservation} the proxy chose, and the dataset/dim-group/series buckets
+     * are sufficient evidence that the fixture's value-injection path is running.
+     */
+    private static boolean hasPopulatedMetadataAttrValue(JsonNode datasetNode, JsonNode structAttrs, Set<String> metadataOnlyIds) {
+        if (anyPopulatedAtBucket(datasetNode.path("attributes"), structAttrs.path("dataSet"), metadataOnlyIds)) {
+            return true;
+        }
+        JsonNode dga = datasetNode.path("dimensionGroupAttributes");
+        if (dga.isObject()) {
+            for (Iterator<JsonNode> it = dga.elements(); it.hasNext(); ) {
+                if (anyPopulatedAtBucket(it.next(), structAttrs.path("dimensionGroup"), metadataOnlyIds)) {
+                    return true;
+                }
+            }
+        }
+        JsonNode series = datasetNode.path("series");
+        if (series.isObject()) {
+            for (Iterator<JsonNode> it = series.elements(); it.hasNext(); ) {
+                if (anyPopulatedAtBucket(it.next().path("attributes"), structAttrs.path("series"), metadataOnlyIds)) {
+                    return true;
+                }
+            }
+        } else if (series.isArray()) {
+            for (JsonNode s : series) {
+                if (anyPopulatedAtBucket(s.path("attributes"), structAttrs.path("series"), metadataOnlyIds)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean anyPopulatedAtBucket(JsonNode valueArr, JsonNode defsArr, Set<String> targetIds) {
+        if (!valueArr.isArray() || !defsArr.isArray()) {
+            return false;
+        }
+        int n = Math.min(valueArr.size(), defsArr.size());
+        for (int i = 0; i < n; i++) {
+            String id = defsArr.get(i).path("id").asText(null);
+            if (id == null || !targetIds.contains(id)) {
+                continue;
+            }
+            JsonNode v = valueArr.get(i);
+            if (v != null && !v.isNull() && !v.isMissingNode()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Pin for the structure-side DSD round-trip (designs 022, 027): the proxy must
+     * preserve the moving parts of a DSD response that sdmx-core's bean model loses
+     * or that registry-specific fixtures rescue. Gated by {@code dsdFidelityTestSuitConfiguration}
+     * in the registry test config -- absent block skips the pin entirely; sub-assertions
+     * inside the test are individually opt-in via the populated fields.
+     *
+     * <p>Originally landed as the IMF-specific {@code testDsdConversionFidelity_issue79}
+     * regression for issue #79 (see #81); generalised here so any registry that wants
+     * to lock in the same invariants populates its sub-config and inherits the test.
+     */
+    @Test
+    @DisplayName("Structure Endpoint: DSD round-trip preserves metadata URN, conceptRoles, annotation text, and metadataAttributeUsages")
+    @SneakyThrows
+    void testDsdConversionFidelity() {
+        DsdFidelityTestSuitConfiguration cfg = testConfig.getDsdFidelityTestSuitConfiguration();
+        Assumptions.assumeTrue(cfg != null,
+                "No dsdFidelityTestSuitConfiguration -- skipping DSD round-trip fidelity pin");
+
+        String[] urnParts = parseUrn(cfg.getDsdUrn());
+        String path = String.format("%s/sdmx/3.0/structure/datastructure/%s/%s/%s?references=none&detail=full",
+                BASE_PATH, urnParts[0], urnParts[1], urnParts[2]);
+        String accept = cfg.getMediaType() != null ? cfg.getMediaType() : "application/vnd.sdmx.structure+json;version=2.0.0";
+
+        Response response = restClient.getResponseWithAccept(path, accept);
+        assertThat(response.getStatusCode())
+                .as("DSD structure request must return HTTP 200 (dsd=%s)", cfg.getDsdUrn())
+                .isEqualTo(200);
+
+        JsonNode root = objectMapper.readTree(response.getBody().asByteArray());
+        JsonNode dsd = root.path("data").path("dataStructures").get(0);
+        assertThat(dsd).as("dataStructures[0] must be present in response for %s", cfg.getDsdUrn()).isNotNull();
+        assertThat(dsd.path("id").asText())
+                .as("DSD response must echo the requested DSD id")
+                .isEqualTo(urnParts[1]);
+        assertThat(dsd.path("agencyID").asText())
+                .as("DSD response must echo the requested agency id")
+                .isEqualTo(urnParts[0]);
+
+        if (cfg.getExpectedMetadataUrnContains() != null && !cfg.getExpectedMetadataUrnContains().isBlank()) {
+            String metadataUrn = dsd.path("metadata").asText();
+            assertThat(metadataUrn)
+                    .as("DSD `metadata` URN must contain %s (Stage 1 mapper fix preserves the MSD reference)", cfg.getExpectedMetadataUrnContains())
+                    .contains(cfg.getExpectedMetadataUrnContains());
+        }
+
+        Map<String, String> dimRoles = cfg.getDimensionConceptRoleSuffixes();
+        if (dimRoles != null && !dimRoles.isEmpty()) {
+            JsonNode dimensions = dsd.path("dataStructureComponents").path("dimensionList").path("dimensions");
+            assertThat(dimensions.isArray()).as("dimensions must be an array").isTrue();
+            for (Map.Entry<String, String> e : dimRoles.entrySet()) {
+                JsonNode dim = null;
+                for (JsonNode d : dimensions) {
+                    if (e.getKey().equals(d.path("id").asText())) {
+                        dim = d;
+                        break;
+                    }
+                }
+                assertThat(dim).as("Dimension %s must be present in DSD %s", e.getKey(), cfg.getDsdUrn()).isNotNull();
+                JsonNode roles = dim.path("conceptRoles");
+                assertThat(roles.isArray() && !roles.isEmpty())
+                        .as("Dimension %s must carry a non-empty conceptRoles array, got: %s", e.getKey(), roles)
+                        .isTrue();
+                assertThat(roles.get(0).asText())
+                        .as("Dimension %s conceptRoles[0] must end with %s", e.getKey(), e.getValue())
+                        .endsWith(e.getValue());
+            }
+        }
+
+        List<String> annotationIds = cfg.getExpectedAnnotationsWithText();
+        if (annotationIds != null && !annotationIds.isEmpty()) {
+            JsonNode annotations = dsd.path("annotations");
+            assertThat(annotations.isArray() && !annotations.isEmpty())
+                    .as("DSD annotations must be non-empty when expectedAnnotationsWithText is configured")
+                    .isTrue();
+            for (String annId : annotationIds) {
+                JsonNode found = null;
+                for (JsonNode a : annotations) {
+                    if (annId.equals(a.path("id").asText())) {
+                        found = a;
+                        break;
+                    }
+                }
+                assertThat(found).as("DSD annotation `%s` must be present in %s", annId, cfg.getDsdUrn()).isNotNull();
+                assertThat(found.path("text").asText())
+                        .as("DSD annotation `%s` text must be non-empty (ANNOTATION_VALUE_TO_TEXT fixture rescues the original `value`)", annId)
+                        .isNotEmpty();
+            }
+        }
+
+        if (cfg.isExpectNonEmptyMetadataAttributeUsages()) {
+            JsonNode usages = dsd.path("dataStructureComponents").path("attributeList").path("metadataAttributeUsages");
+            assertThat(usages.isArray() && !usages.isEmpty())
+                    .as("metadataAttributeUsages must be a non-empty array (PRESERVE_METADATA_ATTRIBUTE_USAGES fixture restores the MSD usage list)")
+                    .isTrue();
         }
     }
 

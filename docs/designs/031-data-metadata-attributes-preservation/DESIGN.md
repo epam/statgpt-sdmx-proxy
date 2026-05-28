@@ -343,12 +343,27 @@ covered by an E2E test against the live proxy.
 
 **File:** `sdmx-proxy-e2e/src/test/java/com/epam/sdmxproxy/e2e/tests/framework/BaseRegistryTestSuite.java`
 
-Extend the existing
-`testDataDimensionGroupAttributesPreserved` (added in design 030) to
-also assert that `data.structures[0].attributes.dataSet` and
-`data.dataSets[0].attributes` are populated when the upstream emits
-them, and to check the dataset-level value array matches the structure
-sidecar's `dataSet` bucket length.
+New generic test `testDataMetadataAttributesPreservation`, gated by
+`metadataPreservationTestSuitConfiguration` in the registry test
+config. Hits the configured dataflow twice (default attributes, then
+`attributes=all`) and pins:
+
+- `attributes=all` attribute IDs are a superset of the default-response
+  IDs across all four buckets (no metadata-attribute IDs leak when the
+  client did not opt in);
+- the `attributes=all` response carries at least one attribute ID not
+  in the default response (proves the fixture is surfacing something,
+  not no-op);
+- at least one of those metadata-only attributes carries a non-null
+  value somewhere in `dataSets[0]` (dataset-level `attributes`,
+  `dimensionGroupAttributes`, or series-level `attributes`), exercising
+  the fixture's value-injection path, not just the structure-side
+  definitions.
+
+The matching IMF registry test config (`imf_3_0_test_config.json`)
+points the block at `IMF.RES:WEO(9.0.0)` / `USA.LP.*` to cover the
+reproducer. Registries without MSD usages (e.g. BIS) omit the config
+block and the test softly aborts via `Assumptions.assumeTrue`.
 
 ## Risks
 
