@@ -30,4 +30,11 @@ public class RegistryTestSuitConfiguration {
      * {@link com.epam.sdmxproxy.e2e.tests.framework.BaseRegistryTestSuite}.
      */
     private DsdFidelityTestSuitConfiguration dsdFidelityTestSuitConfiguration;
+
+    /**
+     * Optional. When present, enables the generic structure-DESCENDANTS metadata-artefact
+     * pin (MSD / metadataflow / metadataProvisionAgreement) in
+     * {@link com.epam.sdmxproxy.e2e.tests.framework.BaseRegistryTestSuite}.
+     */
+    private MetadataDescendantsTestSuitConfiguration metadataDescendantsTestSuitConfiguration;
 }

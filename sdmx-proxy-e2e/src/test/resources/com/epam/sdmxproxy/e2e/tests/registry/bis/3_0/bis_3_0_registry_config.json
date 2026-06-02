@@ -19,7 +19,10 @@
               "codelist",
               "dataflow",
               "hierarchy",
-              "hierarchyassociation"
+              "hierarchyassociation",
+              "metadatastructure",
+              "metadataflow",
+              "metadataprovisionagreement"
             ]
           },
           "dataEndpointConfig": {
