@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import com.epam.sdmxproxy.common.data.SdmxMediaType;
 import com.epam.sdmxproxy.common.data.TranslatedAvailabilityQuery;
 import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
@@ -40,6 +41,7 @@ import com.epam.sdmxproxy.services.filter.FilterNormalizer;
 import com.epam.sdmxproxy.services.fixture.availability.AvailabilityFixtureService;
 import com.epam.sdmxproxy.services.fixture.data.DataFixtureService;
 import com.epam.sdmxproxy.services.fixture.data.MetadataAttributesPreserver;
+import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsageFolder;
 import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsagePreserver;
 import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
 import com.epam.sdmxproxy.services.limit.CachedShrinkResult;
@@ -77,6 +79,7 @@ public class AdapterRouterImpl implements AdapterRouter {
     private final CacheService cacheService;
     private final StructureFixtureService fixtureService;
     private final MetadataAttributeUsagePreserver metadataAttributeUsagePreserver;
+    private final MetadataAttributeUsageFolder metadataAttributeUsageFolder;
     private final MetadataAttributesPreserver metadataAttributesPreserver;
     private final AvailabilityFixtureService availabilityFixtureService;
     private final DataFixtureService dataFixtureService;
@@ -172,7 +175,12 @@ public class AdapterRouterImpl implements AdapterRouter {
                     return;
                 }
                 List<FixtureConfiguration<StructureFixtureType>> fixtures = query.getVersionConfiguration().getStructureEndpointConfig().getFixtures();
-                boolean preserveUsages = metadataAttributeUsagePreserver.isEnabled(fixtures);
+                boolean markerEnabled = metadataAttributeUsagePreserver.isEnabled(fixtures);
+                // JSON output: capture the usages verbatim and re-inject after conversion. XML 2.1 output:
+                // fold the usages into the AttributeList as DataAttributes (design 032) -- never for JSON,
+                // which would mimic the SDMX-PLUS behaviour removed in design 027.
+                boolean preserveUsages = markerEnabled && SdmxMediaType.isJson(requestedMediaType);
+                boolean foldUsages = markerEnabled && SdmxMediaType.isXmlV21(requestedMediaType) && returnFormat == ReturnFormat.JSON_STRUCTURE_2_0_0;
 
                 Map<String, JsonNode> capturedUsages = Map.of();
                 InputStream forFixtures;
@@ -180,6 +188,8 @@ public class AdapterRouterImpl implements AdapterRouter {
                     byte[] rawBytes = rawStream.readAllBytes();
                     capturedUsages = metadataAttributeUsagePreserver.capture(rawBytes);
                     forFixtures = new ByteArrayInputStream(rawBytes);
+                } else if (foldUsages) {
+                    forFixtures = new ByteArrayInputStream(metadataAttributeUsageFolder.foldForXml21(rawStream.readAllBytes(), query));
                 } else {
                     forFixtures = rawStream;
                 }

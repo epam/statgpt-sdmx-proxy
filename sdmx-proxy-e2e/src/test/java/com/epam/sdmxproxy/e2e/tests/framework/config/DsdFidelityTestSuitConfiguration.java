@@ -21,6 +21,9 @@ import java.util.Map;
  *       has rescued the original {@code value} into {@code text}.</li>
  *   <li>{@link #expectNonEmptyMetadataAttributeUsages} -- PRESERVE_METADATA_ATTRIBUTE_USAGES
  *       fixture has restored the MSD usage list at the attribute level.</li>
+ *   <li>{@link #expectedFoldedMetadataAttributeIdsXml21} -- on XML 2.1 output the
+ *       PRESERVE_METADATA_ATTRIBUTE_USAGES fixture folds each MSD usage into the
+ *       {@code AttributeList} as a regular {@code DataAttribute} (design 032).</li>
  * </ul>
  * Each sub-assertion is opt-in: a registry that does not need a given check leaves the
  * field unset (or {@code false} for the boolean). Absent config block -> the whole
@@ -61,4 +64,13 @@ public class DsdFidelityTestSuitConfiguration {
      * is a non-empty array (gates the PRESERVE_METADATA_ATTRIBUTE_USAGES fixture).
      */
     private boolean expectNonEmptyMetadataAttributeUsages;
+
+    /**
+     * Optional. When non-empty, refetches the DSD with {@code Accept:
+     * application/vnd.sdmx.structure+xml;version=2.1} and asserts each listed metadata-attribute id
+     * appears as a {@code <str:Attribute>} in the AttributeList -- i.e. the PRESERVE_METADATA_ATTRIBUTE_USAGES
+     * fixture folded the MSD usages into regular DataAttributes for XML 2.1 output (design 032).
+     * The MSD must not leak as a {@code <str:MetadataStructure>} element.
+     */
+    private List<String> expectedFoldedMetadataAttributeIdsXml21;
 }

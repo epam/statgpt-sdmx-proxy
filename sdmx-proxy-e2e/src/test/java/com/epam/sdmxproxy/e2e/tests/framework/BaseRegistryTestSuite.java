@@ -613,6 +613,42 @@ public abstract class BaseRegistryTestSuite {
         }
     }
 
+    /**
+     * Pin for the XML 2.1 fold (design 032): SDMX-ML 2.1 has no {@code MetadataAttributeUsage}
+     * element, so on XML 2.1 output the PRESERVE_METADATA_ATTRIBUTE_USAGES fixture folds each
+     * MSD-derived usage into the DSD {@code AttributeList} as a regular {@code DataAttribute}
+     * (matching the registry's native 2.1 representation). Gated by
+     * {@code dsdFidelityTestSuitConfiguration.expectedFoldedMetadataAttributeIdsXml21} -- absent or
+     * empty list skips the pin.
+     */
+    @Test
+    @DisplayName("Structure Endpoint: XML 2.1 folds MSD metadata-attribute usages into the AttributeList")
+    @SneakyThrows
+    void testDsdMetadataUsagesFoldedToAttributesXml21() {
+        DsdFidelityTestSuitConfiguration cfg = testConfig.getDsdFidelityTestSuitConfiguration();
+        Assumptions.assumeTrue(
+                cfg != null && cfg.getExpectedFoldedMetadataAttributeIdsXml21() != null && !cfg.getExpectedFoldedMetadataAttributeIdsXml21().isEmpty(),
+                "No expectedFoldedMetadataAttributeIdsXml21 -- skipping XML 2.1 metadata-attribute fold pin");
+
+        String[] urnParts = parseUrn(cfg.getDsdUrn());
+        String path = String.format("%s/sdmx/3.0/structure/datastructure/%s/%s/%s?references=none&detail=full", BASE_PATH, urnParts[0], urnParts[1], urnParts[2]);
+
+        Response response = restClient.getResponseWithAccept(path, "application/vnd.sdmx.structure+xml;version=2.1");
+        assertThat(response.getStatusCode())
+                .as("DSD XML 2.1 request must return HTTP 200 (dsd=%s)", cfg.getDsdUrn())
+                .isEqualTo(200);
+
+        String xml = response.getBody().asString();
+        for (String id : cfg.getExpectedFoldedMetadataAttributeIdsXml21()) {
+            assertThat(xml)
+                    .as("metadata attribute %s must be folded into the AttributeList as a <str:Attribute> for XML 2.1 (design 032)", id)
+                    .contains("id=\"" + id + "\"");
+        }
+        assertThat(xml)
+                .as("the spliced MSD must not leak as a <str:MetadataStructure> element in the DSD-only response")
+                .doesNotContain("<str:MetadataStructure");
+    }
+
     Stream<Arguments> availabilityCases() {
         return availabilityCases.stream()
                 .map(testCase -> {
