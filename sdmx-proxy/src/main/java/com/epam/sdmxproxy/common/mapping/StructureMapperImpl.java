@@ -9,6 +9,9 @@ import io.sdmx.api.sdmx.model.beans.codelist.HierarchyBean;
 import io.sdmx.api.sdmx.model.beans.conceptscheme.ConceptSchemeBean;
 import io.sdmx.api.sdmx.model.beans.datastructure.DataStructureBean;
 import io.sdmx.api.sdmx.model.beans.datastructure.DataflowBean;
+import io.sdmx.api.sdmx.model.beans.metadatastructure.MetadataFlowBean;
+import io.sdmx.api.sdmx.model.beans.metadatastructure.MetadataProvisionAgreementBean;
+import io.sdmx.api.sdmx.model.beans.metadatastructure.MetadataStructureDefinitionBean;
 import io.sdmx.api.sdmx.model.beans.registry.ContentConstraintBean;
 
 import java.util.function.Predicate;
@@ -22,6 +25,9 @@ public class StructureMapperImpl implements StructureMapper {
     private final Mapper<CategorySchemeBean> categorySchemesMapper;
     private final Mapper<ContentConstraintBean> contentConstraintMapper;
     private final Mapper<HierarchyBean> hierarchyMapper;
+    private final Mapper<MetadataStructureDefinitionBean> metadataStructureMapper;
+    private final Mapper<MetadataFlowBean> metadataflowMapper;
+    private final Mapper<MetadataProvisionAgreementBean> metadataProvisionAgreementMapper;
 
     public StructureMapperImpl() {
         this(null);
@@ -40,6 +46,9 @@ public class StructureMapperImpl implements StructureMapper {
         categorySchemesMapper = new CategorySchemesMapper(annotationMapper, textMapper);
         contentConstraintMapper = new ContentConstraintMapper(annotationMapper, referenceMapper, textMapper);
         hierarchyMapper = new HierarchyMapper(textMapper, annotationMapper);
+        metadataStructureMapper = new MetadataStructureDefinitionMapper(annotationMapper, referenceMapper, representationMapper, textMapper);
+        metadataflowMapper = new MetadataflowMapper(annotationMapper, referenceMapper, textMapper);
+        metadataProvisionAgreementMapper = new MetadataProvisionAgreementMapper(annotationMapper, referenceMapper, textMapper);
     }
 
     @Override
@@ -52,6 +61,9 @@ public class StructureMapperImpl implements StructureMapper {
         artefacts.addMaintainables(categorySchemesMapper.map(beans.getCategorySchemes()));
         artefacts.addMaintainables(contentConstraintMapper.map(beans.getContentConstraintBeans()));
         artefacts.addMaintainables(hierarchyMapper.map(beans.getHierarchies()));
+        artefacts.addMaintainables(metadataStructureMapper.map(beans.getMetadataStructures()));
+        artefacts.addMaintainables(metadataflowMapper.map(beans.getMetadataflows()));
+        artefacts.addMaintainables(metadataProvisionAgreementMapper.map(beans.getMetadataProvisions()));
         return artefacts;
     }
 

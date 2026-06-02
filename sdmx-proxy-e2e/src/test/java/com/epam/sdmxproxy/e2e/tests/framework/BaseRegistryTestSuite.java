@@ -15,6 +15,7 @@ import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import com.epam.sdmxproxy.e2e.tests.framework.config.DataflowKeyCase;
 import com.epam.sdmxproxy.e2e.tests.framework.config.DsdFidelityTestSuitConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.config.LimitTestSuitConfiguration;
+import com.epam.sdmxproxy.e2e.tests.framework.config.MetadataDescendantsTestSuitConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.config.MetadataPreservationTestSuitConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.config.RegistryTestSuitConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.config.StructureTypeAndUrn;
@@ -609,6 +610,73 @@ public abstract class BaseRegistryTestSuite {
             JsonNode usages = dsd.path("dataStructureComponents").path("attributeList").path("metadataAttributeUsages");
             assertThat(usages.isArray() && !usages.isEmpty())
                     .as("metadataAttributeUsages must be a non-empty array (PRESERVE_METADATA_ATTRIBUTE_USAGES fixture restores the MSD usage list)")
+                    .isTrue();
+        }
+    }
+
+    /**
+     * Pin for the structure-DESCENDANTS metadata artefacts (design 033): the proxy must
+     * forward {@code MetadataStructureDefinition} / {@code Metadataflow} /
+     * {@code MetadataProvisionAgreement} artefacts that the upstream registry returns as
+     * descendants. Before the mapper fix these were parsed into {@code SdmxBeans} but
+     * dropped by {@code StructureMapperImpl}, so a DESCENDANTS response silently omitted
+     * the MSD.
+     * <p>
+     * Gated by {@code metadataDescendantsTestSuitConfiguration} -- absent block skips the
+     * pin; each sub-assertion is opt-in via the populated flags. The MSD check additionally
+     * asserts the artefact carries its {@code metadataAttributes}, guarding against a
+     * header-only stub.
+     */
+    @Test
+    @DisplayName("Structure Endpoint: DESCENDANTS preserves MSD / metadataflow / metadataProvisionAgreement")
+    @SneakyThrows
+    void testStructureMetadataDescendantsPreserved() {
+        MetadataDescendantsTestSuitConfiguration cfg = testConfig.getMetadataDescendantsTestSuitConfiguration();
+        Assumptions.assumeTrue(cfg != null,
+                "No metadataDescendantsTestSuitConfiguration -- skipping metadata DESCENDANTS pin");
+
+        String[] urnParts = parseUrn(cfg.getDataflowUrn());
+        String path = String.format("%s/sdmx/3.0/structure/dataflow/%s/%s/%s",
+                BASE_PATH, urnParts[0], urnParts[1], urnParts[2]);
+        String accept = cfg.getMediaType() != null ? cfg.getMediaType()
+                : "application/vnd.sdmx.structure+json;version=2.0.0";
+
+        Response response = restClient.getResponseWithAccept(
+                path, accept, Map.of("references", "descendants", "detail", "full"));
+        assertThat(response.getStatusCode())
+                .as("DESCENDANTS request must return HTTP 200 (dataflow=%s)", cfg.getDataflowUrn())
+                .isEqualTo(200);
+
+        JsonNode data = objectMapper.readTree(response.getBody().asByteArray()).path("data");
+
+        if (cfg.isExpectMetadataStructures()) {
+            JsonNode msds = data.path("metadataStructures");
+            assertThat(msds.isArray() && !msds.isEmpty())
+                    .as("data.metadataStructures must be non-empty -- the MSD mapper restores it (design 033)")
+                    .isTrue();
+            if (cfg.getExpectedMsdIdContains() != null && !cfg.getExpectedMsdIdContains().isBlank()) {
+                assertThat(msds.get(0).path("id").asText())
+                        .as("first MSD id must contain %s", cfg.getExpectedMsdIdContains())
+                        .contains(cfg.getExpectedMsdIdContains());
+            }
+            JsonNode attrs = msds.get(0)
+                    .path("metadataStructureComponents")
+                    .path("metadataAttributeList")
+                    .path("metadataAttributes");
+            assertThat(attrs.isArray() && !attrs.isEmpty())
+                    .as("restored MSD must carry its metadataAttributes, not just a header")
+                    .isTrue();
+        }
+        if (cfg.isExpectMetadataflows()) {
+            JsonNode mdfs = data.path("metadataflows");
+            assertThat(mdfs.isArray() && !mdfs.isEmpty())
+                    .as("data.metadataflows must be non-empty")
+                    .isTrue();
+        }
+        if (cfg.isExpectMetadataProvisionAgreements()) {
+            JsonNode mpas = data.path("metadataProvisionAgreements");
+            assertThat(mpas.isArray() && !mpas.isEmpty())
+                    .as("data.metadataProvisionAgreements must be non-empty")
                     .isTrue();
         }
     }
