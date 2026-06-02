@@ -58,6 +58,25 @@ public class SdmxMediaType {
                 && m1.getSubtype().equals(m2.getSubtype());
     }
 
+    /**
+     * True when {@code mediaType} is one of the recognised JSON media types (SDMX-JSON variants or
+     * {@code application/json}). Null-safe.
+     */
+    public static boolean isJson(MediaType mediaType) {
+        return mediaType != null && JSON_MEDIA_TYPES.stream().anyMatch(json -> isMatch(json, mediaType));
+    }
+
+    /**
+     * True when {@code mediaType} is an SDMX-ML XML media type carrying {@code version=2.1}
+     * (e.g. {@code application/vnd.sdmx.structure+xml;version=2.1}). Null-safe.
+     */
+    public static boolean isXmlV21(MediaType mediaType) {
+        return mediaType != null
+                && mediaType.getSubtype() != null
+                && mediaType.getSubtype().toLowerCase().contains("xml")
+                && "2.1".equals(mediaType.getParameter("version"));
+    }
+
     public static MediaType mapMediaType(String acceptHeader) {
         if (acceptHeader == null || acceptHeader.isBlank()) {
             return MediaType.APPLICATION_JSON;

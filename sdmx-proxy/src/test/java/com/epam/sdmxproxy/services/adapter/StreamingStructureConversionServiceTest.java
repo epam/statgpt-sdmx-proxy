@@ -5,6 +5,7 @@ import com.epam.sdmxproxy.configuration.data.ReturnFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
+import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsageFolder;
 import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsagePreserver;
 import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
 import lombok.SneakyThrows;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -37,6 +39,8 @@ public class StreamingStructureConversionServiceTest {
     private StructureFixtureService fixtureService;
     @Autowired
     private MetadataAttributeUsagePreserver metadataAttributeUsagePreserver;
+    @Autowired
+    private MetadataAttributeUsageFolder metadataAttributeUsageFolder;
 
     @Test
     @SneakyThrows
@@ -324,11 +328,10 @@ public class StreamingStructureConversionServiceTest {
                 List.of(preserveFixture, annotationValueFixture, versionWildcardFixture);
 
         Map<String, com.fasterxml.jackson.databind.JsonNode> capturedUsages = metadataAttributeUsagePreserver.capture(rawBytes);
-        InputStream fixedInputStream = fixtureService.applyFixtures(
-                new java.io.ByteArrayInputStream(rawBytes), ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
-
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         MediaType targetMediaType = MediaType.valueOf(SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE);
+        InputStream fixedInputStream = fixtureService.applyFixtures(
+                new java.io.ByteArrayInputStream(rawBytes), ReturnFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
 
         //WHEN
         sut.convert(fixedInputStream, outputStream, ReturnFormat.JSON_STRUCTURE_2_0_0, targetMediaType);
@@ -403,6 +406,29 @@ public class StreamingStructureConversionServiceTest {
         //WHEN
         sut.convert(fixedInputStream, outputStream, ReturnFormat.JSON_STRUCTURE_2_0_0, targetMediaType);
 
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldFoldMetadataAttributeUsagesIntoAttributes_forXml21() {
+        //GIVEN: IMF QNEA DSD (18 attributes + 25 metadataAttributeUsages) with its MSD inline,
+        // as AdapterRouterImpl hands it to the folder on the XML 2.1 path (design 032). The MSD is
+        // already present, so no side-fetch happens and the folder's adapter is never invoked.
+        byte[] input = getClass().getResourceAsStream("structure_conversion/imf/3.0/qnea_dsd_with_msd.json").readAllBytes();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MediaType targetMediaType = MediaType.valueOf(SdmxMediaType.STRUCTURE_SDMX_XML_2_1_VALUE);
+
+        //WHEN: fold usages into attributes, then convert to 2.1 XML
+        byte[] folded = metadataAttributeUsageFolder.foldForXml21(input, null);
+        sut.convert(new java.io.ByteArrayInputStream(folded), outputStream, ReturnFormat.JSON_STRUCTURE_2_0_0, targetMediaType);
+
+        //THEN
+        String xml = outputStream.toString(java.nio.charset.StandardCharsets.UTF_8);
+        assertTrue(xml.contains("id=\"DOI\""), "folded metadata attribute DOI must appear as a DataAttribute");
+        assertTrue(xml.contains("id=\"AUTHOR\""), "folded metadata attribute AUTHOR must appear as a DataAttribute");
+        int attrCount = xml.split("<str:Attribute ", -1).length - 1;
+        assertEquals(43, attrCount, "AttributeList must contain 18 real + 25 folded attributes (matches IMF native 2.1)");
+        assertFalse(xml.contains("<str:MetadataStructure"), "the inline MSD must not leak into the DSD-only response");
     }
 
 }

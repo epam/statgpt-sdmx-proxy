@@ -171,7 +171,13 @@
     "expectedAnnotationsWithText": [
       "origin"
     ],
-    "expectNonEmptyMetadataAttributeUsages": true
+    "expectNonEmptyMetadataAttributeUsages": true,
+    "expectedFoldedMetadataAttributeIdsXml21": [
+      "DOI",
+      "AUTHOR",
+      "METHODOLOGY",
+      "LICENSE"
+    ]
   },
   "availabilityTestSuitConfiguration": {
     "dataflowConfigs": [
