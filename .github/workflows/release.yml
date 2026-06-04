@@ -28,7 +28,9 @@ jobs:
       code-checks-bypassed: false
       ort-enabled: true
       ort-bypassed: false
-      ort-version: "latest"
+      ort-version: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
+      ort-config-repository: "https://github.com/oss-review-toolkit/ort-config.git"
+      ort-config-revision: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
       java-version: "25"
       java-distribution: "corretto"
       runs-on: '["ubuntu-24.04"]'
@@ -40,10 +42,10 @@ jobs:
     permissions:
       contents: write # to submit dependency graph
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@3.2.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.4.0
         with:
           java-version: "25"
           java-distribution: "corretto"
@@ -62,10 +64,13 @@ jobs:
     outputs:
       next-version: ${{ steps.semantic_versioning.outputs.next-version }}
       is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
-      latest-tag: ${{ steps.semantic_versioning.outputs.latest-tag }}
+      latest-stable-tag: ${{ steps.semantic_versioning.outputs.latest-stable-tag }}
+      changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@3.2.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.4.0
         id: semantic_versioning
+        with:
+          promote: true
 
   release:
     runs-on: ubuntu-24.04
@@ -110,12 +115,12 @@ jobs:
           docker-cleanup: "true"
           set-tmpdir: "true"
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
 
-      - uses: epam/ai-dial-ci/actions/java_prepare@3.2.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.4.0
         with:
           java-version: "25"
           java-distribution: "corretto"
@@ -131,9 +136,9 @@ jobs:
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
           dockerhub-username: ${{ secrets.DOCKERHUB_LOGIN }}
           dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
-          image-name: ${{ matrix.image-name }}
+          image-name: ghcr.io/${{ matrix.image-name }}
           dockerfile-path: ${{ matrix.dockerfile }}
-          image-tag: ${{ needs.calculate_version.outputs.next-version }}
+          image-tag: ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || 'development' }}
           push-enabled: true
           trivy-enabled: true
           bypass-checks: false
@@ -145,11 +150,9 @@ jobs:
           gpr-password: ${{ secrets.GPR_PASSWORD }}
           platforms: "linux/amd64"
           image-extra-aliases: |
-            ghcr.io/${{ matrix.image-name }}:${{ needs.calculate_version.outputs.next-version }}
-            ${{ github.ref == 'refs/heads/development' && format('{0}:development', matrix.image-name) || '' }}
-            ${{ github.ref == 'refs/heads/development' && format('ghcr.io/{0}:development', matrix.image-name) || '' }}
+            ${{ matrix.image-name }}:${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || 'development' }}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}:latest', matrix.image-name) || '' }}
-            ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('ghcr.io/{0}:latest', matrix.image-name) || '' }}
+            ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', matrix.image-name, 'latest') || '' }}
 
   create_release:
     runs-on: ubuntu-24.04
@@ -157,7 +160,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
 
@@ -166,16 +169,19 @@ jobs:
         run: |
           sed -i -E "s/^([ \t]*version[ \t]*=[ \t]*)[\"'].*[\"']/\1\"${{ needs.calculate_version.outputs.next-version }}\"/g" build.gradle
 
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@3.2.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.4.0
         with:
-          latest-tag: ${{ needs.calculate_version.outputs.latest-tag }}
+          latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
+          use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
 
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@3.2.0
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.4.0
+        if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
+          git-user-name: ${{ vars.ACTIONS_BOT_NAME || 'statgpt-actions' }}
+          git-user-email: ${{ vars.ACTIONS_BOT_EMAIL || '231008922+statgpt-actions@users.noreply.github.com' }}
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # Comes from generate_release_notes step
+          draft-stable-releases: true
           extra-commit-command: |
-            git config --global user.name "statgpt-actions"
-            git config --global user.email "231008922+statgpt-actions@users.noreply.github.com"
             git add build.gradle
-            git commit -m '[skip ci] Update version' || true
+            git commit -m '[skip ci] Update version' || true # Upstream branch may already be updated

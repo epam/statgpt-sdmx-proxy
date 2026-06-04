@@ -15,6 +15,10 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if style_checks failed
+      style-task-name:
+        type: string
+        default: "checkstyleMain"
+        description: Gradle task name to run in style_checks
       code-checks-enabled:
         type: boolean
         default: true
@@ -35,6 +39,14 @@ on:
         type: string
         default: "latest"
         description: ORT version to use
+      ort-config-repository:
+        type: string
+        description: ORT config repository to use
+        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/oss-review-toolkit/ort-config.git' }}
+      ort-config-revision:
+        type: string
+        description: ORT config revision to use
+        default: ${{ vars.ORT_CONFIG_VCS_REVISION || 'main' }}
       java-version:
         type: string
         default: "17"
@@ -56,10 +68,10 @@ jobs:
     if: ${{ inputs.style-checks-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@3.2.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.4.0
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -70,17 +82,22 @@ jobs:
           # PAT is used temporarily
           GPR_USERNAME: ${{ secrets.GPR_USERNAME }}
           GPR_PASSWORD: ${{ secrets.GPR_PASSWORD }}
+          STYLE_TASK_NAME: ${{ inputs.style-task-name }}
         run: |
-          ./gradlew checkstyleMain
+          if [ -n "$STYLE_TASK_NAME" ] && ./gradlew tasks --all --quiet | grep -qw "$STYLE_TASK_NAME"; then
+            ./gradlew "$STYLE_TASK_NAME"
+          else
+            echo "::error::Gradle task '$STYLE_TASK_NAME' was not found" && exit 1
+          fi
 
   code_checks:
     if: ${{ inputs.code-checks-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@3.2.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.4.0
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -91,14 +108,26 @@ jobs:
           # PAT is used temporarily
           GPR_USERNAME: ${{ secrets.GPR_USERNAME }}
           GPR_PASSWORD: ${{ secrets.GPR_PASSWORD }}
+          SKIP_STYLE_TASK: ${{ inputs.style-checks-enabled }}
+          STYLE_TASK_NAME: ${{ inputs.style-task-name }}
         run: |
-          ./gradlew check || { echo "::error::Tests failed" && exit 1; } # TODO: figure out why we need to capture exit code
+          #!/bin/bash
+          check_args=()
+
+          if [ "$SKIP_STYLE_TASK" = "true" ]; then
+            if [ -n "$STYLE_TASK_NAME" ] && ./gradlew tasks --all --quiet | grep -qw "$STYLE_TASK_NAME"; then
+              check_args=(-x "$STYLE_TASK_NAME")
+            else
+              echo "::warning::Gradle task '$STYLE_TASK_NAME' was not found; nothing to exclude"
+            fi
+          fi
+          ./gradlew check "${check_args[@]}" || { echo "::error::Checks failed" && exit 1; } # TODO: figure out why we need to capture exit code
 
   ort:
     if: ${{ inputs.ort-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
       - uses: oss-review-toolkit/ort-ci-github-action@9acdf1e56f1b42972b12274ae56c35bf70a5f65b # v1.0.1
@@ -109,4 +138,6 @@ jobs:
           allow-dynamic-versions: "true"
           fail-on: "violations"
           ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Gradle"
+          ort-config-repository: ${{ inputs.ort-config-repository }}
+          ort-config-revision: ${{ inputs.ort-config-revision }}
         continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
