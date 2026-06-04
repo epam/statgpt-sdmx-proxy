@@ -32,14 +32,14 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         repository: ${{ inputs.test-repository }}
         ref: ${{ inputs.test-branch }}
         path: ${{ inputs.working-directory }}
         lfs: false
         persist-credentials: false
-    - uses: epam/ai-dial-ci/actions/java_prepare@3.2.0
+    - uses: epam/ai-dial-ci/actions/java_prepare@4.4.0
       with:
         java-version: ${{ inputs.java-version }}
         java-distribution: ${{ inputs.java-distribution }}
@@ -54,7 +54,7 @@ runs:
         ./gradlew ${{ inputs.gradle-task }} --tests "${{ inputs.test-filter }}"
     - name: Upload JUnit reports
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: ${{ inputs.report-prefix }}-e2e
         path: ${{ inputs.working-directory }}/build/test-results/e2e/

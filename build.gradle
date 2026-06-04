@@ -1,5 +1,7 @@
 // Root build.gradle - shared configuration for all subprojects
 
+version = "0.0.0"
+
 var mavenProxy = findProperty('MAVEN_PROXY_CONFIG') ?: System.getenv('MAVEN_PROXY_CONFIG') ?: "MavenCentral"
 
 allprojects {
