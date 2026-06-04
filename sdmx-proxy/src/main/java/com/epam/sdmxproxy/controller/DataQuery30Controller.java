@@ -23,6 +23,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.time.Instant;
 
 import static com.epam.sdmxproxy.controller.utils.ControllerUtils.ControllerType.DATA;
+import static com.epam.sdmxproxy.controller.utils.ControllerUtils.logFullIncomingRequest;
 import static com.epam.sdmxproxy.controller.utils.ControllerUtils.logRequestUrl;
 
 @Slf4j
@@ -57,6 +58,7 @@ public class DataQuery30Controller implements DataQuery30Api {
             @RequestHeader(value = "X-Source-Artefact-Urn", required = false) @Nullable String sourceArtefactUrn
     ) {
         logRequestUrl(accept, DATA);
+        logFullIncomingRequest(DATA); // TEMPORARY diagnostic (design 034) — remove after capturing DIAL request shape
 
         if (!"dataflow".equals(context)) {
             throw new UnsupportedContextException("context = " + context + " not supported");
