@@ -17,4 +17,11 @@ repositories {
 dependencies {
     compileOnly "org.projectlombok:lombok:${lombok_version}"
     annotationProcessor "org.projectlombok:lombok:${lombok_version}"
+
+    testImplementation "org.junit.jupiter:junit-jupiter:${junit_jupiter_version}"
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }

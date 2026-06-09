@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.limit.truncate;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.services.fixture.data.StreamingFixtureIO;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -46,8 +46,8 @@ public class JsonDataV20SeriesLimitTruncator implements SeriesLimitTruncator {
     private final StreamingFixtureIO streamingFixtureIO;
 
     @Override
-    public Set<ReturnFormat> supportedFormats() {
-        return Set.of(ReturnFormat.JSON_DATA_2_0_0);
+    public Set<SdmxFormat> supportedFormats() {
+        return Set.of(SdmxFormat.JSON_DATA_2_0_0);
     }
 
     @Override

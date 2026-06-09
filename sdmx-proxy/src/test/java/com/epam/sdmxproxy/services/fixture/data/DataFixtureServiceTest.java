@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.data;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
@@ -33,7 +33,7 @@ class DataFixtureServiceTest {
         DataFixtureService service = new DataFixtureService(List.of());
         InputStream input = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
 
-        InputStream result = service.applyFixtures(input, ReturnFormat.JSON_1_0_0, null, null);
+        InputStream result = service.applyFixtures(input, SdmxFormat.JSON_DATA_1_0_0, null, null);
 
         assertSame(input, result);
     }
@@ -43,7 +43,7 @@ class DataFixtureServiceTest {
         DataFixtureService service = new DataFixtureService(List.of());
         InputStream input = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
 
-        InputStream result = service.applyFixtures(input, ReturnFormat.JSON_1_0_0, null, Collections.emptyList());
+        InputStream result = service.applyFixtures(input, SdmxFormat.JSON_DATA_1_0_0, null, Collections.emptyList());
 
         assertSame(input, result);
     }
@@ -52,7 +52,7 @@ class DataFixtureServiceTest {
     void shouldApplyMatchingFixture() {
         DataFixture mockFixture = mock(DataFixture.class);
         when(mockFixture.getType()).thenReturn(DataFixtureType.TIME_PERIOD_MONTHLY_NORMALIZATION);
-        when(mockFixture.supportedFormats()).thenReturn(Set.of(ReturnFormat.JSON_1_0_0));
+        when(mockFixture.supportedFormats()).thenReturn(Set.of(SdmxFormat.JSON_DATA_1_0_0));
 
         InputStream input = new ByteArrayInputStream("original".getBytes(StandardCharsets.UTF_8));
         InputStream fixedStream = new ByteArrayInputStream("fixed".getBytes(StandardCharsets.UTF_8));
@@ -67,7 +67,7 @@ class DataFixtureServiceTest {
         fc.setType(DataFixtureType.TIME_PERIOD_MONTHLY_NORMALIZATION);
         fc.setConfig(config);
 
-        InputStream result = service.applyFixtures(input, ReturnFormat.JSON_1_0_0, sdmxBeans, List.of(fc));
+        InputStream result = service.applyFixtures(input, SdmxFormat.JSON_DATA_1_0_0, sdmxBeans, List.of(fc));
 
         assertSame(fixedStream, result);
         verify(mockFixture).apply(input, sdmxBeans, config);
@@ -77,7 +77,7 @@ class DataFixtureServiceTest {
     void shouldSkipFixtureWhenFormatDoesNotMatch() {
         DataFixture jsonFixture = mock(DataFixture.class);
         when(jsonFixture.getType()).thenReturn(DataFixtureType.TIME_PERIOD_MONTHLY_NORMALIZATION);
-        when(jsonFixture.supportedFormats()).thenReturn(Set.of(ReturnFormat.JSON_1_0_0));
+        when(jsonFixture.supportedFormats()).thenReturn(Set.of(SdmxFormat.JSON_DATA_1_0_0));
 
         DataFixtureService service = new DataFixtureService(List.of(jsonFixture));
 
@@ -87,7 +87,7 @@ class DataFixtureServiceTest {
         fc.setType(DataFixtureType.TIME_PERIOD_MONTHLY_NORMALIZATION);
         fc.setConfig(Map.of());
 
-        InputStream result = service.applyFixtures(input, ReturnFormat.XML_GENERICDATA_2_1, null, List.of(fc));
+        InputStream result = service.applyFixtures(input, SdmxFormat.XML_GENERIC_DATA_2_1, null, List.of(fc));
 
         assertSame(input, result);
         verify(jsonFixture, never()).apply(any(), any(), any());
@@ -97,7 +97,7 @@ class DataFixtureServiceTest {
     void shouldChainMultipleFixturesInOrder() {
         DataFixture fixture = mock(DataFixture.class);
         when(fixture.getType()).thenReturn(DataFixtureType.TIME_PERIOD_MONTHLY_NORMALIZATION);
-        when(fixture.supportedFormats()).thenReturn(Set.of(ReturnFormat.JSON_1_0_0));
+        when(fixture.supportedFormats()).thenReturn(Set.of(SdmxFormat.JSON_DATA_1_0_0));
 
         InputStream input = new ByteArrayInputStream("original".getBytes(StandardCharsets.UTF_8));
         InputStream after1 = new ByteArrayInputStream("after1".getBytes(StandardCharsets.UTF_8));
@@ -117,7 +117,7 @@ class DataFixtureServiceTest {
         fc2.setType(DataFixtureType.TIME_PERIOD_MONTHLY_NORMALIZATION);
         fc2.setConfig(config);
 
-        InputStream result = service.applyFixtures(input, ReturnFormat.JSON_1_0_0, null, List.of(fc1, fc2));
+        InputStream result = service.applyFixtures(input, SdmxFormat.JSON_DATA_1_0_0, null, List.of(fc1, fc2));
 
         assertSame(after2, result);
         InOrder inOrder = inOrder(fixture);

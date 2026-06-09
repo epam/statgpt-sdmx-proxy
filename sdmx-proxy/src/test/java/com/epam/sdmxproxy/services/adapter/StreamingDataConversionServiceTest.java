@@ -1,7 +1,8 @@
 package com.epam.sdmxproxy.services.adapter;
 
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
+import com.epam.sdmxproxy.configuration.data.SdmxMediaTypes;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingDataConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
@@ -46,12 +47,12 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/data_conversion_input_data.xml");
         InputStream structures = getClass().getResourceAsStream("data_conversion/data_conversion_input_structures.xml");
 
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.XML_2_1);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, SdmxFormat.XML_STRUCTURE_2_1);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         //WHEN
-        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.XML_STRUCTURE_SPECIFIC_2_1, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1, MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0));
 
         //THEN
         JsonNode jsonNode = new ObjectMapper().readTree(outputStream.toByteArray());
@@ -70,12 +71,12 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/NGDP_RPCH_currentStructureIndex_Null.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
 
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, SdmxFormat.JSON_STRUCTURE_2_0_0);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         //WHEN
-        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0));
 
         //THEN
         JsonNode jsonNode = new ObjectMapper().readTree(outputStream.toByteArray());
@@ -95,12 +96,12 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/data_weo_no_query_params_to_proxy.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
 
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, SdmxFormat.JSON_STRUCTURE_2_0_0);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         //WHEN
-        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0));
 
     }
 
@@ -112,12 +113,12 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/data_weo_2026-2028_period.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
 
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, SdmxFormat.JSON_STRUCTURE_2_0_0);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         //WHEN
-        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0));
 
         //THEN
         JsonNode jsonNode = objectMapper.readTree(outputStream.toByteArray());
@@ -145,11 +146,11 @@ public class StreamingDataConversionServiceTest {
         //GIVEN
         InputStream input = getClass().getResourceAsStream("data_conversion/data_conversion_input_data.xml");
         InputStream structures = getClass().getResourceAsStream("data_conversion/data_conversion_input_structures.xml");
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.XML_2_1);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, SdmxFormat.XML_STRUCTURE_2_1);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         //WHEN
-        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.XML_STRUCTURE_SPECIFIC_2_1, MediaType.valueOf(SdmxMediaType.SDMX_XML_3_0_0_VALUE));
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1, MediaType.valueOf(SdmxMediaTypes.DATA_XML_3_0_0));
 
         //THEN
         String xml = outputStream.toString(StandardCharsets.UTF_8);
@@ -163,11 +164,11 @@ public class StreamingDataConversionServiceTest {
         //GIVEN
         InputStream input = getClass().getResourceAsStream("data_conversion/data_conversion_input_data.xml");
         InputStream structures = getClass().getResourceAsStream("data_conversion/data_conversion_input_structures.xml");
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.XML_2_1);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, SdmxFormat.XML_STRUCTURE_2_1);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         //WHEN
-        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.XML_STRUCTURE_SPECIFIC_2_1, MediaType.valueOf(SdmxMediaType.SDMX_CSV_2_0_0_VALUE));
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1, MediaType.valueOf(SdmxMediaTypes.DATA_CSV_2_0_0));
 
         //THEN
         String csv = outputStream.toString(StandardCharsets.UTF_8);
@@ -187,11 +188,11 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/NGDP_RPCH_currentStructureIndex_Null.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
 
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, SdmxFormat.JSON_STRUCTURE_2_0_0);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         //WHEN
-        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_CSV_2_0_0_VALUE));
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaTypes.DATA_CSV_2_0_0));
 
         //THEN
         String csv = outputStream.toString(StandardCharsets.UTF_8);
@@ -211,11 +212,11 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/NGDP_RPCH_currentStructureIndex_Null.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
 
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, SdmxFormat.JSON_STRUCTURE_2_0_0);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         //WHEN
-        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_XML_3_0_0_VALUE));
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaTypes.DATA_XML_3_0_0));
 
         //THEN
         String xml = outputStream.toString(StandardCharsets.UTF_8);
@@ -230,12 +231,12 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/data_weo_empty_dataset.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
 
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, SdmxFormat.JSON_STRUCTURE_2_0_0);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         //WHEN + THEN — should not throw NPE or any other exception for empty dataset
-        assertDoesNotThrow(() -> streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE)));
+        assertDoesNotThrow(() -> streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0)));
     }
 
     @Test
@@ -247,11 +248,11 @@ public class StreamingDataConversionServiceTest {
         // bug was silently affecting WEO too.
         InputStream input = getClass().getResourceAsStream("data_conversion/NGDP_RPCH_currentStructureIndex_Null.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, SdmxFormat.JSON_STRUCTURE_2_0_0);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0,
-                MediaType.valueOf(SdmxMediaType.SDMX_CSV_2_0_0_VALUE));
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.JSON_DATA_2_0_0,
+                MediaType.valueOf(SdmxMediaTypes.DATA_CSV_2_0_0));
 
         assertEquals(51, countPopulatedObsValueRows(outputStream.toString(StandardCharsets.UTF_8)),
                 "WEO JSON->CSV should preserve all 51 NGDP_RPCH OBS_VALUE rows");
@@ -268,13 +269,13 @@ public class StreamingDataConversionServiceTest {
         SdmxBeans sdmxBeans = parseBopStructures();
 
         ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream();
-        streamingDataConversionService.convert(csvInput, jsonBuffer, sdmxBeans, ReturnFormat.CSV_DATA_2_0_0,
-                MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+        streamingDataConversionService.convert(csvInput, jsonBuffer, sdmxBeans, SdmxFormat.CSV_DATA_2_0_0,
+                MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0));
 
         ByteArrayOutputStream csvOut = new ByteArrayOutputStream();
         streamingDataConversionService.convert(new java.io.ByteArrayInputStream(jsonBuffer.toByteArray()),
-                csvOut, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0,
-                MediaType.valueOf(SdmxMediaType.SDMX_CSV_2_0_0_VALUE));
+                csvOut, sdmxBeans, SdmxFormat.JSON_DATA_2_0_0,
+                MediaType.valueOf(SdmxMediaTypes.DATA_CSV_2_0_0));
 
         assertEquals(90, countPopulatedObsValueRows(csvOut.toString(StandardCharsets.UTF_8)),
                 "BOP JSON->CSV should preserve all 90 IMF-populated OBS_VALUE rows");
@@ -290,8 +291,8 @@ public class StreamingDataConversionServiceTest {
         SdmxBeans sdmxBeans = parseBopStructures();
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.CSV_DATA_2_0_0,
-                MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.CSV_DATA_2_0_0,
+                MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0));
 
         assertEquals(90, countNonNullPrimaryMeasures(outputStream.toString(StandardCharsets.UTF_8)),
                 "BOP CSV->JSON should preserve all 90 IMF-populated OBS_VALUE observations");
@@ -314,7 +315,7 @@ public class StreamingDataConversionServiceTest {
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         assertDoesNotThrow(() -> streamingDataConversionService.convert(input, outputStream, sdmxBeans,
-                ReturnFormat.CSV_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_CSV_2_0_0_VALUE)));
+                SdmxFormat.CSV_DATA_2_0_0, MediaType.valueOf(SdmxMediaTypes.DATA_CSV_2_0_0)));
 
         // Both the canonicalizer (fixes the read) and the copyDataToFlatWriter fix
         // (preserves OBS_VALUE) must work together for this to come out right.
@@ -337,7 +338,7 @@ public class StreamingDataConversionServiceTest {
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         assertDoesNotThrow(() -> streamingDataConversionService.convert(input, outputStream, sdmxBeans,
-                ReturnFormat.CSV_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_CSV_2_0_0_VALUE)));
+                SdmxFormat.CSV_DATA_2_0_0, MediaType.valueOf(SdmxMediaTypes.DATA_CSV_2_0_0)));
 
         assertTrue(countPopulatedObsValueRows(outputStream.toString(StandardCharsets.UTF_8)) > 0,
                 "Real CPI CSV with attributes=all should round-trip with at least one populated OBS_VALUE");
@@ -370,7 +371,7 @@ public class StreamingDataConversionServiceTest {
 
         // Pre-fix: this throws SdmxException("Line 2 has less elements than expected...").
         assertDoesNotThrow(() -> streamingDataConversionService.convert(input, outputStream, sdmxBeans,
-                ReturnFormat.CSV_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_CSV_2_0_0_VALUE)));
+                SdmxFormat.CSV_DATA_2_0_0, MediaType.valueOf(SdmxMediaTypes.DATA_CSV_2_0_0)));
 
         // Sanity-check both observations made it through. The canonicalizer
         // collapses the embedded newlines to spaces, so the writer emits well-formed
@@ -391,8 +392,8 @@ public class StreamingDataConversionServiceTest {
         SdmxBeans sdmxBeans = parseBopStructures();
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.CSV_DATA_2_0_0,
-                MediaType.valueOf(SdmxMediaType.SDMX_CSV_2_0_0_VALUE));
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.CSV_DATA_2_0_0,
+                MediaType.valueOf(SdmxMediaTypes.DATA_CSV_2_0_0));
 
         assertEquals(90, countPopulatedObsValueRows(outputStream.toString(StandardCharsets.UTF_8)),
                 "BOP CSV->CSV should preserve all 90 IMF-populated OBS_VALUE rows");
@@ -411,12 +412,12 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/imf_fsic_data.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/imf_fsic_structures.json");
 
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, SdmxFormat.JSON_STRUCTURE_2_0_0);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         //WHEN
-        assertDoesNotThrow(() -> streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE)));
+        assertDoesNotThrow(() -> streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0)));
 
         //THEN
         JsonNode jsonNode = new ObjectMapper().readTree(outputStream.toByteArray());
@@ -449,7 +450,7 @@ public class StreamingDataConversionServiceTest {
         SdmxBeans sdmxBeans = loadWeoStructures();
         InputStream input = getClass().getResourceAsStream("data_conversion/data_weo_misroute_3countries.json");
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0));
 
         JsonNode root = new ObjectMapper().readTree(outputStream.toByteArray());
         JsonNode obsDims = root.path("data").path("structures").get(0).path("dimensions").path("observation");
@@ -480,7 +481,7 @@ public class StreamingDataConversionServiceTest {
         SdmxBeans sdmxBeans = loadWeoStructures();
         InputStream input = getClass().getResourceAsStream("data_conversion/data_weo_misroute_3countries.json");
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0));
 
         JsonNode root = new ObjectMapper().readTree(outputStream.toByteArray());
         JsonNode timeValues = root.path("data").path("structures").get(0).path("dimensions").path("observation").get(0).path("values");
@@ -496,7 +497,7 @@ public class StreamingDataConversionServiceTest {
     @SneakyThrows
     private SdmxBeans loadWeoStructures() {
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
-        return streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        return streamingStructureConversionService.parseStructures(structures, SdmxFormat.JSON_STRUCTURE_2_0_0);
     }
 
     @Test
@@ -514,10 +515,10 @@ public class StreamingDataConversionServiceTest {
         InputStream input = getClass().getResourceAsStream("data_conversion/data_weo_misroute_3countries.json");
         InputStream structures = getClass().getResourceAsStream("data_conversion/structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
 
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structures, SdmxFormat.JSON_STRUCTURE_2_0_0);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        streamingDataConversionService.convert(input, outputStream, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+        streamingDataConversionService.convert(input, outputStream, sdmxBeans, SdmxFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0));
 
         JsonNode root = new ObjectMapper().readTree(outputStream.toByteArray());
         JsonNode firstDataSet = root.path("data").path("dataSets").get(0);
@@ -564,7 +565,7 @@ public class StreamingDataConversionServiceTest {
     @SneakyThrows
     private SdmxBeans parseStructuresFixture(String resourcePath) {
         InputStream structures = getClass().getResourceAsStream(resourcePath);
-        return streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        return streamingStructureConversionService.parseStructures(structures, SdmxFormat.JSON_STRUCTURE_2_0_0);
     }
 
     /**

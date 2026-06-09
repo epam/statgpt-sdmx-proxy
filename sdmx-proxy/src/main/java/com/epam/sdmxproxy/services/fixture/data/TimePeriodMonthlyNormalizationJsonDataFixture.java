@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.data;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -51,8 +51,8 @@ public class TimePeriodMonthlyNormalizationJsonDataFixture implements DataFixtur
     }
 
     @Override
-    public Set<ReturnFormat> supportedFormats() {
-        return Set.of(ReturnFormat.JSON_1_0_0, ReturnFormat.JSON_DATA_2_0_0);
+    public Set<SdmxFormat> supportedFormats() {
+        return Set.of(SdmxFormat.JSON_DATA_1_0_0, SdmxFormat.JSON_DATA_2_0_0);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.limit;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -18,7 +18,7 @@ class JsonAvailabilityResponseParserTest {
     void parse_imfSampleResponse_extractsDimensionValues() {
         try (InputStream in = getClass().getResourceAsStream(
                 "/com/epam/sdmxproxy/services/fixture/availability/imf_weo_availability_response.json")) {
-            AvailabilityProjection projection = parser.parse(in, ReturnFormat.JSON_STRUCTURE_2_0_0);
+            AvailabilityProjection projection = parser.parse(in, SdmxFormat.JSON_STRUCTURE_2_0_0);
 
             assertThat(projection.valuesByDimensionId()).isNotEmpty();
             assertThat(projection.valuesByDimensionId().get("COUNTRY"))
@@ -34,7 +34,7 @@ class JsonAvailabilityResponseParserTest {
         try (InputStream in = getClass().getResourceAsStream(
                 "/com/epam/sdmxproxy/services/limit/bis_ws_eer_availability.json")) {
             assertThat(in).isNotNull();
-            AvailabilityProjection projection = parser.parse(in, ReturnFormat.JSON_STRUCTURE_2_0_0);
+            AvailabilityProjection projection = parser.parse(in, SdmxFormat.JSON_STRUCTURE_2_0_0);
 
             assertThat(projection.seriesCount())
                     .as("series_count annotation must be extracted")
@@ -56,7 +56,7 @@ class JsonAvailabilityResponseParserTest {
         String body = "{\"data\":{\"dataConstraints\":[{\"annotations\":["
                 + "{\"id\":\"series_count\",\"title\":\"42\",\"type\":\"sdmx_metrics\"}"
                 + "],\"cubeRegions\":[]}]}}";
-        AvailabilityProjection projection = parser.parse(toStream(body), ReturnFormat.JSON_STRUCTURE_2_0_0);
+        AvailabilityProjection projection = parser.parse(toStream(body), SdmxFormat.JSON_STRUCTURE_2_0_0);
         assertThat(projection.seriesCount()).isEqualTo(42L);
     }
 
@@ -64,7 +64,7 @@ class JsonAvailabilityResponseParserTest {
     void parse_missingSeriesCountAnnotation_nullField() {
         String body = "{\"data\":{\"dataConstraints\":[{\"cubeRegions\":[{\"components\":"
                 + "[{\"id\":\"FREQ\",\"values\":[{\"value\":\"A\"}]}]}]}]}}";
-        AvailabilityProjection projection = parser.parse(toStream(body), ReturnFormat.JSON_STRUCTURE_2_0_0);
+        AvailabilityProjection projection = parser.parse(toStream(body), SdmxFormat.JSON_STRUCTURE_2_0_0);
         assertThat(projection.seriesCount()).isNull();
         assertThat(projection.effectiveSeriesCount()).isEqualTo(1L);
     }
@@ -72,7 +72,7 @@ class JsonAvailabilityResponseParserTest {
     @Test
     void parse_emptyAvailability_returnsEmptyProjection() {
         InputStream in = toStream("{\"data\":{\"dataConstraints\":[]}}");
-        AvailabilityProjection projection = parser.parse(in, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        AvailabilityProjection projection = parser.parse(in, SdmxFormat.JSON_STRUCTURE_2_0_0);
         assertThat(projection.valuesByDimensionId()).isEmpty();
     }
 
@@ -80,7 +80,7 @@ class JsonAvailabilityResponseParserTest {
     void parse_singleDimensionSingleValue() {
         String body = "{\"data\":{\"dataConstraints\":[{\"cubeRegions\":[{\"components\":"
                 + "[{\"id\":\"FREQ\",\"values\":[{\"value\":\"A\"}]}]}]}]}}";
-        AvailabilityProjection projection = parser.parse(toStream(body), ReturnFormat.JSON_STRUCTURE_2_0_0);
+        AvailabilityProjection projection = parser.parse(toStream(body), SdmxFormat.JSON_STRUCTURE_2_0_0);
         assertThat(projection.valuesByDimensionId()).containsEntry("FREQ", List.of("A"));
     }
 
@@ -89,7 +89,7 @@ class JsonAvailabilityResponseParserTest {
         String body = "{\"data\":{\"dataConstraints\":[{\"cubeRegions\":[{\"components\":["
                 + "{\"id\":\"FREQ\",\"values\":[{\"value\":\"A\"},{\"value\":\"D\"},{\"value\":\"A\"}]}"
                 + "]}]}]}}";
-        AvailabilityProjection projection = parser.parse(toStream(body), ReturnFormat.JSON_STRUCTURE_2_0_0);
+        AvailabilityProjection projection = parser.parse(toStream(body), SdmxFormat.JSON_STRUCTURE_2_0_0);
         assertThat(projection.valuesByDimensionId()).containsEntry("FREQ", List.of("A", "D"));
     }
 
@@ -99,14 +99,14 @@ class JsonAvailabilityResponseParserTest {
                 + "{\"components\":[{\"id\":\"FREQ\",\"values\":[{\"value\":\"A\"}]}]},"
                 + "{\"components\":[{\"id\":\"FREQ\",\"values\":[{\"value\":\"M\"}]}]}"
                 + "]}]}}";
-        AvailabilityProjection projection = parser.parse(toStream(body), ReturnFormat.JSON_STRUCTURE_2_0_0);
+        AvailabilityProjection projection = parser.parse(toStream(body), SdmxFormat.JSON_STRUCTURE_2_0_0);
         assertThat(projection.valuesByDimensionId()).containsEntry("FREQ", List.of("A", "M"));
     }
 
     @Test
     void supports_onlyJsonStructure200() {
-        assertThat(parser.supports(ReturnFormat.JSON_STRUCTURE_2_0_0)).isTrue();
-        assertThat(parser.supports(ReturnFormat.JSON_1_0_0)).isFalse();
+        assertThat(parser.supports(SdmxFormat.JSON_STRUCTURE_2_0_0)).isTrue();
+        assertThat(parser.supports(SdmxFormat.JSON_DATA_1_0_0)).isFalse();
     }
 
     private static InputStream toStream(String s) {

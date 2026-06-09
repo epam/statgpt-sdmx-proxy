@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.limit.truncate;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.services.fixture.data.StreamingFixtureIO;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +20,8 @@ import java.util.Set;
 
 /**
  * Streaming truncator for SDMX-ML data responses -- covers both
- * {@link ReturnFormat#XML_GENERICDATA_2_1 generic data} and
- * {@link ReturnFormat#XML_STRUCTURE_SPECIFIC_2_1 structure-specific data}. In both flavors
+ * {@link SdmxFormat#XML_GENERIC_DATA_2_1 generic data} and
+ * {@link SdmxFormat#XML_STRUCTURE_SPECIFIC_DATA_2_1 structure-specific data}. In both flavors
  * a series is a {@code <Series>} element (local-name match, namespace-agnostic) nested
  * inside {@code <DataSet>}. The transform copies every event through verbatim; when the
  * running series counter reaches {@code n} it starts skipping subsequent {@code <Series>}
@@ -45,10 +45,10 @@ public class XmlSeriesLimitTruncator implements SeriesLimitTruncator {
     private final StreamingFixtureIO streamingFixtureIO;
 
     @Override
-    public Set<ReturnFormat> supportedFormats() {
+    public Set<SdmxFormat> supportedFormats() {
         return Set.of(
-                ReturnFormat.XML_GENERICDATA_2_1,
-                ReturnFormat.XML_STRUCTURE_SPECIFIC_2_1
+                SdmxFormat.XML_GENERIC_DATA_2_1,
+                SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1
         );
     }
 

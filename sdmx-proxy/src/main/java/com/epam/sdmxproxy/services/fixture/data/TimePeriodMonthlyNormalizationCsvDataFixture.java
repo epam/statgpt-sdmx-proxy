@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.data;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
 import com.opencsv.RFC4180Parser;
 import com.opencsv.RFC4180ParserBuilder;
@@ -58,8 +58,8 @@ public class TimePeriodMonthlyNormalizationCsvDataFixture implements DataFixture
     }
 
     @Override
-    public Set<ReturnFormat> supportedFormats() {
-        return Set.of(ReturnFormat.CSV_DATA_1_0_0, ReturnFormat.CSV_DATA_2_0_0);
+    public Set<SdmxFormat> supportedFormats() {
+        return Set.of(SdmxFormat.CSV_DATA_1_0_0, SdmxFormat.CSV_DATA_2_0_0);
     }
 
     @Override

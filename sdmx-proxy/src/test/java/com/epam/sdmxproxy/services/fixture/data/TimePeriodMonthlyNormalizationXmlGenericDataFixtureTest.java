@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.data;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ class TimePeriodMonthlyNormalizationXmlGenericDataFixtureTest {
     @Test
     void supportedFormats_containsOnlyXmlGeneric() {
         assertEquals(1, fixture.supportedFormats().size());
-        assertTrue(fixture.supportedFormats().contains(ReturnFormat.XML_GENERICDATA_2_1));
+        assertTrue(fixture.supportedFormats().contains(SdmxFormat.XML_GENERIC_DATA_2_1));
     }
 
     @Test

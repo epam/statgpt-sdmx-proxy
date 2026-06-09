@@ -1,7 +1,8 @@
 package com.epam.sdmxproxy.controller;
 
 import com.epam.sdmxproxy.api.DataQuery30Api;
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
+import com.epam.sdmxproxy.configuration.data.SdmxMediaTypes;
 import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.exception.UnsupportedContextException;
@@ -32,7 +33,7 @@ public class DataQuery30Controller implements DataQuery30Api {
 
     private final QueryTranslator queryTranslator;
     private final AdapterRouter adapterRouter;
-    private static final String ACCEPT_HEADER_FALLBACK = SdmxMediaType.SDMX_JSON_2_0_0_VALUE;
+    private static final String ACCEPT_HEADER_FALLBACK = SdmxMediaTypes.DATA_JSON_2_0_0;
 
 
     @Override
@@ -62,7 +63,7 @@ public class DataQuery30Controller implements DataQuery30Api {
             throw new UnsupportedContextException("context = " + context + " not supported");
         }
 
-        if (Strings.CS.equals(accept, SdmxMediaType.ANY)) {
+        if (Strings.CS.equals(accept, SdmxMediaTypeResolver.ANY)) {
             accept = ACCEPT_HEADER_FALLBACK;
         }
 

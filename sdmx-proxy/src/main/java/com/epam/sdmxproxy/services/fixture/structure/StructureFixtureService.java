@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.structure;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ import java.util.List;
  * Orchestrates applying fixtures to raw registry responses.
  * Fixtures are applied as a chain of responsibility in the order they are configured.
  * For each configured fixture, the service finds a matching implementation by both
- * {@link StructureFixtureType} and supported {@link ReturnFormat}, then applies it.
+ * {@link StructureFixtureType} and supported {@link SdmxFormat}, then applies it.
  */
 @Slf4j
 @Service
@@ -33,7 +33,7 @@ public class StructureFixtureService {
      */
     public InputStream applyFixtures(
             InputStream input,
-            ReturnFormat format,
+            SdmxFormat format,
             List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs
     ) {
         if (fixtureConfigs == null || fixtureConfigs.isEmpty()) {
@@ -53,7 +53,7 @@ public class StructureFixtureService {
         return current;
     }
 
-    private StructureFixture findFixture(StructureFixtureType type, ReturnFormat format) {
+    private StructureFixture findFixture(StructureFixtureType type, SdmxFormat format) {
         return fixtures.stream()
                 .filter(f -> f.getType() == type && f.supportedFormats().contains(format))
                 .findFirst()

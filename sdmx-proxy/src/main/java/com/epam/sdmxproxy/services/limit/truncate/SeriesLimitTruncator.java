@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.limit.truncate;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 
 import java.io.InputStream;
@@ -9,12 +9,12 @@ import java.util.Set;
 /**
  * Cuts a raw registry data response at {@code N} distinct series, streaming. One
  * implementation per registry data format (SDMX-JSON 1.0.0, SDMX-JSON 2.0.0, SDMX-CSV
- * 2.0.0, ...). Each implementation registers its supported {@link ReturnFormat}s; lookup
+ * 2.0.0, ...). Each implementation registers its supported {@link SdmxFormat}s; lookup
  * is via {@link SeriesLimitTruncatorProvider}.
  */
 public interface SeriesLimitTruncator {
 
-    Set<ReturnFormat> supportedFormats();
+    Set<SdmxFormat> supportedFormats();
 
     /**
      * Wraps the raw registry stream; the returned stream emits at most {@code n} distinct

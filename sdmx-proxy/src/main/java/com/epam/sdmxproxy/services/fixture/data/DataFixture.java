@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.data;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 
@@ -24,7 +24,7 @@ public interface DataFixture {
     DataFixtureType getType();
 
     /** Registry return formats this implementation can transform. */
-    Set<ReturnFormat> supportedFormats();
+    Set<SdmxFormat> supportedFormats();
 
     /**
      * Wraps {@code input} with this fixture's streaming transformation.

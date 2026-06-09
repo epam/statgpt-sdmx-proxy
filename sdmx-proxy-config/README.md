@@ -57,8 +57,8 @@ Shared by every `*EndpointConfig` block below.
 | Field              | Required | Description                                                                                                     | Available Values        | Default |
 |--------------------|:--------:|-----------------------------------------------------------------------------------------------------------------|-------------------------|---------|
 | `url`              |   Yes    | Base URL for this endpoint type                                                                                 |                         |         |
-| `supportedFormats` |    No    | Formats the registry can return natively; used for bypass matching                                              | Array of `ReturnFormat` | (empty) |
-| `defaultFormat`    |    No    | Format requested from the registry when bypass is disabled or the requested format is not in `supportedFormats` | `ReturnFormat`          |         |
+| `supportedFormats` |    No    | Formats the registry can return natively; used for bypass matching                                              | Array of `SdmxFormat`   | (empty) |
+| `defaultFormat`    |    No    | Format requested from the registry when bypass is disabled or the requested format is not in `supportedFormats` | `SdmxFormat`            |         |
 | `bypassEnabled`    |    No    | When true, responses are streamed through unchanged if the requested format is in `supportedFormats`            | `true`, `false`         | `false` |
 
 ### `StructureEndpointConfiguration` (extends `EndpointConfiguration`)
@@ -169,26 +169,40 @@ Fixtures are applied as a chain of responsibility in the order listed.
 
 | Value                               | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 |-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `TIME_PERIOD_MONTHLY_NORMALIZATION` | Rewrite monthly `TIME_PERIOD` values to canonical `YYYY-Mmm` (e.g. `2024-03` → `2024-M03`). Supported for `JSON_1_0_0`, `JSON_DATA_2_0_0`, `XML_GENERICDATA_2_1`, `XML_STRUCTURE_SPECIFIC_2_1`, `CSV_DATA_1_0_0`, and `CSV_DATA_2_0_0`.                                                                                                                                                                                                                                                                                |
+| `TIME_PERIOD_MONTHLY_NORMALIZATION` | Rewrite monthly `TIME_PERIOD` values to canonical `YYYY-Mmm` (e.g. `2024-03` → `2024-M03`). Supported for `JSON_DATA_1_0_0`, `JSON_DATA_2_0_0`, `XML_GENERIC_DATA_2_1`, `XML_STRUCTURE_SPECIFIC_DATA_2_1`, `CSV_DATA_1_0_0`, and `CSV_DATA_2_0_0`.                                                                                                                                                                                                                                                                                |
 | `PRESERVE_METADATA_ATTRIBUTES`      | Capture raw `data.structures[*].attributes` (all four buckets: `dataSet`, `dimensionGroup`, `series`, `observation`), `data.dataSets[*].attributes`, and `data.dataSets[*].dimensionGroupAttributes` from the upstream SDMX-JSON 2.0 response, then re-inject them onto the converted output. Restores SDMX 3.0 DSD `metadataAttributeUsages` definitions and values that sdmx-core's `DataStructureBean` model drops (any attachment level: dataset, observation, dimensionGroup, or series). JSON 2.0 → JSON 2.0 only. |
 
 ### Enum: `SdmxVersion`
 
 `SDMX_2_1`, `SDMX_3_0`.
 
-### Enum: `ReturnFormat`
+### Enum: `SdmxFormat`
 
 Values are the enum names used in JSON (e.g. `JSON_STRUCTURE_2_0_0`). Each maps to a media type
-consumed on the wire:
+consumed on the wire. The full SDMX format matrix is enumerated for naming/recognition
+completeness; whether a client may request a format is governed by the controllers' `produces`
+lists, and whether the proxy can convert it by the conversion switches.
 
-| Value                        | Media type                                                   |
-|------------------------------|--------------------------------------------------------------|
-| `JSON_1_0_0`                 | `application/vnd.sdmx.data+json;version=1.0.0`               |
-| `JSON_2_1_DRAFT`             | `application/vnd.sdmx.draft-sdmx-json+json; version=2.1`     |
-| `JSON_DATA_2_0_0`            | `application/vnd.sdmx.data+json; version=2.0.0`              |
-| `JSON_STRUCTURE_2_0_0`       | `application/vnd.sdmx.structure+json; version=2.0.0`         |
-| `XML_2_1`                    | `application/vnd.sdmx.structure+xml;version=2.1`             |
-| `XML_GENERICDATA_2_1`        | `application/vnd.sdmx.genericdata+xml;version=2.1`           |
-| `XML_STRUCTURE_SPECIFIC_2_1` | `application/vnd.sdmx.structurespecificdata+xml;version=2.1` |
-| `CSV_DATA_1_0_0`             | `application/vnd.sdmx.data+csv;version=1.0.0`                |
-| `CSV_DATA_2_0_0`             | `application/vnd.sdmx.data+csv;version=2.0.0`                |
+| Value                                         | Media type                                                            |
+|-----------------------------------------------|-----------------------------------------------------------------------|
+| `JSON_DATA_1_0_0`                             | `application/vnd.sdmx.data+json;version=1.0.0`                         |
+| `JSON_DATA_2_0_0`                             | `application/vnd.sdmx.data+json; version=2.0.0`                        |
+| `JSON_DATA_DRAFT_2_1`                         | `application/vnd.sdmx.draft-sdmx-json+json; version=2.1`               |
+| `CSV_DATA_1_0_0`                              | `application/vnd.sdmx.data+csv;version=1.0.0`                          |
+| `CSV_DATA_2_0_0`                              | `application/vnd.sdmx.data+csv;version=2.0.0`                          |
+| `XML_DATA_3_0_0`                              | `application/vnd.sdmx.data+xml;version=3.0.0`                          |
+| `XML_GENERIC_DATA_2_1`                        | `application/vnd.sdmx.genericdata+xml;version=2.1`                     |
+| `XML_STRUCTURE_SPECIFIC_DATA_2_1`             | `application/vnd.sdmx.structurespecificdata+xml;version=2.1`           |
+| `XML_GENERIC_TIME_SERIES_DATA_2_1`            | `application/vnd.sdmx.generictimeseriesdata+xml;version=2.1`           |
+| `XML_STRUCTURE_SPECIFIC_TIME_SERIES_DATA_2_1` | `application/vnd.sdmx.structurespecifictimeseriesdata+xml;version=2.1` |
+| `JSON_STRUCTURE_2_0_0`                        | `application/vnd.sdmx.structure+json; version=2.0.0`                   |
+| `JSON_STRUCTURE_1_0_0`                        | `application/vnd.sdmx.structure+json;version=1.0.0`                    |
+| `XML_STRUCTURE_2_1`                           | `application/vnd.sdmx.structure+xml;version=2.1`                       |
+| `XML_STRUCTURE_3_0_0`                         | `application/vnd.sdmx.structure+xml;version=3.0.0`                     |
+| `XML_SCHEMA_2_1`                              | `application/vnd.sdmx.schema+xml;version=2.1`                          |
+| `XML_SCHEMA_3_0_0`                            | `application/vnd.sdmx.schema+xml;version=3.0.0`                        |
+| `JSON_METADATA_2_0_0`                         | `application/vnd.sdmx.metadata+json;version=2.0.0`                     |
+| `XML_METADATA_3_0_0`                          | `application/vnd.sdmx.metadata+xml;version=3.0.0`                      |
+| `CSV_METADATA_1_0_0`                          | `application/vnd.sdmx.metadata+csv;version=1.0.0`                      |
+| `XML_GENERIC_METADATA_2_1`                    | `application/vnd.sdmx.genericmetadata+xml;version=2.1`                 |
+| `XML_STRUCTURE_SPECIFIC_METADATA_2_1`         | `application/vnd.sdmx.structurespecificmetadata+xml;version=2.1`       |

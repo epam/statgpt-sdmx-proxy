@@ -9,9 +9,9 @@
           "structureEndpointConfig": {
             "url": "https://stats.bis.org/api/v1/",
             "supportedFormats": [
-              "XML_2_1"
+              "XML_STRUCTURE_2_1"
             ],
-            "defaultFormat": "XML_2_1",
+            "defaultFormat": "XML_STRUCTURE_2_1",
             "bypassEnabled": false,
             "supportedStructures": [
               "datastructure",
@@ -21,17 +21,17 @@
           "dataEndpointConfig": {
             "url": "https://stats.bis.org/api/v1/data/",
             "supportedFormats": [
-              "XML_STRUCTURE_SPECIFIC_2_1"
+              "XML_STRUCTURE_SPECIFIC_DATA_2_1"
             ],
-            "defaultFormat": "XML_STRUCTURE_SPECIFIC_2_1",
+            "defaultFormat": "XML_STRUCTURE_SPECIFIC_DATA_2_1",
             "bypassEnabled": true
           },
           "availabilityEndpointConfig": {
             "url": "https://stats.bis.org/api/v1/",
             "supportedFormats": [
-              "XML_2_1"
+              "XML_STRUCTURE_2_1"
             ],
-            "defaultFormat": "XML_2_1",
+            "defaultFormat": "XML_STRUCTURE_2_1",
             "bypassEnabled": true,
             "availabilityEnabled": true
           },
@@ -68,9 +68,9 @@
           "structureEndpointConfig": {
             "url": "https://api.imf.org/external/sdmx/2.1/",
             "supportedFormats": [
-              "XML_2_1"
+              "XML_STRUCTURE_2_1"
             ],
-            "defaultFormat": "XML_2_1",
+            "defaultFormat": "XML_STRUCTURE_2_1",
             "bypassEnabled": false,
             "supportedStructures": [
               "datastructure",
@@ -81,17 +81,17 @@
           "dataEndpointConfig": {
             "url": "https://api.imf.org/external/sdmx/2.1/data/",
             "supportedFormats": [
-              "JSON_1_0_0"
+              "JSON_DATA_1_0_0"
             ],
-            "defaultFormat": "JSON_1_0_0",
+            "defaultFormat": "JSON_DATA_1_0_0",
             "bypassEnabled": true
           },
           "availabilityEndpointConfig": {
             "url": "https://api.imf.org/external/sdmx/2.1/",
             "supportedFormats": [
-              "XML_2_1"
+              "XML_STRUCTURE_2_1"
             ],
-            "defaultFormat": "XML_2_1",
+            "defaultFormat": "XML_STRUCTURE_2_1",
             "bypassEnabled": true,
             "availabilityEnabled": true
           },

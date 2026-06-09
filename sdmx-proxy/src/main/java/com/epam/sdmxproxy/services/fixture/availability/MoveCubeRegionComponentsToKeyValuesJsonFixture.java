@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.availability;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,8 +47,8 @@ public class MoveCubeRegionComponentsToKeyValuesJsonFixture implements Availabil
     }
 
     @Override
-    public Set<ReturnFormat> supportedFormats() {
-        return Set.of(ReturnFormat.JSON_STRUCTURE_2_0_0);
+    public Set<SdmxFormat> supportedFormats() {
+        return Set.of(SdmxFormat.JSON_STRUCTURE_2_0_0);
     }
 
     @Override

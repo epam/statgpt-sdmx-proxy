@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.data;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,8 +32,8 @@ class TimePeriodMonthlyNormalizationCsvDataFixtureTest {
     @Test
     void supportedFormats_containsBothCsvVersions() {
         assertEquals(2, fixture.supportedFormats().size());
-        assertTrue(fixture.supportedFormats().contains(ReturnFormat.CSV_DATA_1_0_0));
-        assertTrue(fixture.supportedFormats().contains(ReturnFormat.CSV_DATA_2_0_0));
+        assertTrue(fixture.supportedFormats().contains(SdmxFormat.CSV_DATA_1_0_0));
+        assertTrue(fixture.supportedFormats().contains(SdmxFormat.CSV_DATA_2_0_0));
     }
 
     @Test

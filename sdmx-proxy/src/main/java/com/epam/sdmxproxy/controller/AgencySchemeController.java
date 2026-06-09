@@ -1,7 +1,8 @@
 package com.epam.sdmxproxy.controller;
 
 import com.epam.sdmxproxy.api.AgencySchemeApi;
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
+import com.epam.sdmxproxy.configuration.data.SdmxMediaTypes;
 import com.epam.sdmxproxy.services.agencyscheme.AgencySchemeService;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AgencySchemeController implements AgencySchemeApi {
 
-    private static final String ACCEPT_HEADER_FALLBACK = SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE;
+    private static final String ACCEPT_HEADER_FALLBACK = SdmxMediaTypes.STRUCTURE_JSON_2_0_0;
 
     private final AgencySchemeService agencySchemeService;
 
@@ -27,7 +28,7 @@ public class AgencySchemeController implements AgencySchemeApi {
     public ResponseEntity<StreamingResponseBody> getAgencyScheme(String agencyId, String resourceId, String version, @Nullable String accept) {
         log.debug("GET /structure/agencyscheme/{}/{}/{}", agencyId, resourceId, version);
 
-        if (Strings.CS.equals(accept, SdmxMediaType.ANY) || accept == null) {
+        if (Strings.CS.equals(accept, SdmxMediaTypeResolver.ANY) || accept == null) {
             accept = ACCEPT_HEADER_FALLBACK;
         }
 

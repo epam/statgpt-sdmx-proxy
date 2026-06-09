@@ -5,7 +5,7 @@ import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.services.fixture.availability.AvailabilityFixtureService;
@@ -386,12 +386,12 @@ class LimitEmulationServiceImplTest {
         dataCfg.setSupportsLimit(false);
         dataCfg.setLimitEmulationTolerance(1.2);
         dataCfg.setLimitEmulationProbeBudget(8);
-        dataCfg.setDefaultFormat(ReturnFormat.JSON_1_0_0);
+        dataCfg.setDefaultFormat(SdmxFormat.JSON_DATA_1_0_0);
 
         AvailabilityEndpointConfiguration availCfg = new AvailabilityEndpointConfiguration();
         availCfg.setAvailabilityEnabled(true);
         availCfg.setUnwrapStarComponentId(false);
-        availCfg.setDefaultFormat(ReturnFormat.JSON_STRUCTURE_2_0_0);
+        availCfg.setDefaultFormat(SdmxFormat.JSON_STRUCTURE_2_0_0);
 
         VersionSpecificRegistryConfiguration versionConfig = new VersionSpecificRegistryConfiguration();
         versionConfig.setSdmxVersion(sdmxVersion);
@@ -409,7 +409,7 @@ class LimitEmulationServiceImplTest {
                 .version("1.0")
                 .key(key)
                 .filters(filters)
-                .returnFormat(ReturnFormat.JSON_1_0_0)
+                .returnFormat(SdmxFormat.JSON_DATA_1_0_0)
                 .limit(limit)
                 .build();
     }

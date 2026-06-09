@@ -22,14 +22,14 @@ public class EndpointConfiguration {
      * List of formats that this endpoint can return natively.
      * If bypass is enabled and requested format is in this list, data will be returned directly without conversion.
      */
-    private List<ReturnFormat> supportedFormats;
+    private List<SdmxFormat> supportedFormats;
 
     /**
      * Default format to use when bypass is disabled or requested format is not in supportedFormats.
      * This format will be requested from registry and then converted to the requested format.
      * If null, no default format is available and an error should be thrown.
      */
-    private ReturnFormat defaultFormat;
+    private SdmxFormat defaultFormat;
 
     /**
      * Whether bypass is enabled for this endpoint.

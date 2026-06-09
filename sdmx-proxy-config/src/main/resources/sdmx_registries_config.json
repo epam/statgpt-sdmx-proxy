@@ -28,10 +28,10 @@
           "dataEndpointConfig": {
             "url": "https://stats.bis.org/api/v2/data/",
             "supportedFormats": [
-              "JSON_1_0_0",
+              "JSON_DATA_1_0_0",
               "CSV_DATA_2_0_0"
             ],
-            "defaultFormat": "JSON_1_0_0",
+            "defaultFormat": "JSON_DATA_1_0_0",
             "bypassEnabled": false,
             "mergeAllWildcardKey": true,
             "supportsLimit": false,

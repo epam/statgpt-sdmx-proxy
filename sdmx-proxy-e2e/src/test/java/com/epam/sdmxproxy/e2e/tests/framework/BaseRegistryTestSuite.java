@@ -3,7 +3,7 @@ package com.epam.sdmxproxy.e2e.tests.framework;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.e2e.support.fixtures.ResponseValidator;
@@ -72,12 +72,12 @@ public abstract class BaseRegistryTestSuite {
      * not in this set can't run the emulation diagnostic -- the test softly aborts with
      * an actionable message naming the missing truncator format.
      */
-    private static final Set<ReturnFormat> TRUNCATOR_SUPPORTED_FORMATS = Set.of(
-            ReturnFormat.JSON_1_0_0,
-            ReturnFormat.JSON_DATA_2_0_0,
-            ReturnFormat.CSV_DATA_2_0_0,
-            ReturnFormat.XML_GENERICDATA_2_1,
-            ReturnFormat.XML_STRUCTURE_SPECIFIC_2_1
+    private static final Set<SdmxFormat> TRUNCATOR_SUPPORTED_FORMATS = Set.of(
+            SdmxFormat.JSON_DATA_1_0_0,
+            SdmxFormat.JSON_DATA_2_0_0,
+            SdmxFormat.CSV_DATA_2_0_0,
+            SdmxFormat.XML_GENERIC_DATA_2_1,
+            SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1
     );
 
     private static final String BASE_PATH = "/statgpt/sdmx-proxy/api/v0";
@@ -211,7 +211,7 @@ public abstract class BaseRegistryTestSuite {
     @ParameterizedTest(name = "artefact: {0}, detail: {1}, references: {2}, registryReturnFormat: {3}, proxyFormat: {4}")
     @DisplayName("Specific Structure Cases")
     @MethodSource("specificStructureCases")
-    void testSpecificStructureTypes(StructureTypeAndUrn artefact, StructureQueryDetail detail, StructureReferenceDetail references, ReturnFormat registryReturnFormat, String proxyFormat) {
+    void testSpecificStructureTypes(StructureTypeAndUrn artefact, StructureQueryDetail detail, StructureReferenceDetail references, SdmxFormat registryReturnFormat, String proxyFormat) {
         updateConfigToMatchRegistryReturnType(registryReturnFormat);
 
         String[] urnParts = parseUrn(artefact.getUrn());
@@ -270,7 +270,7 @@ public abstract class BaseRegistryTestSuite {
     @ParameterizedTest(name = "dataflow: {0}, key: {1}, registryReturnFormat: {2}, proxyFormat: {3}")
     @DisplayName("Data Endpoint Cases")
     @MethodSource("dataCases")
-    void testDataEndpoint(String dataflowUrn, String key, ReturnFormat registryReturnFormat, String proxyFormat) {
+    void testDataEndpoint(String dataflowUrn, String key, SdmxFormat registryReturnFormat, String proxyFormat) {
         updateDataConfigToMatchRegistryReturnType(registryReturnFormat);
 
         String[] urnParts = parseUrn(dataflowUrn);
@@ -323,7 +323,7 @@ public abstract class BaseRegistryTestSuite {
     @DisplayName("Data Endpoint preserves dimensionGroupAttributes (SDMX-JSON 2.0)")
     @MethodSource("dataCases")
     @SneakyThrows
-    void testDataDimensionGroupAttributesPreserved(String dataflowUrn, String key, ReturnFormat registryReturnFormat, String proxyFormat) {
+    void testDataDimensionGroupAttributesPreserved(String dataflowUrn, String key, SdmxFormat registryReturnFormat, String proxyFormat) {
         Assumptions.assumeTrue(
                 "application/vnd.sdmx.data+json;version=2.0.0".equals(proxyFormat),
                 "dimension-group assertion runs only for SDMX-JSON 2.0 output"
@@ -734,7 +734,7 @@ public abstract class BaseRegistryTestSuite {
     @ParameterizedTest(name = "dataflow: {0}, key: {1}, mode: {2}, registryReturnFormat: {3}, proxyFormat: {4}")
     @DisplayName("Availability Endpoint Cases")
     @MethodSource("availabilityCases")
-    void testAvailabilityEndpoint(String dataflowUrn, String key, String mode, ReturnFormat registryReturnFormat, String proxyFormat) {
+    void testAvailabilityEndpoint(String dataflowUrn, String key, String mode, SdmxFormat registryReturnFormat, String proxyFormat) {
         updateAvailabilityConfigToMatchRegistryReturnType(registryReturnFormat);
 
         String[] urnParts = parseUrn(dataflowUrn);
@@ -764,7 +764,7 @@ public abstract class BaseRegistryTestSuite {
     }
 
     @SneakyThrows
-    private void updateConfigToMatchRegistryReturnType(ReturnFormat registryReturnType) {
+    private void updateConfigToMatchRegistryReturnType(SdmxFormat registryReturnType) {
         Response getConfigResponse = restClient.getResponse(CONFIG_PATH);
         ProxyConfiguration proxyConfiguration = objectMapper.readValue(getConfigResponse.body().asString(), ProxyConfiguration.class);
 
@@ -788,7 +788,7 @@ public abstract class BaseRegistryTestSuite {
     }
 
     @SneakyThrows
-    private void updateDataConfigToMatchRegistryReturnType(ReturnFormat registryReturnType) {
+    private void updateDataConfigToMatchRegistryReturnType(SdmxFormat registryReturnType) {
         Response getConfigResponse = restClient.getResponse(CONFIG_PATH);
         ProxyConfiguration proxyConfiguration = objectMapper.readValue(getConfigResponse.body().asString(), ProxyConfiguration.class);
 
@@ -812,7 +812,7 @@ public abstract class BaseRegistryTestSuite {
     }
 
     @SneakyThrows
-    private void updateAvailabilityConfigToMatchRegistryReturnType(ReturnFormat registryReturnType) {
+    private void updateAvailabilityConfigToMatchRegistryReturnType(SdmxFormat registryReturnType) {
         Response getConfigResponse = restClient.getResponse(CONFIG_PATH);
         ProxyConfiguration proxyConfiguration = objectMapper.readValue(getConfigResponse.body().asString(), ProxyConfiguration.class);
 
@@ -886,7 +886,7 @@ public abstract class BaseRegistryTestSuite {
     @ParameterizedTest(name = "registryReturnFormat: {0}")
     @DisplayName("Limit diagnostic: emulation strictly caps series at N (HARD FAIL)")
     @MethodSource("limitEmulationFormats")
-    void testLimitEmulationStrict(ReturnFormat registryReturnFormat) throws Exception {
+    void testLimitEmulationStrict(SdmxFormat registryReturnFormat) throws Exception {
         LimitTestSuitConfiguration cfg = testConfig.getLimitTestSuitConfiguration();
         // limitEmulationFormats() already short-circuits to an empty stream when cfg is
         // null; reaching here means cfg is non-null. The parameterized source also filters
@@ -923,18 +923,18 @@ public abstract class BaseRegistryTestSuite {
     }
 
     /**
-     * Yields the set of {@link ReturnFormat}s to parameterize the emulation test over.
+     * Yields the set of {@link SdmxFormat}s to parameterize the emulation test over.
      * If {@code limitTestSuitConfiguration} is absent or its {@code registryReturnFormats}
      * is empty, yields a single entry (the registry's own {@code defaultFormat}) or
      * nothing (the outer test then skips via assumption).
      */
     @SuppressWarnings("unused")
-    Stream<ReturnFormat> limitEmulationFormats() {
+    Stream<SdmxFormat> limitEmulationFormats() {
         LimitTestSuitConfiguration cfg = testConfig.getLimitTestSuitConfiguration();
         if (cfg == null) {
             return Stream.empty();
         }
-        List<ReturnFormat> formats = cfg.getRegistryReturnFormats();
+        List<SdmxFormat> formats = cfg.getRegistryReturnFormats();
         if (formats != null && !formats.isEmpty()) {
             return formats.stream();
         }
@@ -953,13 +953,13 @@ public abstract class BaseRegistryTestSuite {
      * must be able to exercise any truncator even if the registry's committed default is
      * one specific format.
      */
-    private static void forceDataReturnFormat(VersionSpecificRegistryConfiguration versionCfg, ReturnFormat format) {
+    private static void forceDataReturnFormat(VersionSpecificRegistryConfiguration versionCfg, SdmxFormat format) {
         DataEndpointConfiguration data = versionCfg.getDataEndpointConfig();
         if (data == null) {
             return;
         }
         data.setDefaultFormat(format);
-        List<ReturnFormat> supported = data.getSupportedFormats() == null
+        List<SdmxFormat> supported = data.getSupportedFormats() == null
                 ? new ArrayList<>()
                 : new ArrayList<>(data.getSupportedFormats());
         if (!supported.contains(format)) {

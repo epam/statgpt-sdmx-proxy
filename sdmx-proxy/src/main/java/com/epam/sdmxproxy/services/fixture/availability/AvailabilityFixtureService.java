@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.availability;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
@@ -15,7 +15,7 @@ import java.util.List;
  * Orchestrates applying fixtures to raw registry responses.
  * Fixtures are applied as a chain of responsibility in the order they are configured.
  * For each configured fixture, the service finds a matching implementation by both
- * {@link AvailabilityFixtureType} and supported {@link ReturnFormat}, then applies it.
+ * {@link AvailabilityFixtureType} and supported {@link SdmxFormat}, then applies it.
  */
 @Slf4j
 @Service
@@ -34,7 +34,7 @@ public class AvailabilityFixtureService {
      */
     public InputStream applyFixtures(
             InputStream input,
-            ReturnFormat format,
+            SdmxFormat format,
             SdmxBeans sdmxBeans,
             List<FixtureConfiguration<AvailabilityFixtureType>> fixtureConfigs
     ) {
@@ -55,7 +55,7 @@ public class AvailabilityFixtureService {
         return current;
     }
 
-    private AvailabilityFixture findFixture(AvailabilityFixtureType type, ReturnFormat format) {
+    private AvailabilityFixture findFixture(AvailabilityFixtureType type, SdmxFormat format) {
         return fixtures.stream()
                 .filter(f -> f.getType() == type && f.supportedFormats().contains(format))
                 .findFirst()

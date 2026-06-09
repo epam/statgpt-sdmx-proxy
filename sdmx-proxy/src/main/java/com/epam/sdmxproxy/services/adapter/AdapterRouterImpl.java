@@ -14,14 +14,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
 import com.epam.sdmxproxy.common.data.TranslatedAvailabilityQuery;
 import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.common.utils.FormatSupportChecker;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
@@ -136,7 +136,7 @@ public class AdapterRouterImpl implements AdapterRouter {
     public StreamingResponseBody getStructures(TranslatedStructureQuery query) {
         VersionSpecificRegistryConfiguration versionConfig = query.getVersionConfiguration();
         MediaType requestedMediaType = query.getContentType();
-        ReturnFormat returnFormat = query.getRegistryReturnFormat();
+        SdmxFormat returnFormat = query.getRegistryReturnFormat();
 
         String responseKey = CacheKeyGenerator.generateResponseKey(query, requestedMediaType, Collections.emptyMap());
 
@@ -168,7 +168,7 @@ public class AdapterRouterImpl implements AdapterRouter {
                 : null;
     }
 
-    private StreamingResponseBody getStructuresConversion(TranslatedStructureQuery query, ReturnFormat returnFormat, MediaType requestedMediaType, String responseKey) {
+    private StreamingResponseBody getStructuresConversion(TranslatedStructureQuery query, SdmxFormat returnFormat, MediaType requestedMediaType, String responseKey) {
         return outputStream -> {
             try (InputStream rawStream = genericRegistryAdapter.getStructures(query)) {
                 if (rawStream == null) {
@@ -179,8 +179,8 @@ public class AdapterRouterImpl implements AdapterRouter {
                 // JSON output: capture the usages verbatim and re-inject after conversion. XML 2.1 output:
                 // fold the usages into the AttributeList as DataAttributes (design 032) -- never for JSON,
                 // which would mimic the SDMX-PLUS behaviour removed in design 027.
-                boolean preserveUsages = markerEnabled && SdmxMediaType.isJson(requestedMediaType);
-                boolean foldUsages = markerEnabled && SdmxMediaType.isXmlV21(requestedMediaType) && returnFormat == ReturnFormat.JSON_STRUCTURE_2_0_0;
+                boolean preserveUsages = markerEnabled && SdmxMediaTypeResolver.isJson(requestedMediaType);
+                boolean foldUsages = markerEnabled && SdmxMediaTypeResolver.isXmlV21(requestedMediaType) && returnFormat == SdmxFormat.JSON_STRUCTURE_2_0_0;
 
                 Map<String, JsonNode> capturedUsages = Map.of();
                 InputStream forFixtures;
@@ -239,7 +239,7 @@ public class AdapterRouterImpl implements AdapterRouter {
             log.debug("Empty structures payload for {}; returning empty SdmxBeans", structureKey);
             return new SdmxBeansImpl();
         }
-        ReturnFormat structureReturnFormat = query.getRegistryReturnFormat();
+        SdmxFormat structureReturnFormat = query.getRegistryReturnFormat();
         return streamingStructureConversionService.parseStructures(new ByteArrayInputStream(structures), structureReturnFormat);
     }
 
@@ -331,7 +331,7 @@ public class AdapterRouterImpl implements AdapterRouter {
     public StreamingResponseBody getData(TranslatedDataQuery query) {
         VersionSpecificRegistryConfiguration versionConfig = query.getVersionConfiguration();
         MediaType requestedMediaType = query.getContentType();
-        ReturnFormat returnFormat = query.getReturnFormat();
+        SdmxFormat returnFormat = query.getReturnFormat();
         DataEndpointConfiguration dataConfig = versionConfig.getDataEndpointConfig();
 
         if (dataConfig != null && dataConfig.isConvertKeyToFilters()) {
@@ -355,7 +355,7 @@ public class AdapterRouterImpl implements AdapterRouter {
                 && !dataConfig.isSupportsLimit();
         List<FixtureConfiguration<DataFixtureType>> dataFixtures = dataConfig != null ? dataConfig.getFixtures() : null;
         boolean preserveMetadataAttrs = metadataAttributesPreserver.isEnabled(dataFixtures)
-                && returnFormat == ReturnFormat.JSON_DATA_2_0_0
+                && returnFormat == SdmxFormat.JSON_DATA_2_0_0
                 && isJson20Output(requestedMediaType);
         return outputStream -> {
             SdmxBeans sdmxBeans = getSdmxBeans(getStructureQuery(query));
@@ -503,7 +503,7 @@ public class AdapterRouterImpl implements AdapterRouter {
     public StreamingResponseBody getAvailability(TranslatedAvailabilityQuery query) {
         VersionSpecificRegistryConfiguration versionConfig = query.getVersionConfiguration();
         MediaType requestedMediaType = query.getContentType();
-        ReturnFormat returnFormat = query.getReturnFormat();
+        SdmxFormat returnFormat = query.getReturnFormat();
         AvailabilityEndpointConfiguration availabilityConfig = versionConfig.getAvailabilityEndpointConfig();
 
         if (availabilityConfig != null && availabilityConfig.isConvertKeyToFilters()) {

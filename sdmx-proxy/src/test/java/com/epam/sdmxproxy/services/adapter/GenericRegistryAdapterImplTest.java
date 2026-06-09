@@ -3,7 +3,7 @@ package com.epam.sdmxproxy.services.adapter;
 import com.epam.sdmxproxy.common.data.TranslatedAvailabilityQuery;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.registry.api.SdmxApiClientProvider;
@@ -156,7 +156,7 @@ class GenericRegistryAdapterImplTest {
                 .resourceID("TEST_FLOW")
                 .version("1.0")
                 .filters(filters)
-                .returnFormat(ReturnFormat.JSON_STRUCTURE_2_0_0)
+                .returnFormat(SdmxFormat.JSON_STRUCTURE_2_0_0)
                 .build();
     }
 
@@ -175,7 +175,7 @@ class GenericRegistryAdapterImplTest {
                 .resourceID("TEST_FLOW")
                 .version("1.0")
                 .filters(filters)
-                .returnFormat(ReturnFormat.JSON_STRUCTURE_2_0_0)
+                .returnFormat(SdmxFormat.JSON_STRUCTURE_2_0_0)
                 .build();
     }
 }

@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.e2e.tests.framework.config;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -15,6 +15,6 @@ public class DataTestSuitConfiguration {
 
     private List<String> mediaTypes;
 
-    private List<ReturnFormat> registryReturnFormats;
+    private List<SdmxFormat> registryReturnFormats;
 
 }

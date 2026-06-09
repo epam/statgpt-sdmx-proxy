@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.limit.truncate;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.services.fixture.data.StreamingFixtureIO;
 import com.opencsv.RFC4180Parser;
 import com.opencsv.RFC4180ParserBuilder;
@@ -42,8 +42,8 @@ public class CsvSeriesLimitTruncator implements SeriesLimitTruncator {
     private final StreamingFixtureIO streamingFixtureIO;
 
     @Override
-    public Set<ReturnFormat> supportedFormats() {
-        return Set.of(ReturnFormat.CSV_DATA_2_0_0);
+    public Set<SdmxFormat> supportedFormats() {
+        return Set.of(SdmxFormat.CSV_DATA_2_0_0);
     }
 
     @Override

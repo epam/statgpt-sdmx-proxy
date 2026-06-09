@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.limit;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 
 import java.io.InputStream;
 
@@ -13,11 +13,11 @@ public interface AvailabilityResponseParser {
     /**
      * Indicates whether this parser handles the given registry format.
      */
-    boolean supports(ReturnFormat format);
+    boolean supports(SdmxFormat format);
 
     /**
      * Streams through {@code availabilityResponseStream} and returns the projection. Must
      * not buffer the full response. Caller owns stream close semantics.
      */
-    AvailabilityProjection parse(InputStream availabilityResponseStream, ReturnFormat format);
+    AvailabilityProjection parse(InputStream availabilityResponseStream, SdmxFormat format);
 }

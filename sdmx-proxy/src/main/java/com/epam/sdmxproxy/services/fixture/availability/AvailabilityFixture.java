@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.availability;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
@@ -23,7 +23,7 @@ public interface AvailabilityFixture {
     /**
      * Returns the set of return formats this fixture can handle.
      */
-    Set<ReturnFormat> supportedFormats();
+    Set<SdmxFormat> supportedFormats();
 
 
     InputStream apply(InputStream input, SdmxBeans sdmxBeans, Map<String, String> config);

@@ -1,7 +1,8 @@
 package com.epam.sdmxproxy.controller;
 
 import com.epam.sdmxproxy.api.SdmxStructure30Api;
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
+import com.epam.sdmxproxy.configuration.data.SdmxMediaTypes;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.registry.configuration.ProxyConfigurationProvider;
@@ -24,7 +25,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.util.List;
 import java.util.Optional;
 
-import static com.epam.sdmxproxy.common.data.SdmxMediaType.parseMediaType;
+import static com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver.parseMediaType;
 import static com.epam.sdmxproxy.controller.utils.ControllerUtils.ControllerType.STRUCTURE;
 import static com.epam.sdmxproxy.controller.utils.ControllerUtils.logRequestUrl;
 
@@ -34,7 +35,7 @@ import static com.epam.sdmxproxy.controller.utils.ControllerUtils.logRequestUrl;
 public class SdmxStructure30Controller implements SdmxStructure30Api {
 
     private static final String WILDCARD_AGENCY = "*";
-    private static final String ACCEPT_HEADER_FALLBACK = SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE;
+    private static final String ACCEPT_HEADER_FALLBACK = SdmxMediaTypes.STRUCTURE_JSON_2_0_0;
 
     private final QueryTranslator queryTranslator;
     private final AdapterRouter adapterRouter;
@@ -54,7 +55,7 @@ public class SdmxStructure30Controller implements SdmxStructure30Api {
     ) {
         logRequestUrl(accept, STRUCTURE);
 
-        if (Strings.CS.equals(accept, SdmxMediaType.ANY)) {
+        if (Strings.CS.equals(accept, SdmxMediaTypeResolver.ANY)) {
             accept = ACCEPT_HEADER_FALLBACK;
         }
 

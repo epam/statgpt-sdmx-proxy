@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.data;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
@@ -27,7 +27,7 @@ public class DataFixtureService {
 
     public InputStream applyFixtures(
             InputStream input,
-            ReturnFormat format,
+            SdmxFormat format,
             SdmxBeans sdmxBeans,
             List<FixtureConfiguration<DataFixtureType>> fixtureConfigs
     ) {
@@ -48,7 +48,7 @@ public class DataFixtureService {
         return current;
     }
 
-    private DataFixture findFixture(DataFixtureType type, ReturnFormat format) {
+    private DataFixture findFixture(DataFixtureType type, SdmxFormat format) {
         return fixtures.stream()
                 .filter(f -> f.getType() == type && f.supportedFormats().contains(format))
                 .findFirst()
