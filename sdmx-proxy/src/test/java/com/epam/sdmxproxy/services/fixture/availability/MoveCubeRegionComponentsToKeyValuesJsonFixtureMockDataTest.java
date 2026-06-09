@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.availability;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -60,12 +60,12 @@ class MoveCubeRegionComponentsToKeyValuesJsonFixtureMockDataTest {
 
     @Test
     void shouldSupportJsonStructure() {
-        assertTrue(fixture.supportedFormats().contains(ReturnFormat.JSON_STRUCTURE_2_0_0));
+        assertTrue(fixture.supportedFormats().contains(SdmxFormat.JSON_STRUCTURE_2_0_0));
     }
 
     @Test
     void shouldNotSupportXmlFormats() {
-        assertFalse(fixture.supportedFormats().contains(ReturnFormat.XML_2_1));
+        assertFalse(fixture.supportedFormats().contains(SdmxFormat.XML_STRUCTURE_2_1));
     }
 
     @Test

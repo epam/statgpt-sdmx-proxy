@@ -1,6 +1,7 @@
 package com.epam.sdmxproxy.api;
 
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
+import com.epam.sdmxproxy.configuration.data.SdmxMediaTypes;
 import com.epam.sdmxproxy.web.config.settings.WebMvcSettings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -74,19 +75,19 @@ public interface DataQuery30Api {
                                     schema = @Schema(type = "string", format = "binary")
                             ),
                             @Content(
-                                    mediaType = SdmxMediaType.SDMX_JSON_1_0_0_VALUE,
+                                    mediaType = SdmxMediaTypes.DATA_JSON_1_0_0,
                                     schema = @Schema(type = "string", format = "binary")
                             ),
                             @Content(
-                                    mediaType = SdmxMediaType.SDMX_JSON_2_0_0_VALUE,
+                                    mediaType = SdmxMediaTypes.DATA_JSON_2_0_0,
                                     schema = @Schema(type = "string", format = "binary")
                             ),
                             @Content(
-                                    mediaType = SdmxMediaType.SDMX_XML_3_0_0_VALUE,
+                                    mediaType = SdmxMediaTypes.DATA_XML_3_0_0,
                                     schema = @Schema(type = "string", format = "binary")
                             ),
                             @Content(
-                                    mediaType = SdmxMediaType.SDMX_CSV_2_0_0_VALUE,
+                                    mediaType = SdmxMediaTypes.DATA_CSV_2_0_0,
                                     schema = @Schema(type = "string", format = "binary")
                             )
                     }
@@ -104,12 +105,12 @@ public interface DataQuery30Api {
             value = "/{context:datastructure|dataflow|provisionagreement}/{agencyID}/{resourceID}/{version}/{key}",
             produces = {
                     MediaType.APPLICATION_JSON_VALUE,
-                    SdmxMediaType.SDMX_JSON_1_0_0_VALUE,
-                    SdmxMediaType.SDMX_JSON_2_0_0_VALUE,
-                    SdmxMediaType.SDMX_XML_3_0_0_VALUE,
-                    SdmxMediaType.SDMX_CSV_2_0_0_VALUE,
-                    SdmxMediaType.APPLICATION_CSV_VALUE,
-                    SdmxMediaType.TEXT_CSV_VALUE,
+                    SdmxMediaTypes.DATA_JSON_1_0_0,
+                    SdmxMediaTypes.DATA_JSON_2_0_0,
+                    SdmxMediaTypes.DATA_XML_3_0_0,
+                    SdmxMediaTypes.DATA_CSV_2_0_0,
+                    SdmxMediaTypeResolver.APPLICATION_CSV_VALUE,
+                    SdmxMediaTypeResolver.TEXT_CSV_VALUE,
                     MediaType.APPLICATION_XML_VALUE,
                     MediaType.ALL_VALUE
             }

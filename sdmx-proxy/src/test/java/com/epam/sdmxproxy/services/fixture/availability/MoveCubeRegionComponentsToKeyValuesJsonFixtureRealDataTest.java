@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.availability;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -57,7 +57,7 @@ class MoveCubeRegionComponentsToKeyValuesJsonFixtureRealDataTest {
         InputStream availabilityInput = getClass().getResourceAsStream("imf_weo_availability_response.json");
         InputStream structuresInput = getClass().getResourceAsStream("structures_dataflow_imf_res_weo_9_0_0_detail_full_references_descendants.json");
 
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structuresInput, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structuresInput, SdmxFormat.JSON_STRUCTURE_2_0_0);
 
         //WHEN
         InputStream result = fixture.apply(availabilityInput, sdmxBeans, new HashMap<>());

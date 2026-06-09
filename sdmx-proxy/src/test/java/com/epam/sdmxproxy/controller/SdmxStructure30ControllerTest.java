@@ -4,7 +4,7 @@ import com.epam.sdmxproxy.common.data.Structure;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.exception.UnsupportedAgencyWildcardException;
@@ -263,7 +263,7 @@ class SdmxStructure30ControllerTest {
                 .references(null)
                 .detail("full")
                 .contentType(MediaType.parseMediaType(JSON_2_0_0))
-                .registryReturnFormat(ReturnFormat.JSON_STRUCTURE_2_0_0)
+                .registryReturnFormat(SdmxFormat.JSON_STRUCTURE_2_0_0)
                 .build();
     }
 }

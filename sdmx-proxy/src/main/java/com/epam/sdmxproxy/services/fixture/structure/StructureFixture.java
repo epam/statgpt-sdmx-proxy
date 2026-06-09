@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.structure;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 
@@ -22,7 +22,7 @@ public interface StructureFixture {
     /**
      * Returns the set of return formats this fixture can handle.
      */
-    Set<ReturnFormat> supportedFormats();
+    Set<SdmxFormat> supportedFormats();
 
     /**
      * Applies the fixture to the given input stream.

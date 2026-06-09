@@ -11,7 +11,7 @@ import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistrySelectionResult;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.epam.sdmxproxy.common.data.SdmxMediaType.parseMediaType;
+import static com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver.parseMediaType;
 
 
 @Slf4j
@@ -178,7 +178,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
 
         RegistrySelectionResult selectedRegistry = selectRegistryAndVersion(agencyId, parsedMediaType.getSdmxVersion(), sourceArtefactUrn);
 
-        ReturnFormat returnFormat = determineStructureReturnFormat(
+        SdmxFormat returnFormat = determineStructureReturnFormat(
                 selectedRegistry,
                 parsedMediaType
         );
@@ -202,7 +202,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
 
         RegistrySelectionResult selectedRegistry = selectRegistryAndVersion(agencyId, parsedMediaType.getSdmxVersion(), null);
 
-        ReturnFormat returnFormat = determineStructureReturnFormat(
+        SdmxFormat returnFormat = determineStructureReturnFormat(
                 selectedRegistry,
                 parsedMediaType
         );
@@ -250,7 +250,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
                     .registryConfiguration(registryConfig)
                     .versionConfiguration(versionConfig)
                     .build();
-            ReturnFormat returnFormat = determineStructureReturnFormat(selected, parsedMediaType);
+            SdmxFormat returnFormat = determineStructureReturnFormat(selected, parsedMediaType);
 
             String queryAgencyId = getVersionSpecificQueryId(SDMX_30_ALL_WILDCARD, versionConfig);
             String queryResourceId = getVersionSpecificQueryId(resourceId, versionConfig);
@@ -360,7 +360,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
             processedKey = mergeAllWildcardKey(processedKey);
         }
 
-        ReturnFormat returnFormat = determineAvailabilityReturnFormat(
+        SdmxFormat returnFormat = determineAvailabilityReturnFormat(
                 selectedRegistry,
                 mediaTypeResult
         );
@@ -527,7 +527,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
             processedKey = mergeAllWildcardKey(processedKey);
         }
 
-        ReturnFormat returnFormat = determineDataReturnFormat(
+        SdmxFormat returnFormat = determineDataReturnFormat(
                 selectedRegistry,
                 mediaTypeResult
         );
@@ -579,7 +579,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
      * Otherwise, uses defaultFormat. Throws exception if defaultFormat is not configured.
      */
     //TODO WRITE TESTS FOR IT
-    private ReturnFormat determineStructureReturnFormat(
+    private SdmxFormat determineStructureReturnFormat(
             RegistrySelectionResult selectedRegistry,
             MediaTypeParseResult parsedMediaType
     ) {
@@ -598,7 +598,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         // Check if bypass is possible
         if (FormatSupportChecker.canBypassStructureFormat(versionConfig, requestedMediaType)) {
             // Find matching format from supportedFormats that matches MediaType details
-            ReturnFormat matchingFormat = findMatchingFormat(
+            SdmxFormat matchingFormat = findMatchingFormat(
                     structureConfig.getSupportedFormats(),
                     requestedMediaType
             );
@@ -608,7 +608,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         }
 
         // Use default format
-        ReturnFormat defaultFormat = structureConfig.getDefaultFormat();
+        SdmxFormat defaultFormat = structureConfig.getDefaultFormat();
         if (defaultFormat == null) {
             throw new IllegalRegistryConfigurationException(
                     String.format("Registry %s (version %s) does not support structure format %s and no default format is configured",
@@ -626,7 +626,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
      * If bypass is enabled and requested format matches supportedFormats, uses matching format.
      * Otherwise, uses defaultFormat. Throws exception if defaultFormat is not configured.
      */
-    private ReturnFormat determineDataReturnFormat(
+    private SdmxFormat determineDataReturnFormat(
             RegistrySelectionResult selectedRegistry,
             MediaTypeParseResult parsedMediaType
     ) {
@@ -644,7 +644,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
 
         // CSV hard override: if client requests CSV and registry supports it, use native CSV
         if (requestedMediaType.getSubtype().contains("csv")) {
-            ReturnFormat csvFormat = findMatchingFormat(dataConfig.getSupportedFormats(), requestedMediaType);
+            SdmxFormat csvFormat = findMatchingFormat(dataConfig.getSupportedFormats(), requestedMediaType);
             if (csvFormat != null) {
                 return csvFormat;
             }
@@ -653,7 +653,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         // Check if bypass is possible
         if (FormatSupportChecker.canBypassDataFormat(versionConfig, requestedMediaType)) {
             // Find matching format from supportedFormats that matches MediaType details
-            ReturnFormat matchingFormat = findMatchingFormat(
+            SdmxFormat matchingFormat = findMatchingFormat(
                     dataConfig.getSupportedFormats(),
                     requestedMediaType
             );
@@ -663,7 +663,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         }
 
         // Use default format
-        ReturnFormat defaultFormat = dataConfig.getDefaultFormat();
+        SdmxFormat defaultFormat = dataConfig.getDefaultFormat();
         if (defaultFormat == null) {
             throw new IllegalRegistryConfigurationException(
                     String.format("Registry %s (version %s) does not support data format %s and no default format is configured",
@@ -682,7 +682,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
      * Otherwise, uses defaultFormat. Throws exception if defaultFormat is not configured.
      */
     //TODO WRITE TESTS FOR IT
-    private ReturnFormat determineAvailabilityReturnFormat(
+    private SdmxFormat determineAvailabilityReturnFormat(
             RegistrySelectionResult selectedRegistry,
             MediaTypeParseResult parsedMediaType
     ) {
@@ -701,7 +701,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         // Check if bypass is possible
         if (FormatSupportChecker.canBypassAvailabilityFormat(versionConfig, requestedMediaType)) {
             // Find matching format from supportedFormats that matches MediaType details
-            ReturnFormat matchingFormat = findMatchingFormat(
+            SdmxFormat matchingFormat = findMatchingFormat(
                     availabilityConfig.getSupportedFormats(),
                     requestedMediaType
             );
@@ -711,7 +711,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
         }
 
         // Use default format
-        ReturnFormat defaultFormat = availabilityConfig.getDefaultFormat();
+        SdmxFormat defaultFormat = availabilityConfig.getDefaultFormat();
         if (defaultFormat == null) {
             throw new IllegalRegistryConfigurationException(
                     String.format("Registry %s (version %s) does not support availability format %s and no default format is configured",
@@ -728,11 +728,11 @@ public class QueryTranslatorImpl implements QueryTranslator {
      *
      * @param supportedFormats   list of formats that registry can return
      * @param requestedMediaType detailed media type from Accept header
-     * @return matching ReturnFormat, or null if not found
+     * @return matching SdmxFormat, or null if not found
      */
     //TODO WRITE TESTS FOR IT
-    private ReturnFormat findMatchingFormat(
-            List<ReturnFormat> supportedFormats,
+    private SdmxFormat findMatchingFormat(
+            List<SdmxFormat> supportedFormats,
             MediaType requestedMediaType
     ) {
         if (supportedFormats == null || supportedFormats.isEmpty()) {

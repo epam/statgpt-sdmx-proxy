@@ -8,7 +8,7 @@ import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryResilienceConfig;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
@@ -105,7 +105,7 @@ class QueryTranslatorImplTest {
         assertEquals(SdmxVersion.SDMX_3_0, query.getVersionConfiguration().getSdmxVersion());
         assertEquals("http://bis.org/api/v3/", query.getVersionConfiguration().getStructureEndpointConfig().getUrl());
         assertNotNull(query.getRegistryReturnFormat());
-        assertEquals(ReturnFormat.JSON_1_0_0, query.getRegistryReturnFormat());
+        assertEquals(SdmxFormat.JSON_DATA_1_0_0, query.getRegistryReturnFormat());
         assertNotNull(query.getContentType());
         assertEquals(MediaType.APPLICATION_JSON, query.getContentType());
     }
@@ -146,7 +146,7 @@ class QueryTranslatorImplTest {
         assertNotNull(query);
         assertEquals(SdmxVersion.SDMX_2_1, query.getVersionConfiguration().getSdmxVersion());
         assertEquals("http://test.org/api/v2.1/", query.getVersionConfiguration().getStructureEndpointConfig().getUrl());
-        assertEquals(ReturnFormat.XML_2_1, query.getRegistryReturnFormat());
+        assertEquals(SdmxFormat.XML_STRUCTURE_2_1, query.getRegistryReturnFormat());
         assertNotNull(query.getContentType());
         assertEquals(MediaType.APPLICATION_JSON, query.getContentType());
     }
@@ -168,7 +168,7 @@ class QueryTranslatorImplTest {
         assertNotNull(query);
         assertEquals(SdmxVersion.SDMX_3_0, query.getVersionConfiguration().getSdmxVersion());
         assertEquals("http://test.org/api/v3/", query.getVersionConfiguration().getStructureEndpointConfig().getUrl());
-        assertEquals(ReturnFormat.JSON_1_0_0, query.getRegistryReturnFormat());
+        assertEquals(SdmxFormat.JSON_DATA_1_0_0, query.getRegistryReturnFormat());
         assertNotNull(query.getContentType());
         assertEquals(MediaType.APPLICATION_JSON, query.getContentType());
     }
@@ -211,7 +211,7 @@ class QueryTranslatorImplTest {
         // Then
         assertNotNull(query.getVersionConfiguration());
         assertEquals(SdmxVersion.SDMX_3_0, query.getVersionConfiguration().getSdmxVersion());
-        assertEquals(ReturnFormat.JSON_1_0_0, query.getRegistryReturnFormat());
+        assertEquals(SdmxFormat.JSON_DATA_1_0_0, query.getRegistryReturnFormat());
         assertEquals("http://bis.org/api/v3/", query.getVersionConfiguration().getStructureEndpointConfig().getUrl());
     }
 
@@ -459,7 +459,7 @@ class QueryTranslatorImplTest {
         );
 
         // Then - Should use JSON format for 3.0
-        assertEquals(ReturnFormat.JSON_1_0_0, query30.getVersionConfiguration().getDataEndpointConfig().getDefaultFormat());
+        assertEquals(SdmxFormat.JSON_DATA_1_0_0, query30.getVersionConfiguration().getDataEndpointConfig().getDefaultFormat());
         assertNotNull(query30.getContentType());
         assertEquals(MediaType.APPLICATION_JSON, query30.getContentType());
 
@@ -476,7 +476,7 @@ class QueryTranslatorImplTest {
         );
 
         // Then - Should use XML format for 2.1
-        assertEquals(ReturnFormat.XML_STRUCTURE_SPECIFIC_2_1, query21.getVersionConfiguration().getDataEndpointConfig().getDefaultFormat());
+        assertEquals(SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1, query21.getVersionConfiguration().getDataEndpointConfig().getDefaultFormat());
         assertNotNull(query21.getContentType());
         assertEquals(MediaType.APPLICATION_XML, query21.getContentType());
     }
@@ -753,7 +753,7 @@ class QueryTranslatorImplTest {
         );
     }
 
-    // ========== ReturnFormat Determination Tests ==========
+    // ========== SdmxFormat Determination Tests ==========
 
     @Test
     void testTranslateStructureQuery_WithBypassEnabled_UsesMatchingFormat() {
@@ -771,7 +771,7 @@ class QueryTranslatorImplTest {
         // Then - Should use matching format from supportedFormats (bypass)
         assertNotNull(query);
         assertNotNull(query.getRegistryReturnFormat());
-        assertEquals(ReturnFormat.JSON_1_0_0, query.getRegistryReturnFormat());
+        assertEquals(SdmxFormat.JSON_DATA_1_0_0, query.getRegistryReturnFormat());
     }
 
     @Test
@@ -792,7 +792,7 @@ class QueryTranslatorImplTest {
         // Then - Should use defaultFormat
         assertNotNull(query);
         assertNotNull(query.getRegistryReturnFormat());
-        assertEquals(ReturnFormat.JSON_1_0_0, query.getRegistryReturnFormat());
+        assertEquals(SdmxFormat.JSON_DATA_1_0_0, query.getRegistryReturnFormat());
     }
 
     @Test
@@ -811,7 +811,7 @@ class QueryTranslatorImplTest {
         // Then - Should use defaultFormat
         assertNotNull(query);
         assertNotNull(query.getRegistryReturnFormat());
-        assertEquals(ReturnFormat.JSON_1_0_0, query.getRegistryReturnFormat());
+        assertEquals(SdmxFormat.JSON_DATA_1_0_0, query.getRegistryReturnFormat());
     }
 
     @Test
@@ -853,7 +853,7 @@ class QueryTranslatorImplTest {
         // Then
         assertNotNull(query);
         assertNotNull(query.getReturnFormat());
-        assertEquals(ReturnFormat.JSON_1_0_0, query.getReturnFormat());
+        assertEquals(SdmxFormat.JSON_DATA_1_0_0, query.getReturnFormat());
     }
 
     @Test
@@ -900,7 +900,7 @@ class QueryTranslatorImplTest {
         // Then
         assertNotNull(query);
         assertNotNull(query.getReturnFormat());
-        assertEquals(ReturnFormat.JSON_1_0_0, query.getReturnFormat());
+        assertEquals(SdmxFormat.JSON_DATA_1_0_0, query.getReturnFormat());
     }
 
     @Test
@@ -1183,23 +1183,23 @@ class QueryTranslatorImplTest {
 
         StructureEndpointConfiguration structure21 = new StructureEndpointConfiguration();
         structure21.setUrl("http://bis.org/api/v2.1/");
-        structure21.setSupportedFormats(List.of(ReturnFormat.XML_2_1));
-        structure21.setDefaultFormat(ReturnFormat.XML_2_1);
+        structure21.setSupportedFormats(List.of(SdmxFormat.XML_STRUCTURE_2_1));
+        structure21.setDefaultFormat(SdmxFormat.XML_STRUCTURE_2_1);
         structure21.setBypassEnabled(true);
         structure21.setSupportedStructures(Set.of("datastructure", "dataflow"));
         version21.setStructureEndpointConfig(structure21);
 
         DataEndpointConfiguration data21 = new DataEndpointConfiguration();
         data21.setUrl("http://bis.org/api/v2.1/data/");
-        data21.setSupportedFormats(List.of(ReturnFormat.XML_STRUCTURE_SPECIFIC_2_1));
-        data21.setDefaultFormat(ReturnFormat.XML_STRUCTURE_SPECIFIC_2_1);
+        data21.setSupportedFormats(List.of(SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1));
+        data21.setDefaultFormat(SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1);
         data21.setBypassEnabled(true);
         version21.setDataEndpointConfig(data21);
 
         AvailabilityEndpointConfiguration availability21 = new AvailabilityEndpointConfiguration();
         availability21.setUrl("http://bis.org/api/v2.1/");
-        availability21.setSupportedFormats(List.of(ReturnFormat.XML_2_1));
-        availability21.setDefaultFormat(ReturnFormat.XML_2_1);
+        availability21.setSupportedFormats(List.of(SdmxFormat.XML_STRUCTURE_2_1));
+        availability21.setDefaultFormat(SdmxFormat.XML_STRUCTURE_2_1);
         availability21.setBypassEnabled(true);
         availability21.setAvailabilityEnabled(true);
         version21.setAvailabilityEndpointConfig(availability21);
@@ -1212,23 +1212,23 @@ class QueryTranslatorImplTest {
 
         StructureEndpointConfiguration structure30 = new StructureEndpointConfiguration();
         structure30.setUrl("http://bis.org/api/v3/");
-        structure30.setSupportedFormats(List.of(ReturnFormat.JSON_1_0_0));
-        structure30.setDefaultFormat(ReturnFormat.JSON_1_0_0);
+        structure30.setSupportedFormats(List.of(SdmxFormat.JSON_DATA_1_0_0));
+        structure30.setDefaultFormat(SdmxFormat.JSON_DATA_1_0_0);
         structure30.setBypassEnabled(true);
         structure30.setSupportedStructures(Set.of("datastructure", "dataflow"));
         version30.setStructureEndpointConfig(structure30);
 
         DataEndpointConfiguration data30 = new DataEndpointConfiguration();
         data30.setUrl("http://bis.org/api/v3/data/");
-        data30.setSupportedFormats(List.of(ReturnFormat.JSON_1_0_0));
-        data30.setDefaultFormat(ReturnFormat.JSON_1_0_0);
+        data30.setSupportedFormats(List.of(SdmxFormat.JSON_DATA_1_0_0));
+        data30.setDefaultFormat(SdmxFormat.JSON_DATA_1_0_0);
         data30.setBypassEnabled(true);
         version30.setDataEndpointConfig(data30);
 
         AvailabilityEndpointConfiguration availability30 = new AvailabilityEndpointConfiguration();
         availability30.setUrl("http://bis.org/api/v3/");
-        availability30.setSupportedFormats(List.of(ReturnFormat.JSON_1_0_0));
-        availability30.setDefaultFormat(ReturnFormat.JSON_1_0_0);
+        availability30.setSupportedFormats(List.of(SdmxFormat.JSON_DATA_1_0_0));
+        availability30.setDefaultFormat(SdmxFormat.JSON_DATA_1_0_0);
         availability30.setBypassEnabled(true);
         availability30.setAvailabilityEnabled(true);
         version30.setAvailabilityEndpointConfig(availability30);
@@ -1256,36 +1256,36 @@ class QueryTranslatorImplTest {
 
         if (version == SdmxVersion.SDMX_2_1) {
             structureConfig.setUrl("http://test.org/api/v2.1/");
-            structureConfig.setSupportedFormats(List.of(ReturnFormat.XML_2_1));
-            structureConfig.setDefaultFormat(ReturnFormat.XML_2_1);
+            structureConfig.setSupportedFormats(List.of(SdmxFormat.XML_STRUCTURE_2_1));
+            structureConfig.setDefaultFormat(SdmxFormat.XML_STRUCTURE_2_1);
             structureConfig.setBypassEnabled(true);
             structureConfig.setSupportedStructures(Set.of("datastructure", "dataflow"));
 
             dataConfig.setUrl("http://test.org/api/v2.1/data/");
-            dataConfig.setSupportedFormats(List.of(ReturnFormat.XML_STRUCTURE_SPECIFIC_2_1));
-            dataConfig.setDefaultFormat(ReturnFormat.XML_STRUCTURE_SPECIFIC_2_1);
+            dataConfig.setSupportedFormats(List.of(SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1));
+            dataConfig.setDefaultFormat(SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1);
             dataConfig.setBypassEnabled(true);
 
             availabilityConfig.setUrl("http://test.org/api/v2.1/");
-            availabilityConfig.setSupportedFormats(List.of(ReturnFormat.XML_2_1));
-            availabilityConfig.setDefaultFormat(ReturnFormat.XML_2_1);
+            availabilityConfig.setSupportedFormats(List.of(SdmxFormat.XML_STRUCTURE_2_1));
+            availabilityConfig.setDefaultFormat(SdmxFormat.XML_STRUCTURE_2_1);
             availabilityConfig.setBypassEnabled(true);
             availabilityConfig.setAvailabilityEnabled(true);
         } else {
             structureConfig.setUrl("http://test.org/api/v3/");
-            structureConfig.setSupportedFormats(List.of(ReturnFormat.JSON_1_0_0));
-            structureConfig.setDefaultFormat(ReturnFormat.JSON_1_0_0);
+            structureConfig.setSupportedFormats(List.of(SdmxFormat.JSON_DATA_1_0_0));
+            structureConfig.setDefaultFormat(SdmxFormat.JSON_DATA_1_0_0);
             structureConfig.setBypassEnabled(true);
             structureConfig.setSupportedStructures(Set.of("datastructure", "dataflow"));
 
             dataConfig.setUrl("http://test.org/api/v3/data/");
-            dataConfig.setSupportedFormats(List.of(ReturnFormat.JSON_1_0_0));
-            dataConfig.setDefaultFormat(ReturnFormat.JSON_1_0_0);
+            dataConfig.setSupportedFormats(List.of(SdmxFormat.JSON_DATA_1_0_0));
+            dataConfig.setDefaultFormat(SdmxFormat.JSON_DATA_1_0_0);
             dataConfig.setBypassEnabled(true);
 
             availabilityConfig.setUrl("http://test.org/api/v3/");
-            availabilityConfig.setSupportedFormats(List.of(ReturnFormat.JSON_1_0_0));
-            availabilityConfig.setDefaultFormat(ReturnFormat.JSON_1_0_0);
+            availabilityConfig.setSupportedFormats(List.of(SdmxFormat.JSON_DATA_1_0_0));
+            availabilityConfig.setDefaultFormat(SdmxFormat.JSON_DATA_1_0_0);
             availabilityConfig.setBypassEnabled(true);
             availabilityConfig.setAvailabilityEnabled(true);
         }

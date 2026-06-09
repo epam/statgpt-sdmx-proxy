@@ -14,7 +14,7 @@ import com.epam.sdmxproxy.common.data.TranslatedAvailabilityQuery;
 import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.exception.AvailabilityProbeException;
 import com.epam.sdmxproxy.exception.IllegalRegistryConfigurationException;
@@ -617,7 +617,7 @@ public class LimitEmulationServiceImpl implements LimitEmulationService {
         String componentId = availabilityConfig.isUnwrapStarComponentId()
                 ? String.join(",", nonTimeDimensionIds(sdmxBeans))
                 : "*";
-        ReturnFormat returnFormat = availabilityConfig.getDefaultFormat();
+        SdmxFormat returnFormat = availabilityConfig.getDefaultFormat();
         return TranslatedAvailabilityQuery.builder()
                 .registryConfiguration(query.getRegistryConfiguration())
                 .versionConfiguration(query.getVersionConfiguration())
@@ -651,7 +651,7 @@ public class LimitEmulationServiceImpl implements LimitEmulationService {
     ) {
         AvailabilityEndpointConfiguration availabilityConfig = requireAvailabilityConfig(query);
         String componentId = String.join(",", nonTimeDimensionIds(sdmxBeans));
-        ReturnFormat returnFormat = availabilityConfig.getDefaultFormat();
+        SdmxFormat returnFormat = availabilityConfig.getDefaultFormat();
         return TranslatedAvailabilityQuery.builder()
                 .registryConfiguration(query.getRegistryConfiguration())
                 .versionConfiguration(query.getVersionConfiguration())

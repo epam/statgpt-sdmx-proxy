@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 import com.epam.sdmxproxy.services.fixture.structure.AnnotationValueToTextJsonFixture;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,7 +29,7 @@ class AnnotationValueToTextJsonFixtureTest {
 
     @Test
     void supportsJsonStructure20() {
-        assertTrue(fixture.supportedFormats().contains(ReturnFormat.JSON_STRUCTURE_2_0_0));
+        assertTrue(fixture.supportedFormats().contains(SdmxFormat.JSON_STRUCTURE_2_0_0));
     }
 
     @Test

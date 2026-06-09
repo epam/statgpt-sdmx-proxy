@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.data;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import lombok.extern.slf4j.Slf4j;
@@ -63,8 +63,8 @@ public class TimePeriodMonthlyNormalizationXmlGenericDataFixture implements Data
     }
 
     @Override
-    public Set<ReturnFormat> supportedFormats() {
-        return Set.of(ReturnFormat.XML_GENERICDATA_2_1);
+    public Set<SdmxFormat> supportedFormats() {
+        return Set.of(SdmxFormat.XML_GENERIC_DATA_2_1);
     }
 
     @Override

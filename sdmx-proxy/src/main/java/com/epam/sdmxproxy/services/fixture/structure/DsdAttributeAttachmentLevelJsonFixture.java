@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.structure;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,8 +41,8 @@ public class DsdAttributeAttachmentLevelJsonFixture implements StructureFixture 
     }
 
     @Override
-    public Set<ReturnFormat> supportedFormats() {
-        return Set.of(ReturnFormat.JSON_STRUCTURE_2_0_0);
+    public Set<SdmxFormat> supportedFormats() {
+        return Set.of(SdmxFormat.JSON_STRUCTURE_2_0_0);
     }
 
     @Override

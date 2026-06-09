@@ -1,5 +1,6 @@
 package com.epam.sdmxproxy.common.data;
 
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.exception.UnsupportedMediaTypeParameterException;
 import com.epam.sdmxproxy.exception.UnsupportedSdmxVersionException;
@@ -7,51 +8,47 @@ import lombok.experimental.UtilityClass;
 import org.springframework.http.MediaType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+/**
+ * HTTP content-negotiation helper for SDMX media types. The recognised set of SDMX vendor types is
+ * derived from {@link SdmxFormat#values()} (the single source of truth for format strings); the
+ * generic / wildcard media types (wildcard, {@code text/json}, {@code application/csv},
+ * {@code text/csv}, version-less {@code application/vnd.sdmx.data+csv}) have no enum member and stay
+ * as constants here.
+ */
 @UtilityClass
-public class SdmxMediaType {
+public class SdmxMediaTypeResolver {
 
     public static final String ANY = "*/*";
-    public static final String DRAFT_JSON_2_1_VALUE = "application/vnd.sdmx.draft-sdmx-json+json; version=2.1";
     public static final String TEXT_JSON_VALUE = "text/json";
-    public static final String SDMX_JSON_1_0_0_VALUE = "application/vnd.sdmx.data+json; version=1.0.0";
-    public static final String SDMX_JSON_2_0_0_VALUE = "application/vnd.sdmx.data+json; version=2.0.0";
-    public static final String SDMX_XML_3_0_0_VALUE = "application/vnd.sdmx.data+xml; version=3.0.0";
     public static final String APPLICATION_CSV_VALUE = "application/csv";
     public static final String TEXT_CSV_VALUE = "text/csv";
-    public static final String SDMX_CSV_1_0_0_VALUE = "application/vnd.sdmx.data+csv; version=1.0.0";
-    public static final String SDMX_CSV_2_0_0_VALUE = "application/vnd.sdmx.data+csv; version=2.0.0";
     public static final String SDMX_CSV_VALUE = "application/vnd.sdmx.data+csv";
 
-    public static final String STRUCTURE_SDMX_XML_2_1_VALUE = "application/vnd.sdmx.structure+xml; version=2.1";
-    public static final String STRUCTURE_SDMX_JSON_2_0_0_VALUE = "application/vnd.sdmx.structure+json; version=2.0.0";
-
-
-    static final Set<MediaType> JSON_MEDIA_TYPES = Set.of(
-            MediaType.valueOf(DRAFT_JSON_2_1_VALUE),
-            MediaType.valueOf(TEXT_JSON_VALUE),
-            MediaType.valueOf(SDMX_JSON_1_0_0_VALUE),
-            MediaType.valueOf(SDMX_JSON_2_0_0_VALUE),
-            MediaType.valueOf(STRUCTURE_SDMX_JSON_2_0_0_VALUE),
-            MediaType.APPLICATION_JSON
-    );
-    static final Set<MediaType> XML_MEDIA_TYPES = Set.of(
-            MediaType.valueOf(SDMX_XML_3_0_0_VALUE),
-            MediaType.valueOf(STRUCTURE_SDMX_XML_2_1_VALUE),
-            MediaType.APPLICATION_XML
-    );
-    static final Set<MediaType> CSV_MEDIA_TYPES = Set.of(
-            MediaType.valueOf(APPLICATION_CSV_VALUE),
-            MediaType.valueOf(TEXT_CSV_VALUE),
-            MediaType.valueOf(SDMX_CSV_VALUE),
-            MediaType.valueOf(SDMX_CSV_1_0_0_VALUE),
-            MediaType.valueOf(SDMX_CSV_2_0_0_VALUE)
-    );
-
+    static final Set<MediaType> JSON_MEDIA_TYPES = buildMediaTypeSet("json", MediaType.valueOf(TEXT_JSON_VALUE), MediaType.APPLICATION_JSON);
+    static final Set<MediaType> XML_MEDIA_TYPES = buildMediaTypeSet("xml", MediaType.APPLICATION_XML);
+    static final Set<MediaType> CSV_MEDIA_TYPES = buildMediaTypeSet("csv", MediaType.valueOf(APPLICATION_CSV_VALUE), MediaType.valueOf(TEXT_CSV_VALUE), MediaType.valueOf(SDMX_CSV_VALUE));
 
     private static final Set<String> CSV_ONLY_PARAMETERS = Set.of("labels", "timeformat", "keys");
+
+    /**
+     * Builds a recognised-media-type set from every {@link SdmxFormat} whose subtype contains the
+     * given token (e.g. {@code json} / {@code xml} / {@code csv}), plus the supplied generic types.
+     */
+    private static Set<MediaType> buildMediaTypeSet(String subtypeToken, MediaType... genericTypes) {
+        Set<MediaType> mediaTypes = Arrays.stream(SdmxFormat.values())
+                .map(format -> MediaType.valueOf(format.getContentType()))
+                .filter(mediaType -> mediaType.getSubtype() != null && mediaType.getSubtype().toLowerCase().contains(subtypeToken))
+                .collect(Collectors.toCollection(HashSet::new));
+        mediaTypes.addAll(Arrays.asList(genericTypes));
+        return Collections.unmodifiableSet(mediaTypes);
+    }
 
     public static boolean isMatch(MediaType m1, MediaType m2) {
         return m1.getType().equals(m2.getType())
@@ -95,7 +92,7 @@ public class SdmxMediaType {
 
             if (CSV_MEDIA_TYPES.stream().anyMatch(csvMediaTypes -> isMatch(csvMediaTypes, accept))) {
                 if (accept.equals(MediaType.valueOf(SDMX_CSV_VALUE))) {
-                    return MediaType.valueOf(SDMX_CSV_2_0_0_VALUE);
+                    return MediaType.valueOf(SdmxFormat.CSV_DATA_2_0_0.getContentType());
                 }
                 return accept;
             }

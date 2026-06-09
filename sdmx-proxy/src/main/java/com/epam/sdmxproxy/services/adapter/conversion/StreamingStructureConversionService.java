@@ -4,9 +4,9 @@ import com.epam.jsdmx.infomodel.sdmx30.Artefacts;
 import com.epam.jsdmx.json20.structure.writer.JsonWriterFactory;
 import com.epam.jsdmx.serializer.common.StubDataStructureLocalRepresentationAdapter;
 import com.epam.jsdmx.serializer.sdmx30.common.DefaultReferenceAdapter;
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
 import com.epam.sdmxproxy.common.mapping.StructureMapperImpl;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.exception.UnsupportedConversionException;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxMLStructureWriterFactory;
 import com.epam.sdmxproxy.services.sdmxsource.JsonV1StructureReaderFactory;
@@ -56,7 +56,7 @@ public class StreamingStructureConversionService {
     public void convert(
             InputStream inputStream,
             OutputStream outputStream,
-            ReturnFormat sourceFormat,
+            SdmxFormat sourceFormat,
             MediaType targetMediaType
     ) {
         SdmxBeans sdmxBeans = parseStructures(inputStream, sourceFormat);
@@ -87,16 +87,16 @@ public class StreamingStructureConversionService {
         return mediaType.getSubtype().contains("xml");
     }
 
-    public SdmxBeans parseStructures(InputStream inputStream, ReturnFormat registryFormat) {
+    public SdmxBeans parseStructures(InputStream inputStream, SdmxFormat registryFormat) {
         ReadableDataLocation location = sdmxSourceReadableDataLocationFactory.getReadableDataLocation(inputStream);
         StructureReaderFactory readerFactory = getParserFactory(registryFormat);
         return readerFactory.getSdmxBeans(location, iBeansBuilder);
     }
 
-    private StructureReaderFactory getParserFactory(ReturnFormat returnFormat) {
+    private StructureReaderFactory getParserFactory(SdmxFormat returnFormat) {
         return switch (returnFormat) {
-            case XML_2_1 -> sdmxMLStructureReaderFactory;
-            case JSON_1_0_0 -> jsonV1StructureReaderFactory;
+            case XML_STRUCTURE_2_1 -> sdmxMLStructureReaderFactory;
+            case JSON_DATA_1_0_0 -> jsonV1StructureReaderFactory;
             case JSON_STRUCTURE_2_0_0 -> jsonV2StructureReaderFactory;
             default ->
                     throw new UnsupportedConversionException("Unsupported return format for parsing: " + returnFormat);
@@ -105,7 +105,7 @@ public class StreamingStructureConversionService {
 
     private void writeAsJson(SdmxBeans sdmxBeans, OutputStream outputStream, MediaType targetMediaType) {
 
-        switch (SdmxMediaType.extractSdmxVersion(targetMediaType.toString())) {
+        switch (SdmxMediaTypeResolver.extractSdmxVersion(targetMediaType.toString())) {
             case SDMX_2_1 -> {
                 throw new UnsupportedConversionException("Json for SDMX 2.1 (JSON v1.0) is not currently supported. Choose different format");
             }
@@ -129,7 +129,7 @@ public class StreamingStructureConversionService {
     }
 
     private void writeAsXml(SdmxBeans sdmxBeans, OutputStream outputStream, MediaType targetMediaType) {
-        switch (SdmxMediaType.extractSdmxVersion(targetMediaType.toString())) {
+        switch (SdmxMediaTypeResolver.extractSdmxVersion(targetMediaType.toString())) {
             case SDMX_2_1 -> {
                 //TODO write a better mapping of targetMediaType onto STRUCTURE_OUTPUT_FORMAT
                 SdmxStructureFormat xmlV21 = new SdmxStructureFormat(STRUCTURE_OUTPUT_FORMAT.SDMX_V21_STRUCTURE_DOCUMENT);

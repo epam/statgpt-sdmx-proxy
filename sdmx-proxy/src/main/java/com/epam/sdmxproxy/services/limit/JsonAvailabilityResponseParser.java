@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.limit;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.exception.AvailabilityProbeException;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -41,12 +41,12 @@ public class JsonAvailabilityResponseParser implements AvailabilityResponseParse
     private static final String SERIES_COUNT_ANNOTATION_ID = "series_count";
 
     @Override
-    public boolean supports(ReturnFormat format) {
-        return format == ReturnFormat.JSON_STRUCTURE_2_0_0;
+    public boolean supports(SdmxFormat format) {
+        return format == SdmxFormat.JSON_STRUCTURE_2_0_0;
     }
 
     @Override
-    public AvailabilityProjection parse(InputStream availabilityResponseStream, ReturnFormat format) {
+    public AvailabilityProjection parse(InputStream availabilityResponseStream, SdmxFormat format) {
         if (!supports(format)) {
             throw new AvailabilityProbeException(
                     "Unsupported availability return format for JSON parser: " + format);

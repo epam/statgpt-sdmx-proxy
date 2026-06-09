@@ -1,7 +1,7 @@
 package com.epam.sdmxproxy.common.data;
 
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import lombok.Builder;
 import lombok.Data;
@@ -34,5 +34,5 @@ public class TranslatedDataQuery {
     private String startPeriod;
     private String endPeriod;
     private MediaType contentType;
-    private ReturnFormat returnFormat;
+    private SdmxFormat returnFormat;
 }

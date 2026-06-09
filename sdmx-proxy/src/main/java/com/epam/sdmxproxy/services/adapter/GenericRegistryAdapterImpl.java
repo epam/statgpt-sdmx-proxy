@@ -6,7 +6,7 @@ import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistrySelectionResult;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.exception.UnexpectedStateException;
 import com.epam.sdmxproxy.registry.api.SdmxApiClientProvider;
 import com.epam.sdmxproxy.registry.api.client.Sdmx21AvailabilityClient;
@@ -60,7 +60,7 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
 
     private InputStream getStructures30(TranslatedStructureQuery query, RegistrySelectionResult selectedRegistry, Structure structure) {
         Sdmx30StructureClient structure30Client = sdmxApiClientProvider.getStructure30Client(selectedRegistry);
-        ReturnFormat structureReturnFormat = query.getRegistryReturnFormat();
+        SdmxFormat structureReturnFormat = query.getRegistryReturnFormat();
         return structure30Client.getStructures(
                 structureReturnFormat.getContentType(),
                 structure.type(),
@@ -74,7 +74,7 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
 
     private InputStream getStructures21(TranslatedStructureQuery query, RegistrySelectionResult selectedRegistry, Structure structure) {
         Sdmx21StructureClient structure21Client = sdmxApiClientProvider.getStructure21Client(selectedRegistry);
-        ReturnFormat structureReturnFormat = query.getRegistryReturnFormat();
+        SdmxFormat structureReturnFormat = query.getRegistryReturnFormat();
         return structure21Client.getStructures(
                 structureReturnFormat.getContentType(),
                 structure.type(),
@@ -140,17 +140,17 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
     /**
      * For CSV return format, builds the Accept header from the registry's base CSV content type
      * with the client's CSV parameters (labels, keys, timeFormat) appended.
-     * For other formats, uses the static content type from ReturnFormat.
+     * For other formats, uses the static content type from SdmxFormat.
      */
     private String resolveDataAcceptHeader(TranslatedDataQuery query) {
-        ReturnFormat returnFormat = query.getReturnFormat();
-        if (returnFormat == ReturnFormat.CSV_DATA_1_0_0 || returnFormat == ReturnFormat.CSV_DATA_2_0_0) {
+        SdmxFormat returnFormat = query.getReturnFormat();
+        if (returnFormat == SdmxFormat.CSV_DATA_1_0_0 || returnFormat == SdmxFormat.CSV_DATA_2_0_0) {
             return buildCsvAcceptHeader(returnFormat, query.getContentType());
         }
         return returnFormat.getContentType();
     }
 
-    private String buildCsvAcceptHeader(ReturnFormat returnFormat, MediaType clientMediaType) {
+    private String buildCsvAcceptHeader(SdmxFormat returnFormat, MediaType clientMediaType) {
         StringBuilder header = new StringBuilder(returnFormat.getContentType());
         appendCsvParam(header, clientMediaType, "labels");
         appendCsvParam(header, clientMediaType, "timeFormat");
@@ -192,7 +192,7 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
         String key = query.getKey() != null ? query.getKey() : "all";
         // providerRef is not part of the request - defaulting to "all" for all providers
         String providerRef = "all";
-        ReturnFormat availabilityReturnFormat = query.getReturnFormat();
+        SdmxFormat availabilityReturnFormat = query.getReturnFormat();
         return availability21Client.getAvailability(
                 availabilityReturnFormat.getContentType(),
                 flowRef,
@@ -272,7 +272,7 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
     private InputStream getAvailability30(TranslatedAvailabilityQuery query, RegistrySelectionResult selectedRegistry) {
         Sdmx30AvailabilityClient availability30Client = sdmxApiClientProvider.getAvailability30Client(selectedRegistry);
         String context = query.getContext() != null ? query.getContext() : "dataflow"; // Default to dataflow if not provided
-        ReturnFormat availabilityReturnFormat = query.getReturnFormat();
+        SdmxFormat availabilityReturnFormat = query.getReturnFormat();
         return availability30Client.getAvailability(
                 availabilityReturnFormat.getContentType(),
                 context,

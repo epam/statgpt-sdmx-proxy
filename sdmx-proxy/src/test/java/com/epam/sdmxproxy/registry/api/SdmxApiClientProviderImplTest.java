@@ -5,7 +5,7 @@ import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryResilienceConfig;
 import com.epam.sdmxproxy.configuration.data.RegistrySelectionResult;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
@@ -340,23 +340,23 @@ class SdmxApiClientProviderImplTest {
 
         StructureEndpointConfiguration structureConfig = new StructureEndpointConfiguration();
         structureConfig.setUrl(baseUrl);
-        structureConfig.setSupportedFormats(java.util.List.of(ReturnFormat.XML_2_1));
-        structureConfig.setDefaultFormat(ReturnFormat.XML_2_1);
+        structureConfig.setSupportedFormats(java.util.List.of(SdmxFormat.XML_STRUCTURE_2_1));
+        structureConfig.setDefaultFormat(SdmxFormat.XML_STRUCTURE_2_1);
         structureConfig.setBypassEnabled(true);
         structureConfig.setSupportedStructures(java.util.Set.of("datastructure", "dataflow"));
         versionConfig.setStructureEndpointConfig(structureConfig);
 
         DataEndpointConfiguration dataConfig = new DataEndpointConfiguration();
         dataConfig.setUrl(dataUrl);
-        dataConfig.setSupportedFormats(java.util.List.of(ReturnFormat.XML_STRUCTURE_SPECIFIC_2_1));
-        dataConfig.setDefaultFormat(ReturnFormat.XML_STRUCTURE_SPECIFIC_2_1);
+        dataConfig.setSupportedFormats(java.util.List.of(SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1));
+        dataConfig.setDefaultFormat(SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1);
         dataConfig.setBypassEnabled(true);
         versionConfig.setDataEndpointConfig(dataConfig);
 
         AvailabilityEndpointConfiguration availabilityConfig = new AvailabilityEndpointConfiguration();
         availabilityConfig.setUrl(baseUrl);
-        availabilityConfig.setSupportedFormats(java.util.List.of(ReturnFormat.XML_2_1));
-        availabilityConfig.setDefaultFormat(ReturnFormat.XML_2_1);
+        availabilityConfig.setSupportedFormats(java.util.List.of(SdmxFormat.XML_STRUCTURE_2_1));
+        availabilityConfig.setDefaultFormat(SdmxFormat.XML_STRUCTURE_2_1);
         availabilityConfig.setBypassEnabled(true);
         availabilityConfig.setAvailabilityEnabled(true);
         versionConfig.setAvailabilityEndpointConfig(availabilityConfig);

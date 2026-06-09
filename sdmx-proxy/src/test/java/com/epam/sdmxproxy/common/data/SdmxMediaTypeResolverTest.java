@@ -1,25 +1,26 @@
 package com.epam.sdmxproxy.common.data;
 
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.exception.UnsupportedMediaTypeParameterException;
 import com.epam.sdmxproxy.exception.UnsupportedSdmxVersionException;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
-import static com.epam.sdmxproxy.common.data.SdmxMediaType.extractSdmxVersion;
-import static com.epam.sdmxproxy.common.data.SdmxMediaType.mapMediaType;
-import static com.epam.sdmxproxy.common.data.SdmxMediaType.parseMediaType;
-import static com.epam.sdmxproxy.common.data.SdmxMediaType.validateCsvParameters;
+import static com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver.extractSdmxVersion;
+import static com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver.mapMediaType;
+import static com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver.parseMediaType;
+import static com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver.validateCsvParameters;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Unit tests for SdmxMediaType utility class.
+ * Unit tests for SdmxMediaTypeResolver utility class.
  * Tests SDMX version extraction and format mapping from Accept headers.
  */
-class SdmxMediaTypeTest {
+class SdmxMediaTypeResolverTest {
 
     @Test
     void testExtractSdmxVersion_SDMX_3_0_XML() {
@@ -628,5 +629,16 @@ class SdmxMediaTypeTest {
         assertTrue(mediaType.toString().contains("csv"));
         assertEquals("name", mediaType.getParameter("labels"));
         assertEquals("normalized", mediaType.getParameter("timeformat"));
+    }
+
+    // ========== SdmxFormat.sdmxVersion parity guard (design 035, Edge Case #1) ==========
+
+    @Test
+    void sdmxVersionMatchesLegacyExtractMapping() {
+        for (SdmxFormat format : SdmxFormat.values()) {
+            assertEquals(format.getSdmxVersion(), extractSdmxVersion(format.getContentType()),
+                    "SdmxFormat." + format + " declares getSdmxVersion()=" + format.getSdmxVersion()
+                            + " but extractSdmxVersion(\"" + format.getContentType() + "\") disagrees");
+        }
     }
 }

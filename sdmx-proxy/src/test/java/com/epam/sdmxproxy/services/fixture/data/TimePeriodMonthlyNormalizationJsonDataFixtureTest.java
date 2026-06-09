@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture.data;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,8 +36,8 @@ class TimePeriodMonthlyNormalizationJsonDataFixtureTest {
     @Test
     void supportedFormats_containsJson100AndJson200() {
         assertEquals(2, fixture.supportedFormats().size());
-        assertTrue(fixture.supportedFormats().contains(ReturnFormat.JSON_1_0_0));
-        assertTrue(fixture.supportedFormats().contains(ReturnFormat.JSON_DATA_2_0_0));
+        assertTrue(fixture.supportedFormats().contains(SdmxFormat.JSON_DATA_1_0_0));
+        assertTrue(fixture.supportedFormats().contains(SdmxFormat.JSON_DATA_2_0_0));
     }
 
     @Test

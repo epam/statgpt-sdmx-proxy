@@ -1,6 +1,7 @@
 package com.epam.sdmxproxy.api;
 
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
+import com.epam.sdmxproxy.configuration.data.SdmxMediaTypes;
 import com.epam.sdmxproxy.web.config.settings.WebMvcSettings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -53,11 +54,11 @@ public interface SdmxStructure30Api {
                     description = "Structure retrieved successfully",
                     content = {
                             @Content(
-                                    mediaType = SdmxMediaType.STRUCTURE_SDMX_XML_2_1_VALUE,
+                                    mediaType = SdmxMediaTypes.STRUCTURE_XML_2_1,
                                     schema = @Schema(type = "string", format = "binary")
                             ),
                             @Content(
-                                    mediaType = SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE,
+                                    mediaType = SdmxMediaTypes.STRUCTURE_JSON_2_0_0,
                                     schema = @Schema(type = "string", format = "binary")
                             )
                     }
@@ -75,9 +76,9 @@ public interface SdmxStructure30Api {
             method = RequestMethod.GET,
             value = "/{structureType}/{agencyId}/{resourceId}/{version}",
             produces = {
-                    SdmxMediaType.STRUCTURE_SDMX_XML_2_1_VALUE,
-                    SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE,
-                    SdmxMediaType.ANY,
+                    SdmxMediaTypes.STRUCTURE_XML_2_1,
+                    SdmxMediaTypes.STRUCTURE_JSON_2_0_0,
+                    SdmxMediaTypeResolver.ANY,
                     MediaType.APPLICATION_JSON_VALUE
             }
     )

@@ -1,7 +1,8 @@
 package com.epam.sdmxproxy.services.adapter;
 
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
+import com.epam.sdmxproxy.configuration.data.SdmxMediaTypes;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingAvailabilityConversionService;
@@ -50,22 +51,22 @@ public class StreamingAvailabilityConversionServiceTest {
         InputStream availabilityInput = getClass().getClassLoader().getResourceAsStream(
                 FIXTURE_AVAILABILITY_RESOURCE_PATH + "imf_weo_availability_response.json");
 
-        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structuresInput, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        SdmxBeans sdmxBeans = streamingStructureConversionService.parseStructures(structuresInput, SdmxFormat.JSON_STRUCTURE_2_0_0);
 
         FixtureConfiguration<AvailabilityFixtureType> availabilityFixtureConfig = new FixtureConfiguration<>();
         availabilityFixtureConfig.setType(AvailabilityFixtureType.MOVE_CUBE_REGION_COMPONENTS_TO_KEY_VALUES);
         availabilityFixtureConfig.setConfig(new HashMap<>());
         InputStream fixedAvailability = availabilityFixtureService.applyFixtures(
                 availabilityInput,
-                ReturnFormat.JSON_STRUCTURE_2_0_0,
+                SdmxFormat.JSON_STRUCTURE_2_0_0,
                 sdmxBeans,
                 List.of(availabilityFixtureConfig));
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        MediaType targetMediaType = MediaType.valueOf(SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE);
+        MediaType targetMediaType = MediaType.valueOf(SdmxMediaTypes.STRUCTURE_JSON_2_0_0);
 
         //WHEN
-        sut.convert(fixedAvailability, outputStream, ReturnFormat.JSON_STRUCTURE_2_0_0, targetMediaType);
+        sut.convert(fixedAvailability, outputStream, SdmxFormat.JSON_STRUCTURE_2_0_0, targetMediaType);
 
         //THEN: dimensions must appear in keyValues (SDMX-JSON 2.0 compliance)
         JsonNode jsonNode = new ObjectMapper().readTree(outputStream.toByteArray());
@@ -90,10 +91,10 @@ public class StreamingAvailabilityConversionServiceTest {
         //GIVEN
         InputStream input = getClass().getResourceAsStream("imf_2_1_availability_response.xml");
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        MediaType targetMediaType = MediaType.valueOf(SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE);
+        MediaType targetMediaType = MediaType.valueOf(SdmxMediaTypes.STRUCTURE_JSON_2_0_0);
 
         //WHEN
-        sut.convert(input, outputStream, ReturnFormat.XML_2_1, targetMediaType);
+        sut.convert(input, outputStream, SdmxFormat.XML_STRUCTURE_2_1, targetMediaType);
 
         //THEN
         JsonNode jsonNode = new ObjectMapper().readTree(outputStream.toByteArray());

@@ -1,7 +1,8 @@
 package com.epam.sdmxproxy.services.fixture.data;
 
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
+import com.epam.sdmxproxy.configuration.data.SdmxMediaTypes;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingDataConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -183,8 +184,8 @@ class BisMonthlyTimePeriodFixturesRealDataTest {
                     fixtured,
                     sink,
                     structures,
-                    ReturnFormat.JSON_1_0_0,
-                    MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE)
+                    SdmxFormat.JSON_DATA_1_0_0,
+                    MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0)
             );
         }
 
@@ -204,7 +205,7 @@ class BisMonthlyTimePeriodFixturesRealDataTest {
 
     private SdmxBeans loadStructures() throws Exception {
         try (InputStream structures = openFixture(STRUCTURES)) {
-            return streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+            return streamingStructureConversionService.parseStructures(structures, SdmxFormat.JSON_STRUCTURE_2_0_0);
         }
     }
 

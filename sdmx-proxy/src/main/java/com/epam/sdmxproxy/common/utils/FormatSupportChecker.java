@@ -1,8 +1,8 @@
 package com.epam.sdmxproxy.common.utils;
 
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import lombok.experimental.UtilityClass;
@@ -84,7 +84,7 @@ public class FormatSupportChecker {
      * @param requestedMediaType media type requested by client
      * @return true if bypass can be used
      */
-    private static boolean canBypass(boolean bypassEnabled, List<ReturnFormat> supportedFormats, MediaType requestedMediaType) {
+    private static boolean canBypass(boolean bypassEnabled, List<SdmxFormat> supportedFormats, MediaType requestedMediaType) {
         if (!bypassEnabled || supportedFormats == null || supportedFormats.isEmpty()) {
             return false;
         }
@@ -94,20 +94,20 @@ public class FormatSupportChecker {
     }
 
     /**
-     * Compares ReturnFormat (registry format) with MediaType (requested format).
+     * Compares SdmxFormat (registry format) with MediaType (requested format).
      *
      * @param registryFormat     format that registry returns natively
      * @param requestedMediaType media type requested by client
      * @return true if formats match
      */
-    public static boolean formatMatches(ReturnFormat registryFormat, MediaType requestedMediaType) {
-        if (registryFormat == ReturnFormat.CSV_DATA_1_0_0 || registryFormat == ReturnFormat.CSV_DATA_2_0_0) {
+    public static boolean formatMatches(SdmxFormat registryFormat, MediaType requestedMediaType) {
+        if (registryFormat == SdmxFormat.CSV_DATA_1_0_0 || registryFormat == SdmxFormat.CSV_DATA_2_0_0) {
             // CSV format matches any CSV media type (text/csv, application/csv, application/vnd.sdmx.data+csv)
             return requestedMediaType.getSubtype().contains("csv");
         }
         String contentType = registryFormat.getContentType();
         MediaType registryMediaType = MediaType.valueOf(contentType);
         // Compare type and subtype (ignoring parameters like version)
-        return SdmxMediaType.isMatch(registryMediaType, requestedMediaType);
+        return SdmxMediaTypeResolver.isMatch(registryMediaType, requestedMediaType);
     }
 }

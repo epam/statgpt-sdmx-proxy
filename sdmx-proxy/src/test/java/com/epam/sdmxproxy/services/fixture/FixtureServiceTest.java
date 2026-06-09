@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.services.fixture;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 import com.epam.sdmxproxy.services.fixture.structure.StructureFixture;
@@ -33,7 +33,7 @@ class FixtureServiceTest {
         StructureFixtureService service = new StructureFixtureService(List.of());
         InputStream input = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
 
-        InputStream result = service.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, null);
+        InputStream result = service.applyFixtures(input, SdmxFormat.JSON_STRUCTURE_2_0_0, null);
 
         assertSame(input, result);
     }
@@ -43,7 +43,7 @@ class FixtureServiceTest {
         StructureFixtureService service = new StructureFixtureService(List.of());
         InputStream input = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
 
-        InputStream result = service.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, Collections.emptyList());
+        InputStream result = service.applyFixtures(input, SdmxFormat.JSON_STRUCTURE_2_0_0, Collections.emptyList());
 
         assertSame(input, result);
     }
@@ -52,7 +52,7 @@ class FixtureServiceTest {
     void shouldApplyMatchingFixture() {
         StructureFixture mockFixture = mock(StructureFixture.class);
         when(mockFixture.getType()).thenReturn(StructureFixtureType.DSD_ATTRIBUTE_ATTACHMENT_LEVEL);
-        when(mockFixture.supportedFormats()).thenReturn(Set.of(ReturnFormat.JSON_STRUCTURE_2_0_0));
+        when(mockFixture.supportedFormats()).thenReturn(Set.of(SdmxFormat.JSON_STRUCTURE_2_0_0));
 
         InputStream input = new ByteArrayInputStream("original".getBytes(StandardCharsets.UTF_8));
         InputStream fixedStream = new ByteArrayInputStream("fixed".getBytes(StandardCharsets.UTF_8));
@@ -67,7 +67,7 @@ class FixtureServiceTest {
         fc.setConfig(config);
 
         List<FixtureConfiguration<StructureFixtureType>> configs = List.of(fc);
-        InputStream result = service.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, configs);
+        InputStream result = service.applyFixtures(input, SdmxFormat.JSON_STRUCTURE_2_0_0, configs);
 
         assertSame(fixedStream, result);
         verify(mockFixture).apply(eq(input), eq(config));
@@ -77,7 +77,7 @@ class FixtureServiceTest {
     void shouldSkipFixtureWhenFormatDoesNotMatch() {
         StructureFixture jsonFixture = mock(StructureFixture.class);
         when(jsonFixture.getType()).thenReturn(StructureFixtureType.DSD_ATTRIBUTE_ATTACHMENT_LEVEL);
-        when(jsonFixture.supportedFormats()).thenReturn(Set.of(ReturnFormat.JSON_STRUCTURE_2_0_0));
+        when(jsonFixture.supportedFormats()).thenReturn(Set.of(SdmxFormat.JSON_STRUCTURE_2_0_0));
 
         StructureFixtureService service = new StructureFixtureService(List.of(jsonFixture));
 
@@ -89,7 +89,7 @@ class FixtureServiceTest {
 
         // Request with XML format -- JSON fixture should not match
         List<FixtureConfiguration<StructureFixtureType>> configs = List.of(fc);
-        InputStream result = service.applyFixtures(input, ReturnFormat.XML_2_1, configs);
+        InputStream result = service.applyFixtures(input, SdmxFormat.XML_STRUCTURE_2_1, configs);
 
         assertSame(input, result);
         verify(jsonFixture, never()).apply(any(), any());
@@ -99,7 +99,7 @@ class FixtureServiceTest {
     void shouldChainMultipleFixturesInOrder() {
         StructureFixture fixture1 = mock(StructureFixture.class);
         when(fixture1.getType()).thenReturn(StructureFixtureType.DSD_ATTRIBUTE_ATTACHMENT_LEVEL);
-        when(fixture1.supportedFormats()).thenReturn(Set.of(ReturnFormat.JSON_STRUCTURE_2_0_0));
+        when(fixture1.supportedFormats()).thenReturn(Set.of(SdmxFormat.JSON_STRUCTURE_2_0_0));
 
         InputStream input = new ByteArrayInputStream("original".getBytes(StandardCharsets.UTF_8));
         InputStream after1 = new ByteArrayInputStream("after1".getBytes(StandardCharsets.UTF_8));
@@ -122,7 +122,7 @@ class FixtureServiceTest {
         when(fixture1.apply(eq(after1), eq(config1))).thenReturn(after2);
 
         List<FixtureConfiguration<StructureFixtureType>> configs = List.of(fc1, fc2);
-        InputStream result = service.applyFixtures(input, ReturnFormat.JSON_STRUCTURE_2_0_0, configs);
+        InputStream result = service.applyFixtures(input, SdmxFormat.JSON_STRUCTURE_2_0_0, configs);
 
         assertSame(after2, result);
         verify(fixture1).apply(eq(input), eq(config1));

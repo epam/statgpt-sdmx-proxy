@@ -1,6 +1,6 @@
 package com.epam.sdmxproxy.e2e.tests.framework.config;
 
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -46,5 +46,5 @@ public class LimitTestSuitConfiguration {
      * data) + XML (structure-specific). {@code null} / empty -> test runs once using the
      * registry's existing {@code defaultFormat}.
      */
-    private List<ReturnFormat> registryReturnFormats;
+    private List<SdmxFormat> registryReturnFormats;
 }

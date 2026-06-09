@@ -3,7 +3,7 @@ package com.epam.sdmxproxy.services.adapter;
 import com.epam.sdmxproxy.common.data.Structure;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.exception.StructureFanOutException;
@@ -215,7 +215,7 @@ public class AdapterRouterImplTest {
                 .references("descendants")
                 .detail("full")
                 .contentType(MediaType.APPLICATION_JSON)
-                .registryReturnFormat(ReturnFormat.XML_2_1)
+                .registryReturnFormat(SdmxFormat.XML_STRUCTURE_2_1)
                 .build();
     }
 }

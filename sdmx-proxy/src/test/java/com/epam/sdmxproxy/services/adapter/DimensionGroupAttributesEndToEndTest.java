@@ -1,7 +1,8 @@
 package com.epam.sdmxproxy.services.adapter;
 
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
+import com.epam.sdmxproxy.configuration.data.SdmxMediaTypes;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingDataConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
@@ -165,12 +166,12 @@ public class DimensionGroupAttributesEndToEndTest {
         SdmxBeans sdmxBeans = loadWeoStructures();
         InputStream input = getClass().getResourceAsStream(DATA_FIXTURE);
         ByteArrayOutputStream firstPass = new ByteArrayOutputStream();
-        streamingDataConversionService.convert(input, firstPass, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0,
-                MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+        streamingDataConversionService.convert(input, firstPass, sdmxBeans, SdmxFormat.JSON_DATA_2_0_0,
+                MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0));
 
         ByteArrayOutputStream secondPass = new ByteArrayOutputStream();
         streamingDataConversionService.convert(new ByteArrayInputStream(firstPass.toByteArray()), secondPass, sdmxBeans,
-                ReturnFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+                SdmxFormat.JSON_DATA_2_0_0, MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0));
 
         JsonNode root = objectMapper.readTree(secondPass.toByteArray());
         JsonNode dga = root.path("data").path("dataSets").get(0).path("dimensionGroupAttributes");
@@ -186,15 +187,15 @@ public class DimensionGroupAttributesEndToEndTest {
         SdmxBeans sdmxBeans = loadWeoStructures();
         InputStream input = getClass().getResourceAsStream(DATA_FIXTURE);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        streamingDataConversionService.convert(input, out, sdmxBeans, ReturnFormat.JSON_DATA_2_0_0,
-                MediaType.valueOf(SdmxMediaType.SDMX_JSON_2_0_0_VALUE));
+        streamingDataConversionService.convert(input, out, sdmxBeans, SdmxFormat.JSON_DATA_2_0_0,
+                MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0));
         return objectMapper.readTree(out.toByteArray());
     }
 
     @SneakyThrows
     private SdmxBeans loadWeoStructures() {
         InputStream structures = getClass().getResourceAsStream(STRUCTURES_FIXTURE);
-        return streamingStructureConversionService.parseStructures(structures, ReturnFormat.JSON_STRUCTURE_2_0_0);
+        return streamingStructureConversionService.parseStructures(structures, SdmxFormat.JSON_STRUCTURE_2_0_0);
     }
 
     private static int countNonNullPositionalValues(JsonNode dga) {

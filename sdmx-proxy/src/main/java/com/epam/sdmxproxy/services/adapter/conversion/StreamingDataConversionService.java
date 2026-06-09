@@ -1,7 +1,7 @@
 package com.epam.sdmxproxy.services.adapter.conversion;
 
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
-import com.epam.sdmxproxy.configuration.data.ReturnFormat;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.exception.UnsupportedConversionException;
 import com.epam.sdmxproxy.services.sdmxsource.CustomDataTransformationUtil;
@@ -72,7 +72,7 @@ public class StreamingDataConversionService {
             InputStream inputStream,
             OutputStream outputStream,
             SdmxBeans sdmxBeans,
-            ReturnFormat sourceFormat,
+            SdmxFormat sourceFormat,
             MediaType targetMediaType
     ) throws IOException {
         // Convert based on target media type
@@ -110,12 +110,12 @@ public class StreamingDataConversionService {
             OutputStream outputStream,
             SdmxBeans sdmxBeans,
             MediaType targetMediaType,
-            ReturnFormat sourceFormat
+            SdmxFormat sourceFormat
     ) {
         DataReaderEngine reader = getDataReader(sdmxBeans, inputStream, sourceFormat);
 
         // Determine SDMX version from target media type
-        SdmxVersion sdmxVersion = SdmxMediaType.extractSdmxVersion(targetMediaType.toString());
+        SdmxVersion sdmxVersion = SdmxMediaTypeResolver.extractSdmxVersion(targetMediaType.toString());
         ISeriesObsDataWriterEngine writer = getDataWriterEngine(sdmxBeans, outputStream, sdmxVersion);
 
         DataTransformOptions options = DataTransformOptions.getInstance();
@@ -126,13 +126,13 @@ public class StreamingDataConversionService {
 
     }
 
-    private DataReaderEngine getDataReader(SdmxBeans sdmxBeans, InputStream inputStream, ReturnFormat sourceFormat) {
+    private DataReaderEngine getDataReader(SdmxBeans sdmxBeans, InputStream inputStream, SdmxFormat sourceFormat) {
         return getDataReader(sdmxBeans, inputStream, sourceFormat, null);
     }
 
-    private DataReaderEngine getDataReader(SdmxBeans sdmxBeans, InputStream inputStream, ReturnFormat sourceFormat, MediaType sourceMediaType) {
+    private DataReaderEngine getDataReader(SdmxBeans sdmxBeans, InputStream inputStream, SdmxFormat sourceFormat, MediaType sourceMediaType) {
         InputStream effectiveInputStream = inputStream;
-        if (sourceFormat == ReturnFormat.CSV_DATA_2_0_0 || sourceFormat == ReturnFormat.CSV_DATA_1_0_0) {
+        if (sourceFormat == SdmxFormat.CSV_DATA_2_0_0 || sourceFormat == SdmxFormat.CSV_DATA_1_0_0) {
             // Sidestep an upstream defect in CSVColumnReaderEngineImpl that splits rows on
             // every physical newline, including newlines embedded inside quoted fields.
             // See https://github.com/epam/statgpt-sdmx-proxy/issues/57.
@@ -150,27 +150,27 @@ public class StreamingDataConversionService {
         );
     }
 
-    private DataReaderFactory getDataReaderFactory(ReturnFormat sourceFormat) {
+    private DataReaderFactory getDataReaderFactory(SdmxFormat sourceFormat) {
         return switch (sourceFormat) {
-            case JSON_1_0_0, JSON_DATA_2_0_0 -> sdmxJsonDataReaderFactory;
+            case JSON_DATA_1_0_0, JSON_DATA_2_0_0 -> sdmxJsonDataReaderFactory;
             case CSV_DATA_1_0_0 -> sdmxCsvDataReaderFactoryV1;
             case CSV_DATA_2_0_0 -> sdmxCsvDataReaderFactoryV2;
             default -> sdmxMLDataReaderFactory;
         };
     }
 
-    private DataFormat getSdmxDataFormat(ReturnFormat sourceFormat, MediaType sourceMediaType) {
+    private DataFormat getSdmxDataFormat(SdmxFormat sourceFormat, MediaType sourceMediaType) {
         switch (sourceFormat) {
-            case JSON_1_0_0 -> {
+            case JSON_DATA_1_0_0 -> {
                 return new SdmxJsonDataFormat(DATA_TYPE.SDMXJSON_1_0_0, null);
             }
             case JSON_DATA_2_0_0 -> {
                 return new SdmxJsonDataFormat(DATA_TYPE.SDMXJSON_2_0_0, null);
             }
-            case XML_GENERICDATA_2_1 -> {
+            case XML_GENERIC_DATA_2_1 -> {
                 return SDMXMLDataFormat.GENERIC_2_1;
             }
-            case XML_STRUCTURE_SPECIFIC_2_1 -> {
+            case XML_STRUCTURE_SPECIFIC_DATA_2_1 -> {
                 return SDMXMLDataFormat.COMPACT_2_1;
             }
             case CSV_DATA_1_0_0 -> {
@@ -191,7 +191,7 @@ public class StreamingDataConversionService {
             OutputStream outputStream,
             SdmxBeans sdmxBeans,
             MediaType targetMediaType,
-            ReturnFormat sourceFormat
+            SdmxFormat sourceFormat
     ) {
         DataReaderEngine reader = getDataReader(sdmxBeans, inputStream, sourceFormat);
 
@@ -210,7 +210,7 @@ public class StreamingDataConversionService {
             OutputStream outputStream,
             SdmxBeans sdmxBeans,
             MediaType targetMediaType,
-            ReturnFormat sourceFormat
+            SdmxFormat sourceFormat
     ) {
         DataReaderEngine reader = getDataReader(sdmxBeans, inputStream, sourceFormat, targetMediaType);
 

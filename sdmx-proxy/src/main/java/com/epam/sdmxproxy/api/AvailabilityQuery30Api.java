@@ -1,7 +1,8 @@
 package com.epam.sdmxproxy.api;
 
 import com.epam.sdmxproxy.common.data.AvailabilityQueryRequestDto;
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
+import com.epam.sdmxproxy.configuration.data.SdmxMediaTypes;
 import com.epam.sdmxproxy.web.config.settings.WebMvcSettings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -61,7 +62,7 @@ public interface AvailabilityQuery30Api {
                     responseCode = "200",
                     description = "Availability data retrieved successfully",
                     content = @Content(
-                            mediaType = SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE,
+                            mediaType = SdmxMediaTypes.STRUCTURE_JSON_2_0_0,
                             schema = @Schema(type = "string", format = "binary")
                     )
             ),
@@ -77,8 +78,8 @@ public interface AvailabilityQuery30Api {
     @GetMapping(
             value = "/{context:datastructure|dataflow|provisionagreement}/{agencyID}/{resourceID}/{version}/{key}/{componentId}",
             produces = {
-                    SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE,
-                    SdmxMediaType.ANY,
+                    SdmxMediaTypes.STRUCTURE_JSON_2_0_0,
+                    SdmxMediaTypeResolver.ANY,
                     MediaType.APPLICATION_JSON_VALUE
             }
     )
@@ -188,7 +189,7 @@ public interface AvailabilityQuery30Api {
                     responseCode = "200",
                     description = "Availability data retrieved successfully",
                     content = @Content(
-                            mediaType = SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE,
+                            mediaType = SdmxMediaTypes.STRUCTURE_JSON_2_0_0,
                             schema = @Schema(type = "string", format = "binary")
                     )
             ),
@@ -205,8 +206,8 @@ public interface AvailabilityQuery30Api {
             value = "/{context:datastructure|dataflow|provisionagreement}/{agencyID}/{resourceID}/{version}",
             consumes = "application/json",
             produces = {
-                    SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE,
-                    SdmxMediaType.ANY,
+                    SdmxMediaTypes.STRUCTURE_JSON_2_0_0,
+                    SdmxMediaTypeResolver.ANY,
                     MediaType.APPLICATION_JSON_VALUE
             }
     )

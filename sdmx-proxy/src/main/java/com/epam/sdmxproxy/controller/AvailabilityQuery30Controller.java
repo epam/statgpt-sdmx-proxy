@@ -2,7 +2,8 @@ package com.epam.sdmxproxy.controller;
 
 import com.epam.sdmxproxy.api.AvailabilityQuery30Api;
 import com.epam.sdmxproxy.common.data.AvailabilityQueryRequestDto;
-import com.epam.sdmxproxy.common.data.SdmxMediaType;
+import com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver;
+import com.epam.sdmxproxy.configuration.data.SdmxMediaTypes;
 import com.epam.sdmxproxy.common.data.TranslatedAvailabilityQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.common.utils.FilterUtils;
@@ -35,7 +36,7 @@ public class AvailabilityQuery30Controller implements AvailabilityQuery30Api {
 
     private final QueryTranslator queryTranslator;
     private final AdapterRouter adapterRouter;
-    private static final String ACCEPT_HEADER_FALLBACK = SdmxMediaType.STRUCTURE_SDMX_JSON_2_0_0_VALUE;
+    private static final String ACCEPT_HEADER_FALLBACK = SdmxMediaTypes.STRUCTURE_JSON_2_0_0;
 
 
     @Override
@@ -60,7 +61,7 @@ public class AvailabilityQuery30Controller implements AvailabilityQuery30Api {
             throw new UnsupportedContextException("context = " + context + " not supported");
         }
 
-        if (Strings.CS.equals(accept, SdmxMediaType.ANY)) {
+        if (Strings.CS.equals(accept, SdmxMediaTypeResolver.ANY)) {
             accept = ACCEPT_HEADER_FALLBACK;
         }
 
@@ -102,7 +103,7 @@ public class AvailabilityQuery30Controller implements AvailabilityQuery30Api {
             throw new UnsupportedContextException("context = " + context + " not supported");
         }
 
-        if (Strings.CS.equals(accept, SdmxMediaType.ANY)) {
+        if (Strings.CS.equals(accept, SdmxMediaTypeResolver.ANY)) {
             accept = ACCEPT_HEADER_FALLBACK;
         }
 
