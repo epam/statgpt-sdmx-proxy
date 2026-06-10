@@ -4,6 +4,7 @@ import com.epam.sdmxproxy.common.data.Structure;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.SdmxFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxMediaTypes;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.exception.StructureFanOutException;
@@ -18,10 +19,12 @@ import com.epam.sdmxproxy.services.fixture.data.DataFixtureService;
 import com.epam.sdmxproxy.services.fixture.data.MetadataAttributesPreserver;
 import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsageFolder;
 import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsagePreserver;
+import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsageXmlInjector;
 import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
 import com.epam.sdmxproxy.services.limit.LimitEmulationService;
 import com.epam.sdmxproxy.services.limit.truncate.SeriesLimitTruncatorProvider;
 import com.epam.sdmxproxy.services.translator.QueryTranslator;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.im.beans.container.SdmxBeansImpl;
@@ -30,9 +33,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,6 +62,8 @@ public class AdapterRouterImplTest {
     private CacheService cacheService;
     private StructureFixtureService structureFixtureService;
     private StreamingStructureConversionService streamingStructureConversionService;
+    private MetadataAttributeUsagePreserver metadataAttributeUsagePreserver;
+    private MetadataAttributeUsageXmlInjector metadataAttributeUsageXmlInjector;
     private AdapterRouterImpl router;
 
     @BeforeEach
@@ -67,8 +75,9 @@ public class AdapterRouterImplTest {
         QueryTranslator queryTranslator = mock(QueryTranslator.class);
         cacheService = mock(CacheService.class);
         structureFixtureService = mock(StructureFixtureService.class);
-        MetadataAttributeUsagePreserver metadataAttributeUsagePreserver = mock(MetadataAttributeUsagePreserver.class);
+        metadataAttributeUsagePreserver = mock(MetadataAttributeUsagePreserver.class);
         MetadataAttributeUsageFolder metadataAttributeUsageFolder = mock(MetadataAttributeUsageFolder.class);
+        metadataAttributeUsageXmlInjector = mock(MetadataAttributeUsageXmlInjector.class);
         MetadataAttributesPreserver metadataAttributesPreserver = mock(MetadataAttributesPreserver.class);
         AvailabilityFixtureService availabilityFixtureService = mock(AvailabilityFixtureService.class);
         DataFixtureService dataFixtureService = mock(DataFixtureService.class);
@@ -87,6 +96,7 @@ public class AdapterRouterImplTest {
                 structureFixtureService,
                 metadataAttributeUsagePreserver,
                 metadataAttributeUsageFolder,
+                metadataAttributeUsageXmlInjector,
                 metadataAttributesPreserver,
                 availabilityFixtureService,
                 dataFixtureService,
@@ -196,6 +206,42 @@ public class AdapterRouterImplTest {
     void getStructuresWithFanOut_nullListThrowsUnexpectedState() {
         assertThatThrownBy(() -> router.getStructuresWithFanOut(null, "key"))
                 .isInstanceOf(UnexpectedStateException.class);
+    }
+
+    @Test
+    void getStructures_xml30WithUsageMarker_invokesXmlInjectorNotJsonPreserver() throws IOException {
+        TranslatedStructureQuery query = buildXml30Query();
+        when(cacheService.getReadyResponse(any())).thenReturn(Optional.empty());
+        when(genericRegistryAdapter.getStructures(query)).thenReturn(new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)));
+        when(metadataAttributeUsagePreserver.isEnabled(any())).thenReturn(true);
+        Map<String, JsonNode> captured = Map.of("IMF.STA|DSD_QNEA|7.0.0", new ObjectMapper().createArrayNode());
+        when(metadataAttributeUsagePreserver.capture(any())).thenReturn(captured);
+        when(structureFixtureService.applyFixtures(any(), any(), any())).thenReturn(new ByteArrayInputStream(new byte[0]));
+        when(metadataAttributeUsageXmlInjector.inject(any(), any())).thenReturn("<injected/>".getBytes(StandardCharsets.UTF_8));
+
+        StreamingResponseBody body = router.getStructures(query);
+        body.writeTo(new ByteArrayOutputStream());
+
+        verify(metadataAttributeUsageXmlInjector, times(1)).inject(any(), eq(captured));
+        verify(metadataAttributeUsagePreserver, never()).inject(any(), any());
+        verify(cacheService, times(1)).putReadyResponse(any(), any(byte[].class));
+    }
+
+    private static TranslatedStructureQuery buildXml30Query() {
+        RegistryConfiguration registry = new RegistryConfiguration();
+        registry.setName("IMF");
+        StructureEndpointConfiguration structureEndpoint = new StructureEndpointConfiguration();
+        VersionSpecificRegistryConfiguration versionConfig = new VersionSpecificRegistryConfiguration();
+        versionConfig.setStructureEndpointConfig(structureEndpoint);
+        return TranslatedStructureQuery.builder()
+                .registryConfiguration(registry)
+                .versionConfiguration(versionConfig)
+                .structure(new Structure("datastructure", "IMF.STA", "DSD_QNEA", "7.0.0"))
+                .references("descendants")
+                .detail("full")
+                .contentType(MediaType.valueOf(SdmxMediaTypes.STRUCTURE_XML_3_0_0))
+                .registryReturnFormat(SdmxFormat.JSON_STRUCTURE_2_0_0)
+                .build();
     }
 
     private static TranslatedStructureQuery buildStructureQuery() {

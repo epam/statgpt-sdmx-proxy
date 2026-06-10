@@ -73,4 +73,12 @@ public class DsdFidelityTestSuitConfiguration {
      * The MSD must not leak as a {@code <str:MetadataStructure>} element.
      */
     private List<String> expectedFoldedMetadataAttributeIdsXml21;
+
+    /**
+     * Optional. When non-empty, refetches the DSD with {@code Accept:
+     * application/vnd.sdmx.structure+xml;version=3.0.0} and asserts each listed metadata-attribute id
+     * appears as a native {@code <str:MetadataAttributeUsage>} (its {@code MetadataAttributeReference}
+     * text equals the id) -- i.e. the XML 3.0 usage injector restored the MSD usages (design 036).
+     */
+    private List<String> expectedMetadataAttributeUsageIdsXml30;
 }

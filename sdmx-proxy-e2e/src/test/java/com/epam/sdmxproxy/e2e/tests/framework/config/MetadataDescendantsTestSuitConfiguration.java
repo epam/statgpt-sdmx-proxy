@@ -41,4 +41,11 @@ public class MetadataDescendantsTestSuitConfiguration {
 
     /** If true, assert {@code data.metadataProvisionAgreements} is non-empty. */
     private boolean expectMetadataProvisionAgreements;
+
+    /**
+     * If true, additionally refetches the dataflow DESCENDANTS with {@code Accept:
+     * application/vnd.sdmx.structure+xml;version=3.0.0} and asserts the response carries a
+     * {@code <str:MetadataStructure>} element -- i.e. the MSD survives the XML 3.0 writer path (design 036).
+     */
+    private boolean expectMetadataStructuresXml30;
 }

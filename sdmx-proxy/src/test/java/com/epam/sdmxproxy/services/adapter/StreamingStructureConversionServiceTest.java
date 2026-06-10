@@ -411,6 +411,56 @@ public class StreamingStructureConversionServiceTest {
 
     @Test
     @SneakyThrows
+    void shouldConvertStructures_Json20_to_Xml30_dsdAndMsd() {
+        //GIVEN: IMF QNEA DSD with its MSD inline
+        InputStream input = getClass().getResourceAsStream("structure_conversion/imf/3.0/qnea_dsd_with_msd.json");
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MediaType targetMediaType = MediaType.valueOf(SdmxMediaTypes.STRUCTURE_XML_3_0_0);
+
+        FixtureConfiguration versionWildcardFixture = new FixtureConfiguration();
+        versionWildcardFixture.setType(StructureFixtureType.VERSION_WILDCARD);
+        versionWildcardFixture.setConfig(new HashMap<>());
+
+        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(versionWildcardFixture);
+        InputStream fixedInputStream = fixtureService.applyFixtures(input, SdmxFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
+
+        //WHEN
+        sut.convert(fixedInputStream, outputStream, SdmxFormat.JSON_STRUCTURE_2_0_0, targetMediaType);
+
+        //THEN
+        String xml = outputStream.toString(java.nio.charset.StandardCharsets.UTF_8);
+        assertTrue(xml.contains("http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure"), "output must declare the SDMX 3.0 structure namespace");
+        assertTrue(xml.contains(":Structure"), "root must be a message:Structure document");
+        assertTrue(xml.contains(":DataStructure "), "DataStructure must be present");
+        assertTrue(xml.contains(":MetadataStructure "), "MetadataStructure (MSD) must survive the round-trip");
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldConvertStructures_Json20_to_Xml30_dsdMetadataReference() {
+        //GIVEN: WEO DSD carrying a DSD-level MSD reference
+        InputStream input = getClass().getResourceAsStream("structure_conversion/imf/3.0/dsd_weo_issue_79.json");
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MediaType targetMediaType = MediaType.valueOf(SdmxMediaTypes.STRUCTURE_XML_3_0_0);
+
+        FixtureConfiguration versionWildcardFixture = new FixtureConfiguration();
+        versionWildcardFixture.setType(StructureFixtureType.VERSION_WILDCARD);
+        versionWildcardFixture.setConfig(new HashMap<>());
+
+        List<FixtureConfiguration<StructureFixtureType>> fixtureConfigs = List.of(versionWildcardFixture);
+        InputStream fixedInputStream = fixtureService.applyFixtures(input, SdmxFormat.JSON_STRUCTURE_2_0_0, fixtureConfigs);
+
+        //WHEN
+        sut.convert(fixedInputStream, outputStream, SdmxFormat.JSON_STRUCTURE_2_0_0, targetMediaType);
+
+        //THEN
+        String xml = outputStream.toString(java.nio.charset.StandardCharsets.UTF_8);
+        assertTrue(xml.contains(":Metadata>") || xml.contains(":Metadata "), "DSD-level <str:Metadata> MSD reference must be present");
+        assertTrue(xml.contains("MetadataStructure=IMF.RES:MSD_WEO_METADATA_EXTERNAL"), "the MSD URN must be referenced");
+    }
+
+    @Test
+    @SneakyThrows
     void shouldFoldMetadataAttributeUsagesIntoAttributes_forXml21() {
         //GIVEN: IMF QNEA DSD (18 attributes + 25 metadataAttributeUsages) with its MSD inline,
         // as AdapterRouterImpl hands it to the folder on the XML 2.1 path (design 032). The MSD is

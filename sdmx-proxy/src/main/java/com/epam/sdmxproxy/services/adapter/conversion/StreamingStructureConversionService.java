@@ -136,7 +136,8 @@ public class StreamingStructureConversionService {
                 sdmxMLStructureWriterFactory.getStructureWriterEngine(xmlV21).writeStructures(sdmxBeans, null, outputStream);
             }
             case SDMX_3_0 -> {
-                throw new UnsupportedConversionException("XML for SDMX 3.0 is not currently supported. Choose different format");
+                SdmxStructureFormat xmlV30 = new SdmxStructureFormat(STRUCTURE_OUTPUT_FORMAT.SDMX_V3_STRUCTURE_DOCUMENT);
+                sdmxMLStructureWriterFactory.getStructureWriterEngine(xmlV30).writeStructures(sdmxBeans, null, outputStream);
             }
             default -> throw new UnsupportedConversionException("Unsupported SDMX version for XML conversion");
         }
