@@ -43,6 +43,7 @@ import com.epam.sdmxproxy.services.fixture.data.DataFixtureService;
 import com.epam.sdmxproxy.services.fixture.data.MetadataAttributesPreserver;
 import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsageFolder;
 import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsagePreserver;
+import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsageXmlInjector;
 import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
 import com.epam.sdmxproxy.services.limit.CachedShrinkResult;
 import com.epam.sdmxproxy.services.limit.LimitEmulationService;
@@ -80,6 +81,7 @@ public class AdapterRouterImpl implements AdapterRouter {
     private final StructureFixtureService fixtureService;
     private final MetadataAttributeUsagePreserver metadataAttributeUsagePreserver;
     private final MetadataAttributeUsageFolder metadataAttributeUsageFolder;
+    private final MetadataAttributeUsageXmlInjector metadataAttributeUsageXmlInjector;
     private final MetadataAttributesPreserver metadataAttributesPreserver;
     private final AvailabilityFixtureService availabilityFixtureService;
     private final DataFixtureService dataFixtureService;
@@ -181,10 +183,13 @@ public class AdapterRouterImpl implements AdapterRouter {
                 // which would mimic the SDMX-PLUS behaviour removed in design 027.
                 boolean preserveUsages = markerEnabled && SdmxMediaTypeResolver.isJson(requestedMediaType);
                 boolean foldUsages = markerEnabled && SdmxMediaTypeResolver.isXmlV21(requestedMediaType) && returnFormat == SdmxFormat.JSON_STRUCTURE_2_0_0;
+                // XML 3.0 output: capture usages verbatim and re-inject native MetadataAttributeUsage
+                // elements after conversion (design 036), mirroring the JSON capture/reinject above.
+                boolean injectUsagesXml30 = markerEnabled && SdmxMediaTypeResolver.isXmlV30(requestedMediaType) && returnFormat == SdmxFormat.JSON_STRUCTURE_2_0_0;
 
                 Map<String, JsonNode> capturedUsages = Map.of();
                 InputStream forFixtures;
-                if (preserveUsages) {
+                if (preserveUsages || injectUsagesXml30) {
                     byte[] rawBytes = rawStream.readAllBytes();
                     capturedUsages = metadataAttributeUsagePreserver.capture(rawBytes);
                     forFixtures = new ByteArrayInputStream(rawBytes);
@@ -206,6 +211,8 @@ public class AdapterRouterImpl implements AdapterRouter {
                     byte[] convertedBytes = buffer.toByteArray();
                     if (preserveUsages && !capturedUsages.isEmpty()) {
                         convertedBytes = metadataAttributeUsagePreserver.inject(convertedBytes, capturedUsages);
+                    } else if (injectUsagesXml30 && !capturedUsages.isEmpty()) {
+                        convertedBytes = metadataAttributeUsageXmlInjector.inject(convertedBytes, capturedUsages);
                     }
                     outputStream.write(convertedBytes);
                     cacheService.putReadyResponse(responseKey, convertedBytes);

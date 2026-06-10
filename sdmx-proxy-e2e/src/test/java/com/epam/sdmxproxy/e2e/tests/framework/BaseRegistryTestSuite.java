@@ -679,6 +679,21 @@ public abstract class BaseRegistryTestSuite {
                     .as("data.metadataProvisionAgreements must be non-empty")
                     .isTrue();
         }
+
+        if (cfg.isExpectMetadataStructuresXml30()) {
+            Response xml30Response = restClient.getResponseWithAccept(
+                    path, "application/vnd.sdmx.structure+xml;version=3.0.0", Map.of("references", "descendants", "detail", "full"));
+            assertThat(xml30Response.getStatusCode())
+                    .as("DESCENDANTS XML 3.0 request must return HTTP 200 (dataflow=%s)", cfg.getDataflowUrn())
+                    .isEqualTo(200);
+            String xml = xml30Response.getBody().asString();
+            assertThat(xml)
+                    .as("root must be a v3.0 message:Structure document")
+                    .contains("http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure");
+            assertThat(xml)
+                    .as("MSD must survive the XML 3.0 writer path as a <str:MetadataStructure> element (design 036)")
+                    .contains("MetadataStructure");
+        }
     }
 
     /**
@@ -715,6 +730,50 @@ public abstract class BaseRegistryTestSuite {
         assertThat(xml)
                 .as("the spliced MSD must not leak as a <str:MetadataStructure> element in the DSD-only response")
                 .doesNotContain("<str:MetadataStructure");
+    }
+
+    /**
+     * Pin for the XML 3.0 usage injector (design 036): SDMX-ML 3.0 has a native
+     * {@code MetadataAttributeUsage} element, so on XML 3.0 output the
+     * PRESERVE_METADATA_ATTRIBUTE_USAGES marker drives the injector to emit each MSD-derived
+     * usage as a {@code <str:MetadataAttributeUsage>} (rather than folding it into a
+     * DataAttribute as on XML 2.1). Gated by
+     * {@code dsdFidelityTestSuitConfiguration.expectedMetadataAttributeUsageIdsXml30} -- absent or
+     * empty list skips the pin (e.g. BIS, whose DSDs carry no usages).
+     */
+    @Test
+    @DisplayName("Structure Endpoint: XML 3.0 emits native MetadataAttributeUsage elements")
+    @SneakyThrows
+    void testDsdMetadataUsagesNativeXml30() {
+        DsdFidelityTestSuitConfiguration cfg = testConfig.getDsdFidelityTestSuitConfiguration();
+        Assumptions.assumeTrue(
+                cfg != null && cfg.getExpectedMetadataAttributeUsageIdsXml30() != null && !cfg.getExpectedMetadataAttributeUsageIdsXml30().isEmpty(),
+                "No expectedMetadataAttributeUsageIdsXml30 -- skipping XML 3.0 native usage pin");
+
+        String[] urnParts = parseUrn(cfg.getDsdUrn());
+        String path = String.format("%s/sdmx/3.0/structure/datastructure/%s/%s/%s?references=none&detail=full", BASE_PATH, urnParts[0], urnParts[1], urnParts[2]);
+
+        Response response = restClient.getResponseWithAccept(path, "application/vnd.sdmx.structure+xml;version=3.0.0");
+        assertThat(response.getStatusCode())
+                .as("DSD XML 3.0 request must return HTTP 200 (dsd=%s)", cfg.getDsdUrn())
+                .isEqualTo(200);
+        assertThat(response.getContentType())
+                .as("content-type must echo XML 3.0")
+                .containsIgnoringCase("xml")
+                .contains("3.0.0");
+
+        String xml = response.getBody().asString();
+        assertThat(xml)
+                .as("root must be a v3.0 message:Structure document")
+                .contains("http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure");
+        assertThat(xml)
+                .as("XML 3.0 must carry native MetadataAttributeUsage elements (design 036)")
+                .contains("MetadataAttributeUsage");
+        for (String id : cfg.getExpectedMetadataAttributeUsageIdsXml30()) {
+            assertThat(xml)
+                    .as("metadata attribute %s must appear as a <str:MetadataAttributeReference>%s</...> in the XML 3.0 output (design 036)", id, id)
+                    .contains(">" + id + "<");
+        }
     }
 
     Stream<Arguments> availabilityCases() {

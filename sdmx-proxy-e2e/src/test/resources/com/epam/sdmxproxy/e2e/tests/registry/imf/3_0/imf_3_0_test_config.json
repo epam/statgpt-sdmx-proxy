@@ -84,6 +84,7 @@
     ],
     "mediaTypes": [
       "application/vnd.sdmx.structure+xml;version=2.1",
+      "application/vnd.sdmx.structure+xml;version=3.0.0",
       "application/vnd.sdmx.structure+json; version=2.0.0"
     ],
     "registryReturnFormats": [
@@ -177,12 +178,19 @@
       "AUTHOR",
       "METHODOLOGY",
       "LICENSE"
+    ],
+    "expectedMetadataAttributeUsageIdsXml30": [
+      "DOI",
+      "AUTHOR",
+      "METHODOLOGY",
+      "LICENSE"
     ]
   },
   "metadataDescendantsTestSuitConfiguration": {
     "dataflowUrn": "IMF.RES:WEO(9.0.0)",
     "expectMetadataStructures": true,
-    "expectedMsdIdContains": "MSD_WEO"
+    "expectedMsdIdContains": "MSD_WEO",
+    "expectMetadataStructuresXml30": true
   },
   "availabilityTestSuitConfiguration": {
     "dataflowConfigs": [

@@ -74,6 +74,17 @@ public class SdmxMediaTypeResolver {
                 && "2.1".equals(mediaType.getParameter("version"));
     }
 
+    /**
+     * True when {@code mediaType} is an SDMX-ML XML media type carrying {@code version=3.0.0}
+     * (e.g. {@code application/vnd.sdmx.structure+xml;version=3.0.0}). Null-safe.
+     */
+    public static boolean isXmlV30(MediaType mediaType) {
+        return mediaType != null
+                && mediaType.getSubtype() != null
+                && mediaType.getSubtype().toLowerCase().contains("xml")
+                && "3.0.0".equals(mediaType.getParameter("version"));
+    }
+
     public static MediaType mapMediaType(String acceptHeader) {
         if (acceptHeader == null || acceptHeader.isBlank()) {
             return MediaType.APPLICATION_JSON;

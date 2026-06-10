@@ -58,6 +58,10 @@ public interface SdmxStructure30Api {
                                     schema = @Schema(type = "string", format = "binary")
                             ),
                             @Content(
+                                    mediaType = SdmxMediaTypes.STRUCTURE_XML_3_0_0,
+                                    schema = @Schema(type = "string", format = "binary")
+                            ),
+                            @Content(
                                     mediaType = SdmxMediaTypes.STRUCTURE_JSON_2_0_0,
                                     schema = @Schema(type = "string", format = "binary")
                             )
@@ -77,6 +81,7 @@ public interface SdmxStructure30Api {
             value = "/{structureType}/{agencyId}/{resourceId}/{version}",
             produces = {
                     SdmxMediaTypes.STRUCTURE_XML_2_1,
+                    SdmxMediaTypes.STRUCTURE_XML_3_0_0,
                     SdmxMediaTypes.STRUCTURE_JSON_2_0_0,
                     SdmxMediaTypeResolver.ANY,
                     MediaType.APPLICATION_JSON_VALUE
