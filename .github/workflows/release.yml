@@ -45,11 +45,11 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@4.4.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.4.1
         with:
           java-version: "25"
           java-distribution: "corretto"
-      - uses: gradle/actions/dependency-submission@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
+      - uses: gradle/actions/dependency-submission@5e2ebd065dc2488b7a6ad670704656cbbe1e8f60 # v6.1.1
         with:
           dependency-graph: generate-and-submit # Default value is 'generate-submit-and-upload', but we don't need job artifacts here
         env:
@@ -67,7 +67,7 @@ jobs:
       latest-stable-tag: ${{ steps.semantic_versioning.outputs.latest-stable-tag }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.4.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.4.1
         id: semantic_versioning
         with:
           promote: true
@@ -120,7 +120,7 @@ jobs:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
 
-      - uses: epam/ai-dial-ci/actions/java_prepare@4.4.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.4.1
         with:
           java-version: "25"
           java-distribution: "corretto"
@@ -169,12 +169,12 @@ jobs:
         run: |
           sed -i -E "s/^([ \t]*version[ \t]*=[ \t]*)[\"'].*[\"']/\1\"${{ needs.calculate_version.outputs.next-version }}\"/g" build.gradle
 
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.4.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.4.1
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
           use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
 
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.4.0
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.4.1
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
           git-user-name: ${{ vars.ACTIONS_BOT_NAME || 'statgpt-actions' }}
