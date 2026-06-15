@@ -39,7 +39,7 @@ runs:
         path: ${{ inputs.working-directory }}
         lfs: false
         persist-credentials: false
-    - uses: epam/ai-dial-ci/actions/java_prepare@4.4.0
+    - uses: epam/ai-dial-ci/actions/java_prepare@4.5.0
       with:
         java-version: ${{ inputs.java-version }}
         java-distribution: ${{ inputs.java-distribution }}
