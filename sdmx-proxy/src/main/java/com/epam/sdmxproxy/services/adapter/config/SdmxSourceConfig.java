@@ -3,13 +3,14 @@ package com.epam.sdmxproxy.services.adapter.config;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxCsvDataReaderFactoryV2;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxJsonDataReaderFactory;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxJsonStructureReaderManagerV2;
+import com.epam.sdmxproxy.services.sdmxsource.InMemoryReadableDataLocationFactory;
 import io.sdmx.format.csv.factory.v1.SdmxCsvDataReaderFactoryV1;
 import io.sdmx.format.json.factory.data.SdmxJsonDataWriterFactory;
 import io.sdmx.format.json.manager.SdmxJsonStructureReaderManagerV1;
 import io.sdmx.format.ml.factory.data.SdmxMLDataReaderFactory;
 import io.sdmx.format.ml.factory.structure.SdmxMLStructureReaderFactory;
 import io.sdmx.im.beans.builder.V3BeansBuilder;
-import io.sdmx.utils.core.io.SdmxSourceReadableDataLocationFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -32,8 +33,9 @@ public class SdmxSourceConfig {
     }
 
     @Bean
-    public SdmxSourceReadableDataLocationFactory sdmxSourceReadableDataLocationFactory() {
-        return new SdmxSourceReadableDataLocationFactory();
+    public InMemoryReadableDataLocationFactory inMemoryReadableDataLocationFactory(
+            @Value("${sdmxproxy.conversion.max-in-memory-bytes:268435456}") long maxInMemoryBytes) {
+        return new InMemoryReadableDataLocationFactory(maxInMemoryBytes);
     }
 
     @Bean
