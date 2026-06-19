@@ -23,6 +23,12 @@ sdmxproxy:
         maxIdleConnections: 50
         keepAliveDuration: 300000
         connectionPoolingEnabled: true
+  conversion:
+    # Maximum bytes an upstream registry response may occupy in memory during
+    # format conversion. Exceeding this aborts the request with HTTP 500 rather
+    # than risking an out-of-memory crash of the pod. Transient peak heap during
+    # the read is ~2-3x this value.
+    max-in-memory-bytes: ${SDMX_MAX_IN_MEMORY_BYTES:268435456}
   registry:
     config:
       source:

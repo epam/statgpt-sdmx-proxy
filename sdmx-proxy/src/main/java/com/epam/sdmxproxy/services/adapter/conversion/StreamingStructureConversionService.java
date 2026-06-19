@@ -9,6 +9,7 @@ import com.epam.sdmxproxy.common.mapping.StructureMapperImpl;
 import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.exception.UnsupportedConversionException;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxMLStructureWriterFactory;
+import com.epam.sdmxproxy.services.sdmxsource.InMemoryReadableDataLocationFactory;
 import com.epam.sdmxproxy.services.sdmxsource.JsonV1StructureReaderFactory;
 import com.epam.sdmxproxy.services.sdmxsource.JsonV2StructureReaderFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,7 +20,6 @@ import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.core.sdmx.api.factory.structure.StructureReaderFactory;
 import io.sdmx.core.sdmx.format.SdmxStructureFormat;
 import io.sdmx.format.ml.factory.structure.SdmxMLStructureReaderFactory;
-import io.sdmx.utils.core.io.SdmxSourceReadableDataLocationFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -39,7 +39,7 @@ import java.util.List;
 public class StreamingStructureConversionService {
 
     private final ObjectMapper objectMapper;
-    private final SdmxSourceReadableDataLocationFactory sdmxSourceReadableDataLocationFactory;
+    private final InMemoryReadableDataLocationFactory sdmxSourceReadableDataLocationFactory;
     private final CustomSdmxMLStructureWriterFactory sdmxMLStructureWriterFactory;
     private final SdmxMLStructureReaderFactory sdmxMLStructureReaderFactory;
     private final JsonV1StructureReaderFactory jsonV1StructureReaderFactory;

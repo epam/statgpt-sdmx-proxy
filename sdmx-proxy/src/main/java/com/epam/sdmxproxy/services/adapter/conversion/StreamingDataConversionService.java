@@ -7,6 +7,7 @@ import com.epam.sdmxproxy.exception.UnsupportedConversionException;
 import com.epam.sdmxproxy.services.sdmxsource.CustomDataTransformationUtil;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxCsvDataReaderFactoryV2;
 import com.epam.sdmxproxy.services.sdmxsource.CustomSdmxJsonDataReaderFactory;
+import com.epam.sdmxproxy.services.sdmxsource.InMemoryReadableDataLocationFactory;
 import com.epam.sdmxproxy.services.sdmxsource.JsonDataWriterFactoryProducer;
 import com.epam.sdmxproxy.services.sdmxsource.QuotedNewlineCanonicalizingInputStream;
 import io.sdmx.api.io.ReadableDataLocation;
@@ -30,7 +31,6 @@ import io.sdmx.format.json.model.SdmxJsonDataFormat;
 import io.sdmx.format.ml.factory.data.SdmxMLDataReaderFactory;
 import io.sdmx.format.ml.factory.data.SdmxMLDataWriterFactory;
 import io.sdmx.format.ml.model.SDMXMLDataFormat;
-import io.sdmx.utils.core.io.SdmxSourceReadableDataLocationFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -51,7 +51,7 @@ import java.util.Locale;
 @Service
 public class StreamingDataConversionService {
 
-    private final SdmxSourceReadableDataLocationFactory readableDataLocationFactory;
+    private final InMemoryReadableDataLocationFactory readableDataLocationFactory;
     private final CustomSdmxJsonDataReaderFactory sdmxJsonDataReaderFactory;
     private final SdmxMLDataReaderFactory sdmxMLDataReaderFactory;
     private final SdmxCsvDataReaderFactoryV1 sdmxCsvDataReaderFactoryV1;

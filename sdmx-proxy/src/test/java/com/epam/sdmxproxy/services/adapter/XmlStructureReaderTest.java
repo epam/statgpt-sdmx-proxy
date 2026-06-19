@@ -1,10 +1,10 @@
 package com.epam.sdmxproxy.services.adapter;
 
+import com.epam.sdmxproxy.services.sdmxsource.InMemoryReadableDataLocationFactory;
 import io.sdmx.api.io.ReadableDataLocation;
 import io.sdmx.api.sdmx.builder.IBeansBuilder;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.format.ml.factory.structure.SdmxMLStructureReaderFactory;
-import io.sdmx.utils.core.io.SdmxSourceReadableDataLocationFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class XmlStructureReaderTest {
 
     @Autowired
-    private SdmxSourceReadableDataLocationFactory sdmxSourceReadableDataLocationFactory;
+    private InMemoryReadableDataLocationFactory sdmxSourceReadableDataLocationFactory;
     @Autowired
     private SdmxMLStructureReaderFactory sdmxMLStructureReaderFactory;
     @Autowired
