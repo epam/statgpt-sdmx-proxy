@@ -37,4 +37,12 @@ public class RegistryResilienceConfig {
      * If null, rate limiting uses default settings (may be disabled).
      */
     private RegistryRateLimitConfig rateLimit;
+
+    /**
+     * Retry configuration applied specifically to HTTP 429 (rate-limit) responses.
+     * Kept separate from {@link #retry} because rate-limit backoff operates on a much
+     * longer time scale than 5xx backoff (minutes vs seconds), and because it is opt-in.
+     * If null, 429 retrying uses the application-wide default (disabled).
+     */
+    private RegistryRateLimitRetryConfig rateLimitRetry;
 }

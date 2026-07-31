@@ -1,7 +1,10 @@
 package com.epam.sdmxproxy.configserver.api;
 
+import com.epam.sdmxproxy.configserver.exception.ErrorResponse;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +26,7 @@ public interface ConfigServerApi {
 
     @Operation(summary = "Update proxy configuration")
     @ApiResponse(responseCode = "200", description = "Configuration updated successfully")
-    @ApiResponse(responseCode = "400", description = "Validation failed")
+    @ApiResponse(responseCode = "422", description = "Validation failed", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping
     ResponseEntity<ProxyConfiguration> updateConfig(@RequestBody ProxyConfiguration configuration);
 }

@@ -16,6 +16,7 @@ public class ResilienceProperties {
     private CircuitBreakerProperties defaultCircuitBreaker = new CircuitBreakerProperties();
     private RetryProperties defaultRetry = new RetryProperties();
     private RateLimitProperties defaultRateLimit = new RateLimitProperties();
+    private RateLimitRetryProperties defaultRateLimitRetry = new RateLimitRetryProperties();
 
     /**
      * Enable rate limiting application-wide by default.

@@ -10,6 +10,7 @@ import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.services.fixture.availability.AvailabilityFixtureService;
 import com.epam.sdmxproxy.services.misc.DimensionService;
+import com.epam.sdmxproxy.services.translator.Sdmx21QueryNormalizerImpl;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.datastructure.DataStructureBean;
 import io.sdmx.api.sdmx.model.beans.datastructure.DimensionBean;
@@ -64,7 +65,8 @@ class LimitEmulationServiceImplTest {
                 new BisectCalculator(),
                 codelistSizeResolver,
                 dimensionService,
-                new KeyParserImpl()
+                new KeyParserImpl(),
+                new Sdmx21QueryNormalizerImpl()
         );
 
         lastProbeQuery = new AtomicReference<>();
@@ -305,7 +307,7 @@ class LimitEmulationServiceImplTest {
     }
 
     @Test
-    void getShrunkQuery_sdmx21_passesConcreteComponentIdAndNoFiltersToAvailability() {
+    void getShrunkQuery_sdmx21_passesAllComponentIdAndNoFiltersToAvailability() {
         TranslatedDataQuery query = baseQuery21(1000, "*");
         SdmxBeans beans = mockBeansWithDims("FREQ", "REF_AREA", "TIME_PERIOD");
         AvailabilityProjection inBand = mkProjection(800L,
@@ -315,8 +317,25 @@ class LimitEmulationServiceImplTest {
 
         service.getShrunkQuery(query, beans, recordingProber());
 
-        assertThat(lastProbeQuery.get().getComponentId()).isEqualTo("FREQ,REF_AREA");
+        // A 2.1 availability componentId is `all` or one component id. A comma-joined list is read
+        // as a single unknown component id and answered with a 500 (observed on NSI 8.19).
+        assertThat(lastProbeQuery.get().getComponentId()).isEqualTo("all");
         assertThat(lastProbeQuery.get().getFilters()).isNull();
+    }
+
+    @Test
+    void getShrunkQuery_sdmx21_omitsReferencesOnAvailabilityProbe() {
+        TranslatedDataQuery query = baseQuery21(1000, "*");
+        SdmxBeans beans = mockBeansWithDims("FREQ", "REF_AREA", "TIME_PERIOD");
+        AvailabilityProjection inBand = mkProjection(800L,
+                "FREQ", List.of("A"),
+                "REF_AREA", List.of("DE"));
+        when(parser.parse(any(), any())).thenReturn(inBand);
+
+        service.getShrunkQuery(query, beans, recordingProber());
+
+        // references=none is answered with a 500 by NSI; null drops the parameter entirely.
+        assertThat(lastProbeQuery.get().getReferences()).isNull();
     }
 
     @Test
@@ -363,7 +382,8 @@ class LimitEmulationServiceImplTest {
 
         TranslatedDataQuery shrunk = service.getShrunkQuery(query, beans, recordingProber());
 
-        assertThat(shrunk.getKey()).isEqualTo("*");
+        // mergeAllWildcardKey collapses to the 3.0 `*`, which the 2.1 normalizer then maps to `all`.
+        assertThat(shrunk.getKey()).isEqualTo("all");
     }
 
     // ===================== helpers =====================

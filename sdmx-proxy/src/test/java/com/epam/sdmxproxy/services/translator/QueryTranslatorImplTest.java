@@ -79,7 +79,8 @@ class QueryTranslatorImplTest {
                 filterValidator,
                 filterTranslator,
                 dimensionService,
-                configurationProvider
+                configurationProvider,
+                new Sdmx21QueryNormalizerImpl()
         );
     }
 

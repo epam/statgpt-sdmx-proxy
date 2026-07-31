@@ -15,6 +15,7 @@ import com.epam.sdmxproxy.registry.api.client.Sdmx21StructureClient;
 import com.epam.sdmxproxy.registry.api.client.Sdmx30AvailabilityClient;
 import com.epam.sdmxproxy.registry.api.client.Sdmx30DataClient;
 import com.epam.sdmxproxy.registry.api.client.Sdmx30StructureClient;
+import com.epam.sdmxproxy.services.translator.Sdmx21QueryNormalizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
@@ -35,6 +36,7 @@ import java.util.Map;
 public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
 
     private final SdmxApiClientProvider sdmxApiClientProvider;
+    private final Sdmx21QueryNormalizer sdmx21QueryNormalizer;
 
     @Override
     public InputStream getStructures(TranslatedStructureQuery query) {
@@ -72,15 +74,21 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
         );
     }
 
+    /**
+     * The 2.1 structure path is built from raw SDMX 3.0 slots, whose documented default is {@code *}.
+     * Most callers pre-map the id and version slots, but agency-scheme discovery sends a literal
+     * {@code *} agency, so every slot goes through the normalizer here -- the structure counterpart
+     * of the {@link #getFlowRef} choke point.
+     */
     private InputStream getStructures21(TranslatedStructureQuery query, RegistrySelectionResult selectedRegistry, Structure structure) {
         Sdmx21StructureClient structure21Client = sdmxApiClientProvider.getStructure21Client(selectedRegistry);
         SdmxFormat structureReturnFormat = query.getRegistryReturnFormat();
         return structure21Client.getStructures(
                 structureReturnFormat.getContentType(),
                 structure.type(),
-                structure.agency(),
-                structure.id(),
-                structure.version(),
+                sdmx21QueryNormalizer.toSdmx21PathSlot(structure.agency()),
+                sdmx21QueryNormalizer.toSdmx21PathSlot(structure.id()),
+                sdmx21QueryNormalizer.toSdmx21PathSlot(structure.version()),
                 query.getReferences(),
                 query.getDetail()
         );
@@ -108,7 +116,7 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
     private InputStream getData21(TranslatedDataQuery query, RegistrySelectionResult selectedRegistry) {
         Sdmx21DataClient data21Client = sdmxApiClientProvider.getData21Client(selectedRegistry);
         String flowRef = getFlowRef(query.getAgencyID(), query.getResourceID(), query.getVersion());
-        String key = getKey(query);
+        String key = sdmx21QueryNormalizer.toKey(query.getKey());
         String providerRef = "all";
         String acceptHeader = resolveDataAcceptHeader(query);
 
@@ -129,12 +137,13 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
         );
     }
 
-    private String getKey(TranslatedDataQuery query) {
-        return query.getKey() != null ? query.getKey() : "all";
-    }
-
+    /**
+     * The 2.1 flowRef is built from raw SDMX 3.0 path slots, whose documented default is {@code *}.
+     * A 2.1 registry needs {@code all} instead, so every slot goes through the normalizer here --
+     * this is the single choke point shared by the 2.1 data and availability calls.
+     */
     private String getFlowRef(String agencyId, String resourceId, String version) {
-        return agencyId + "," + resourceId + "," + version;
+        return sdmx21QueryNormalizer.toSdmx21PathSlot(agencyId) + "," + sdmx21QueryNormalizer.toSdmx21PathSlot(resourceId) + "," + sdmx21QueryNormalizer.toSdmx21PathSlot(version);
     }
 
     /**
@@ -189,21 +198,24 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
     private InputStream getAvailability21(TranslatedAvailabilityQuery query, RegistrySelectionResult selectedRegistry) {
         Sdmx21AvailabilityClient availability21Client = sdmxApiClientProvider.getAvailability21Client(selectedRegistry);
         String flowRef = getFlowRef(query.getAgencyID(), query.getResourceID(), query.getVersion());
-        String key = query.getKey() != null ? query.getKey() : "all";
+        String key = sdmx21QueryNormalizer.toKey(query.getKey());
         // providerRef is not part of the request - defaulting to "all" for all providers
         String providerRef = "all";
+        String componentId = sdmx21QueryNormalizer.toComponentId(query.getComponentId());
+        // null drops the parameter from the query string; NSI answers references=none with a 500.
+        String references = sdmx21QueryNormalizer.toReferences(query.getReferences());
         SdmxFormat availabilityReturnFormat = query.getReturnFormat();
         return availability21Client.getAvailability(
                 availabilityReturnFormat.getContentType(),
                 flowRef,
                 key,
                 providerRef,
-                query.getComponentId(),
+                componentId,
                 query.getStartPeriod(),
                 query.getEndPeriod(),
                 formatInstant(query.getUpdatedAfter()),
                 query.getMode(),
-                query.getReferences()
+                references
         );
     }
 
