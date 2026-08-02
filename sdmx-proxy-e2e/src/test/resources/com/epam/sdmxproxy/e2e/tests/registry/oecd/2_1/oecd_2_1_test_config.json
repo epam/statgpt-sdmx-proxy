@@ -1,0 +1,96 @@
+{
+  "structuresTestSuitConfiguration": {
+    "artefacts": [
+      {
+        "type": "codelist",
+        "urn": "OECD:CL_POLLUTANT(1.0)"
+      },
+      {
+        "type": "conceptscheme",
+        "urn": "OECD.ENV.EPI:CS_AIR_GHG(1.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "OECD.ENV.EPI:DSD_AIR_GHG(1.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "OECD.ENV.EPI:DSD_AIR_GHG@DF_AIR_GHG(1.0)"
+      },
+      {
+        "type": "metadatastructure",
+        "urn": "OECD:MSD_REF_METADATA(1.0)"
+      }
+    ],
+    "mediaTypes": [
+      "application/vnd.sdmx.structure+xml;version=2.1",
+      "application/vnd.sdmx.structure+xml;version=3.0.0",
+      "application/vnd.sdmx.structure+json; version=2.0.0"
+    ],
+    "registryReturnFormats": [
+      "XML_STRUCTURE_2_1"
+    ]
+  },
+  "dataTestSuitConfiguration": {
+    "dataflowConfigs": [
+      {
+        "urn": "OECD.ENV.EPI:DSD_AIR_GHG@DF_AIR_GHG(1.0)",
+        "keys": [
+          "USA.A.*.*.*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "OECD.SDD.TPS:DSD_LFS@DF_IALFS_INDIC(1.0)",
+        "keys": [
+          "USA.EMP.*.*.*.*.*.*.A"
+        ],
+        "filters": {}
+      }
+    ],
+    "mediaTypes": [
+      "application/vnd.sdmx.data+json;version=2.0.0",
+      "application/vnd.sdmx.data+xml;version=3.0.0",
+      "application/vnd.sdmx.data+csv;version=2.0.0"
+    ],
+    "registryReturnFormats": [
+      "XML_STRUCTURE_SPECIFIC_DATA_2_1",
+      "CSV_DATA_1_0_0"
+    ]
+  },
+  "limitTestSuitConfiguration": {
+    "urn": "OECD.ENV.EPI:DSD_AIR_GHG@DF_AIR_GHG(1.0)",
+    "key": "USA.A.*.*.*",
+    "filters": {},
+    "limit": 10,
+    "firstNObservations": 1,
+    "mediaType": "application/vnd.sdmx.data+json;version=2.0.0",
+    "registryReturnFormats": [
+      "XML_STRUCTURE_SPECIFIC_DATA_2_1"
+    ]
+  },
+  "availabilityTestSuitConfiguration": {
+    "dataflowConfigs": [
+      {
+        "urn": "OECD.ENV.EPI:DSD_AIR_GHG@DF_AIR_GHG(1.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "OECD.SDD.TPS:DSD_LFS@DF_IALFS_INDIC(1.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      }
+    ],
+    "mediaTypes": [
+      "application/vnd.sdmx.structure+json; version=2.0.0"
+    ],
+    "registryReturnFormats": [
+      "XML_STRUCTURE_2_1"
+    ]
+  }
+}

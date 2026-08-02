@@ -1,0 +1,82 @@
+{
+  "configs": [
+    {
+      "name": "OECD",
+      "description": "Organisation for Economic Co-operation and Development (NSI Web Service, SDMX 2.1 only)",
+      "versions": {
+        "SDMX_2_1": {
+          "sdmxVersion": "SDMX_2_1",
+          "structureEndpointConfig": {
+            "url": "https://sdmx.oecd.org/public/rest/",
+            "supportedFormats": [
+              "XML_STRUCTURE_2_1"
+            ],
+            "defaultFormat": "XML_STRUCTURE_2_1",
+            "bypassEnabled": false,
+            "supportedStructures": [
+              "datastructure",
+              "conceptscheme",
+              "codelist",
+              "dataflow",
+              "categoryscheme",
+              "agencyscheme",
+              "metadatastructure",
+              "metadataflow"
+            ]
+          },
+          "dataEndpointConfig": {
+            "url": "https://sdmx.oecd.org/public/rest/data/",
+            "supportedFormats": [
+              "XML_STRUCTURE_SPECIFIC_DATA_2_1",
+              "XML_GENERIC_DATA_2_1",
+              "CSV_DATA_1_0_0"
+            ],
+            "defaultFormat": "XML_STRUCTURE_SPECIFIC_DATA_2_1",
+            "bypassEnabled": false,
+            "supportsLimit": false
+          },
+          "availabilityEndpointConfig": {
+            "url": "https://sdmx.oecd.org/public/rest/",
+            "supportedFormats": [
+              "XML_STRUCTURE_2_1"
+            ],
+            "defaultFormat": "XML_STRUCTURE_2_1",
+            "bypassEnabled": false,
+            "availabilityEnabled": true
+          },
+          "resilienceConfig": {
+            "connectionTimeout": 45000,
+            "readTimeout": 120000,
+            "circuitBreaker": {
+              "failureRateThreshold": 90.0,
+              "minimumNumberOfCalls": 50,
+              "waitDurationInOpenState": 30000,
+              "slidingWindowSize": 50
+            },
+            "retry": {
+              "maxAttempts": 3,
+              "initialIntervalMillis": 1000,
+              "multiplier": 2.0,
+              "maxIntervalMillis": 4000
+            },
+            "rateLimitRetry": {
+              "enabled": true,
+              "maxAttempts": 5,
+              "initialIntervalMillis": 3000,
+              "multiplier": 2.0,
+              "maxIntervalMillis": 24000,
+              "maxTotalWaitMillis": 45000
+            }
+          }
+        }
+      }
+    }
+  ],
+  "agencies": [
+    {
+      "name": "OECD",
+      "primaryRegistry": "OECD",
+      "allowSubAgencies": true
+    }
+  ]
+}

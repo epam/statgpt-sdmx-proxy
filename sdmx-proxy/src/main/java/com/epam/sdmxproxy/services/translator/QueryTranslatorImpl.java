@@ -59,6 +59,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
     private final FilterTranslator filterTranslator;
     private final DimensionService dimensionService;
     private final ProxyConfigurationProvider configurationProvider;
+    private final Sdmx21QueryNormalizer sdmx21QueryNormalizer;
 
     private static String getVersionSpecificQueryId(String id, VersionSpecificRegistryConfiguration versionConfig) {
         String queryId = id;
@@ -360,6 +361,11 @@ public class QueryTranslatorImpl implements QueryTranslator {
             processedKey = mergeAllWildcardKey(processedKey);
         }
 
+        boolean is21 = selectedRegistry.getVersionConfiguration().getSdmxVersion() == SdmxVersion.SDMX_2_1;
+        if (is21) {
+            processedKey = sdmx21QueryNormalizer.toKey(processedKey);
+        }
+
         SdmxFormat returnFormat = determineAvailabilityReturnFormat(
                 selectedRegistry,
                 mediaTypeResult
@@ -373,11 +379,11 @@ public class QueryTranslatorImpl implements QueryTranslator {
                 .resourceID(resourceID)
                 .version(version)
                 .key(processedKey)
-                .componentId(componentId)
+                .componentId(is21 ? sdmx21QueryNormalizer.toComponentId(componentId) : componentId)
                 .filters(filters)
                 .updatedAfter(updatedAfter)
                 .mode(mode != null ? mode : "exact")
-                .references(references != null ? references : "none")
+                .references(is21 ? sdmx21QueryNormalizer.toReferences(references) : (references != null ? references : "none"))
                 .startPeriod(startPeriod)
                 .endPeriod(endPeriod)
                 .reportingYearStartDay(reportingYearStartDay)
@@ -525,6 +531,10 @@ public class QueryTranslatorImpl implements QueryTranslator {
         }
         if (dataEndpointConfig != null && dataEndpointConfig.isMergeAllWildcardKey()) {
             processedKey = mergeAllWildcardKey(processedKey);
+        }
+        // Last, so the 2.1 form wins over the 3.0-registry key knobs above.
+        if (versionConfig.getSdmxVersion() == SdmxVersion.SDMX_2_1) {
+            processedKey = sdmx21QueryNormalizer.toKey(processedKey);
         }
 
         SdmxFormat returnFormat = determineDataReturnFormat(

@@ -65,6 +65,15 @@ sdmxproxy:
       defaultRateLimit:
         limitForPeriod: 100
         limitRefreshPeriod: 60000
+      # Default HTTP 429 (rate-limit) retry configuration.
+      # Opt-in: disabled unless a registry sets resilienceConfig.rateLimitRetry.enabled = true.
+      defaultRateLimitRetry:
+        enabled: false
+        maxAttempts: 5
+        initialIntervalMillis: 5000
+        multiplier: 2.0
+        maxIntervalMillis: 60000
+        maxTotalWaitMillis: 75000
   cache:
     mode: ${CACHE_MODE:LOCAL}
     redis:

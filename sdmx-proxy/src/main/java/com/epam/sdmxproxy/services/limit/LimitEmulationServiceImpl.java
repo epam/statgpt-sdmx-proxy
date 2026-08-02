@@ -20,6 +20,8 @@ import com.epam.sdmxproxy.exception.AvailabilityProbeException;
 import com.epam.sdmxproxy.exception.IllegalRegistryConfigurationException;
 import com.epam.sdmxproxy.services.fixture.availability.AvailabilityFixtureService;
 import com.epam.sdmxproxy.services.misc.DimensionService;
+import com.epam.sdmxproxy.services.translator.QueryTranslatorImpl;
+import com.epam.sdmxproxy.services.translator.Sdmx21QueryNormalizer;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.base.IdentifiableBean;
 import io.sdmx.api.sdmx.model.beans.datastructure.DataStructureBean;
@@ -59,6 +61,7 @@ public class LimitEmulationServiceImpl implements LimitEmulationService {
     private final CodelistSizeResolver codelistSizeResolver;
     private final DimensionService dimensionService;
     private final KeyParser keyParser;
+    private final Sdmx21QueryNormalizer sdmx21QueryNormalizer;
 
     private static AvailabilityEndpointConfiguration requireAvailabilityConfig(TranslatedDataQuery query) {
         AvailabilityEndpointConfiguration availabilityConfig =
@@ -551,8 +554,9 @@ public class LimitEmulationServiceImpl implements LimitEmulationService {
         AvailabilityEndpointConfiguration availabilityConfig =
                 query.getVersionConfiguration().getAvailabilityEndpointConfig();
         boolean mergeAllWildcardAvail = availabilityConfig != null && availabilityConfig.isMergeAllWildcardKey();
-        String key = keyParser.buildKey(keyState, nonTimeDims, mergeAllWildcardAvail);
-        TranslatedAvailabilityQuery availQuery = toAvailabilityQuery21(query, sdmxBeans, key);
+        // buildKey emits the 3.0 `*` for unconstrained dims; a 2.1 registry needs an empty position.
+        String key = sdmx21QueryNormalizer.toKey(keyParser.buildKey(keyState, nonTimeDims, mergeAllWildcardAvail));
+        TranslatedAvailabilityQuery availQuery = toAvailabilityQuery21(query, key);
         return doProbe(query, sdmxBeans, availQuery, null, prober);
     }
 
@@ -564,7 +568,8 @@ public class LimitEmulationServiceImpl implements LimitEmulationService {
             long finalM,
             int probesIssued
     ) {
-        String newKey = keyParser.buildKey(keyState, nonTimeDims, mergeAllWildcardData);
+        // Normalized here rather than at the adapter so the cached shrink result and the wire form agree.
+        String newKey = sdmx21QueryNormalizer.toKey(keyParser.buildKey(keyState, nonTimeDims, mergeAllWildcardData));
         TranslatedDataQuery shrunk = query.toBuilder()
                 .key(newKey)
                 .filters(null)
@@ -640,17 +645,17 @@ public class LimitEmulationServiceImpl implements LimitEmulationService {
     }
 
     /**
-     * 2.1 availability: positional key must be concrete, not {@code *}. {@code componentId}
-     * must be the comma-joined list of non-time dims (SDMX-REST 2.1 availability spec does
-     * not accept a bare {@code *} for componentId). No filters.
+     * 2.1 availability: positional key must be concrete, not {@code *}. {@code componentId} must be
+     * {@code all} or a single component id -- observed against NSI 8.19, which answers a bare
+     * {@code *} with a 500 and treats a comma-joined list as one unknown component id. {@code all}
+     * covers every component, which is what the probe wants. No filters.
      */
     private TranslatedAvailabilityQuery toAvailabilityQuery21(
             TranslatedDataQuery query,
-            SdmxBeans sdmxBeans,
             String key
     ) {
         AvailabilityEndpointConfiguration availabilityConfig = requireAvailabilityConfig(query);
-        String componentId = String.join(",", nonTimeDimensionIds(sdmxBeans));
+        String componentId = QueryTranslatorImpl.SDMX_21_ALL_WILDCARD;
         SdmxFormat returnFormat = availabilityConfig.getDefaultFormat();
         return TranslatedAvailabilityQuery.builder()
                 .registryConfiguration(query.getRegistryConfiguration())
@@ -666,7 +671,8 @@ public class LimitEmulationServiceImpl implements LimitEmulationService {
                 .startPeriod(query.getStartPeriod())
                 .endPeriod(query.getEndPeriod())
                 .mode("exact")
-                .references("none")
+                // null drops the parameter; NSI answers references=none with a 500.
+                .references(null)
                 .returnFormat(returnFormat)
                 .contentType(MediaType.parseMediaType(returnFormat.getContentType()))
                 .build();

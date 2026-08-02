@@ -18,6 +18,7 @@ import com.epam.sdmxproxy.registry.api.client.Sdmx30DataClient;
 import com.epam.sdmxproxy.registry.api.client.Sdmx30StructureClient;
 import com.epam.sdmxproxy.registry.api.config.InputStreamFeignDecoder;
 import com.epam.sdmxproxy.registry.api.config.ResilienceProperties;
+import com.epam.sdmxproxy.registry.api.http.RateLimitRetryClientProvider;
 import feign.Client;
 import feign.codec.Encoder;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,11 +29,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for SdmxApiClientProviderImpl.
@@ -45,6 +48,7 @@ class SdmxApiClientProviderImplTest {
     private Client baseOkHttpClient;
     private ResilienceProperties resilienceConfig;
     private Resilience4jComponentFactory resilience4JComponentFactory;
+    private RateLimitRetryClientProvider rateLimitRetryClientProvider;
     private SdmxApiClientProviderImpl provider;
 
     @BeforeEach
@@ -59,12 +63,17 @@ class SdmxApiClientProviderImplTest {
 
         resilience4JComponentFactory = mock(Resilience4jComponentFactory.class);
 
+        // Feign rejects a null client, so the wrapper must hand back the delegate by default.
+        rateLimitRetryClientProvider = mock(RateLimitRetryClientProvider.class);
+        when(rateLimitRetryClientProvider.wrap(any(), any())).thenReturn(baseOkHttpClient);
+
         provider = new SdmxApiClientProviderImpl(
                 encoder,
                 decoder,
                 baseOkHttpClient,
                 resilienceConfig,
-                resilience4JComponentFactory
+                resilience4JComponentFactory,
+                rateLimitRetryClientProvider
         );
     }
 

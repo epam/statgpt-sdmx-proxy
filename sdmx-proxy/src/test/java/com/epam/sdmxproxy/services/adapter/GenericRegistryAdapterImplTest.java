@@ -7,6 +7,7 @@ import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.registry.api.SdmxApiClientProvider;
+import com.epam.sdmxproxy.services.translator.Sdmx21QueryNormalizerImpl;
 import com.epam.sdmxproxy.registry.api.client.Sdmx30AvailabilityClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ class GenericRegistryAdapterImplTest {
     void setUp() {
         clientProvider = mock(SdmxApiClientProvider.class);
         availabilityClient = mock(Sdmx30AvailabilityClient.class);
-        adapter = new GenericRegistryAdapterImpl(clientProvider);
+        adapter = new GenericRegistryAdapterImpl(clientProvider, new Sdmx21QueryNormalizerImpl());
 
         when(clientProvider.getAvailability30Client(any())).thenReturn(availabilityClient);
         when(availabilityClient.getAvailability(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), any(), isNull(), isNull(), isNull(), isNull())).thenReturn(new ByteArrayInputStream(new byte[0]));

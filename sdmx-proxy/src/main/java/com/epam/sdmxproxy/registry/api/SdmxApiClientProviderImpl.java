@@ -14,6 +14,7 @@ import com.epam.sdmxproxy.registry.api.client.SdmxApiBase;
 import com.epam.sdmxproxy.registry.api.config.InputStreamFeignDecoder;
 import com.epam.sdmxproxy.registry.api.config.ResilienceProperties;
 import com.epam.sdmxproxy.registry.api.config.Slf4jFeignLogger;
+import com.epam.sdmxproxy.registry.api.http.RateLimitRetryClientProvider;
 import feign.Client;
 import feign.Feign;
 import feign.InvocationHandlerFactory;
@@ -33,12 +34,13 @@ import static java.util.Objects.isNull;
 @RequiredArgsConstructor
 public class SdmxApiClientProviderImpl implements SdmxApiClientProvider {
 
-    private static final String BUILT_API_CLIENT_KEY_FORMAT = "%s_____%s";
+    private static final String BUILT_API_CLIENT_KEY_FORMAT = "%s_____%s_____%s";
     private final Encoder encoder;
     private final InputStreamFeignDecoder decoder;
     private final Client baseOkHttpClient;
     private final ResilienceProperties resilienceConfig;
     private final Resilience4jComponentFactory resilience4JComponentFactory;
+    private final RateLimitRetryClientProvider rateLimitRetryClientProvider;
 
     private final ConcurrentHashMap<String, SdmxApiBase> builtApiClients = new ConcurrentHashMap<>();
 
@@ -130,7 +132,7 @@ public class SdmxApiClientProviderImpl implements SdmxApiClientProvider {
     }
 
     private <T extends SdmxApiBase> T getOrBuildClient(Class<T> clientClass, String baseUrl, RegistrySelectionResult selectedRegistry) {
-        String key = buildKey(clientClass, baseUrl);
+        String key = buildKey(clientClass, baseUrl, selectedRegistry.getRegistryConfiguration().getName());
         T builtClient = (T) builtApiClients.get(key);
 
         if (isNull(builtClient)) {
@@ -160,7 +162,7 @@ public class SdmxApiClientProviderImpl implements SdmxApiClientProvider {
                 .build();
 
         var builder = Resilience4jFeign.builder(decorators)
-                .client(baseOkHttpClient)
+                .client(rateLimitRetryClientProvider.wrap(baseOkHttpClient, selectedRegistry))
                 .options(getOptions(selectedRegistry.getVersionConfiguration()))
                 .encoder(encoder)
                 .decoder(decoder)
@@ -213,7 +215,12 @@ public class SdmxApiClientProviderImpl implements SdmxApiClientProvider {
         return clientClass.getSimpleName().toLowerCase();
     }
 
-    private String buildKey(Class<?> c, String baseUrl) {
-        return String.format(BUILT_API_CLIENT_KEY_FORMAT, c.getName(), baseUrl);
+    /**
+     * Includes the registry name so two registries sharing a base URL do not silently share one
+     * another's resilience settings. Note the cache is never evicted, so a configuration reload
+     * still has no effect on an already-built client.
+     */
+    private String buildKey(Class<?> c, String baseUrl, String registryName) {
+        return String.format(BUILT_API_CLIENT_KEY_FORMAT, c.getName(), baseUrl, registryName);
     }
 }

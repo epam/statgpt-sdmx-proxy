@@ -78,18 +78,18 @@ Shared by every `*EndpointConfig` block below.
 | `supportsLimit`                      |    No    | When false, the proxy emulates the SDMX 3.0 `limit` parameter via availability probing and streaming series truncation                                                   | `true`, `false`                                  | `true`  |
 | `limitEmulationTolerance`            |    No    | Overshoot factor for the emulation target band `[limit, floor(limit * limitEmulationTolerance)]`. Ignored when `supportsLimit` is true                                   | `[1.0, 10.0]`                                    | `1.2`   |
 | `limitEmulationProbeBudget`          |    No    | Hard cap on the number of availability probes issued per request when emulating `limit`. Ignored when `supportsLimit` is true                                            | `[1, 64]`                                        | `8`     |
-| `convertKeyToFilters`                |    No    | When true, every dim filter is moved into `c[]` and the path key is sent as a single `*` on outbound data requests. Workaround for BIS-style registries (see design 016) | `true`, `false`                                  | `false` |
+| `convertKeyToFilters`                |    No    | When true, every dim filter is moved into `c[]` and the path key is sent as a single `*` on outbound data requests. Workaround for BIS-style registries (see design 016). SDMX 3.0 only -- rejected at config load on an `SDMX_2_1` version, which has no `c[]` parameter | `true`, `false`                                  | `false` |
 
 ### `AvailabilityEndpointConfiguration` (extends `EndpointConfiguration`)
 
 | Field                    | Required | Description                                                                                                                                                                      | Available Values                                         | Default |
 |--------------------------|:--------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|---------|
 | `availabilityEnabled`    |    No    | Enable availability queries for this version. If false, availability requests are rejected                                                                                       | `true`, `false`                                          | `false` |
-| `unwrapStarComponentId`  |    No    | Omit the component ID segment from the upstream path when it is `*`                                                                                                              | `true`, `false`                                          | `false` |
+| `unwrapStarComponentId`  |    No    | Replace a `*` (or absent) component ID with the comma-joined list of the dataflow's non-time dimension IDs. SDMX 3.0 only -- rejected at config load on an `SDMX_2_1` version, whose availability grammar takes a single component ID or `all` | `true`, `false`                                          | `false` |
 | `unwrapFilterParameters` |    No    | Send filters as raw dimension query params (e.g. `FREQ=Q`) instead of the SDMX 3.0 `c[FREQ]=Q` wrapper                                                                           | `true`, `false`                                          | `false` |
 | `mergeAllWildcardKey`    |    No    | Collapse a key whose every position is `*` to a single `*`. Required for BIS and similar registries                                                                              | `true`, `false`                                          | `false` |
 | `fixtures`               |    No    | Response patches applied before conversion/bypass, in order                                                                                                                      | Array of `FixtureConfiguration<AvailabilityFixtureType>` | (empty) |
-| `convertKeyToFilters`    |    No    | When true, every dim filter is moved into `c[]` and the path key is sent as a single `*` on outbound availability requests. Workaround for BIS-style registries (see design 016) | `true`, `false`                                          | `false` |
+| `convertKeyToFilters`    |    No    | When true, every dim filter is moved into `c[]` and the path key is sent as a single `*` on outbound availability requests. Workaround for BIS-style registries (see design 016). SDMX 3.0 only -- rejected at config load on an `SDMX_2_1` version, which has no `c[]` parameter | `true`, `false`                                          | `false` |
 
 ### `RegistryResilienceConfig`
 
@@ -102,6 +102,7 @@ All durations are in milliseconds.
 | `circuitBreaker`    |    No    | Circuit breaker settings; uses defaults when null            | `RegistryCircuitBreakerConfig` |         |
 | `retry`             |    No    | Retry settings; uses defaults when null                      | `RegistryRetryConfig`          |         |
 | `rateLimit`         |    No    | Rate-limit settings; when null, the app-wide default is used | `RegistryRateLimitConfig`      |         |
+| `rateLimitRetry`    |    No    | HTTP 429 retry settings; when null, the app-wide default is used (disabled) | `RegistryRateLimitRetryConfig`  |         |
 
 #### `RegistryCircuitBreakerConfig`
 
@@ -128,6 +129,25 @@ All durations are in milliseconds.
 | `enabled`            |    No    | Enable rate limiting; when null, uses the application-wide default | `true`, `false`  | (app default) |
 | `limitForPeriod`     |    No    | Maximum requests allowed within the refresh period                 | Integer          | (app default) |
 | `limitRefreshPeriod` |    No    | Period (ms) over which `limitForPeriod` is enforced                | Long (ms)        | `60000`       |
+
+#### `RegistryRateLimitRetryConfig`
+
+Retries applied specifically to HTTP 429 responses. Separate from `retry` (which covers 5xx and
+network errors) because rate-limit backoff runs on a much longer time scale. A 429 never counts
+toward the circuit breaker; when this is enabled the breaker's slow-call threshold is also raised so
+that the in-request waiting cannot open it.
+
+| Field                   | Required | Description                                                                      | Available Values | Default |
+|-------------------------|:--------:|----------------------------------------------------------------------------------|------------------|---------|
+| `enabled`               |    No    | Retry HTTP 429 for this registry; when null, uses the application-wide default    | `true`, `false`  | `false` |
+| `maxAttempts`           |    No    | Maximum attempts per 429 cycle, including the initial call                        | Integer          | `5`     |
+| `initialIntervalMillis` |    No    | Initial interval for exponential backoff (ms)                                     | Long (ms)        | `5000`  |
+| `multiplier`            |    No    | Exponential-backoff multiplier                                                    | Double           | `2.0`   |
+| `maxIntervalMillis`     |    No    | Ceiling for a single wait, including one derived from a `Retry-After` header (ms) | Long (ms)        | `60000` |
+| `maxTotalWaitMillis`    |    No    | Ceiling for the summed wait across one 429 cycle (ms)                             | Long (ms)        | `75000` |
+
+Note: built Feign clients are cached per `(client class, base URL, registry name)` and are never
+evicted, so changing `rateLimitRetry` via a config reload has no effect on an already-built client.
 
 ### `AgencyConfiguration`
 
