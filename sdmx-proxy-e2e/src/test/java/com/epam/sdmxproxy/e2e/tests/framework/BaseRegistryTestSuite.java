@@ -14,6 +14,7 @@ import com.epam.sdmxproxy.e2e.support.util.ProxyConfigPusher;
 import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import com.epam.sdmxproxy.e2e.tests.framework.config.DataflowKeyCase;
 import com.epam.sdmxproxy.e2e.tests.framework.config.DsdFidelityTestSuitConfiguration;
+import com.epam.sdmxproxy.e2e.tests.framework.config.FilterKeyOrderTestSuitConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.config.LimitTestSuitConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.config.MetadataDescendantsTestSuitConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.config.MetadataPreservationTestSuitConfiguration;
@@ -40,6 +41,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -820,6 +822,106 @@ public abstract class BaseRegistryTestSuite {
         assertThat(responseBody)
                 .as("Response body should not be empty")
                 .isNotEmpty();
+    }
+
+    /**
+     * Pin for the SDMX 3.0 -> 2.1 filter-to-key translation: clients always send narrowing
+     * ID-keyed as {@code c[DIM]=value}, and against a 2.1 registry the proxy folds it into a
+     * positional key. The only correct order is the one the DSD declares.
+     *
+     * <p>Ordering by anything else (the proxy used to sort the dimension IDs alphabetically)
+     * yields a key with the right arity and every value under the wrong dimension. Registries
+     * answer that with HTTP 200 and an empty constraint, so neither a status assertion nor a
+     * non-empty-body assertion notices -- which is why this pin reads the constraint itself and
+     * checks the requested dimensions actually come back narrowed.
+     *
+     * <p>Gated by {@code filterKeyOrderTestSuitConfiguration}; absent block skips the pin.
+     */
+    @Test
+    @DisplayName("Availability Endpoint: ID-keyed c[] filters land on their DSD-declared key positions")
+    @SneakyThrows
+    void testFilterKeyOrderFollowsDsdOrder() {
+        FilterKeyOrderTestSuitConfiguration cfg = testConfig.getFilterKeyOrderTestSuitConfiguration();
+        Assumptions.assumeTrue(cfg != null, "No filterKeyOrderTestSuitConfiguration -- skipping filter-to-key ordering pin");
+
+        String[] urnParts = parseUrn(cfg.getDataflowUrn());
+        String accept = cfg.getMediaType() != null ? cfg.getMediaType() : "application/vnd.sdmx.structure+json;version=2.0.0";
+
+        List<String> declaredOrder = fetchDeclaredDimensionOrder(urnParts, accept);
+        assertThat(declaredOrder)
+                .as("Dataflow %s must declare its dimensions in a non-alphabetical order, otherwise this pin cannot tell correct ordering from sorted ordering -- pick a different dataflow", cfg.getDataflowUrn())
+                .isNotEqualTo(declaredOrder.stream().sorted().toList());
+        assertThat(declaredOrder)
+                .as("Configured filters must name dimensions that exist in %s", cfg.getDataflowUrn())
+                .containsAll(cfg.getFilters().keySet());
+
+        Map<String, Object> queryParams = new LinkedHashMap<>();
+        queryParams.put("mode", "exact");
+        cfg.getFilters().forEach((dimension, value) -> queryParams.put("c[" + dimension + "]", value));
+
+        String path = String.format("%s/sdmx/3.0/availability/dataflow/%s/%s/%s/*/*", BASE_PATH, urnParts[0], urnParts[1], urnParts[2]);
+        Response response = restClient.getResponseWithAccept(path, accept, queryParams);
+
+        assertThat(response.getStatusCode())
+                .as("Availability with c[] filters must return HTTP 200 for %s", cfg.getDataflowUrn())
+                .isEqualTo(200);
+
+        JsonNode components = objectMapper.readTree(response.getBody().asByteArray())
+                .path("data").path("dataConstraints").path(0).path("cubeRegions").path(0).path("components");
+        assertThat(components.isArray() && !components.isEmpty())
+                .as("Constraint for %s came back with no components. An empty constraint behind HTTP 200 is the signature of a key whose positions do not match the DSD-declared dimension order (declared: %s)", cfg.getDataflowUrn(), declaredOrder)
+                .isTrue();
+
+        Map<String, List<String>> valuesByDimension = new LinkedHashMap<>();
+        for (JsonNode component : components) {
+            List<String> values = new ArrayList<>();
+            for (JsonNode value : component.path("values")) {
+                values.add(value.path("value").asText());
+            }
+            valuesByDimension.put(component.path("id").asText(), values);
+        }
+
+        cfg.getFilters().forEach((dimension, value) -> {
+            assertThat(valuesByDimension)
+                    .as("Constraint must report dimension %s, got %s", dimension, valuesByDimension.keySet())
+                    .containsKey(dimension);
+            assertThat(valuesByDimension.get(dimension))
+                    .as("Dimension %s must be narrowed to the requested value -- a different value here means c[%s] was written to another dimension's position", dimension, dimension)
+                    .contains(value);
+        });
+
+        if (cfg.getMinConstrainedDimensions() != null) {
+            assertThat(valuesByDimension)
+                    .as("Constraint must cover at least %d dimensions, got %s", cfg.getMinConstrainedDimensions(), valuesByDimension.keySet())
+                    .hasSizeGreaterThanOrEqualTo(cfg.getMinConstrainedDimensions());
+        }
+    }
+
+    /**
+     * Reads the dataflow's DSD through the proxy and returns its dimension IDs in declared order.
+     * The JSON array order is the DSD position order, which is exactly the order an SDMX 2.1 key
+     * has to follow.
+     */
+    @SneakyThrows
+    private List<String> fetchDeclaredDimensionOrder(String[] urnParts, String accept) {
+        String path = String.format("%s/sdmx/3.0/structure/dataflow/%s/%s/%s?references=descendants&detail=full", BASE_PATH, urnParts[0], urnParts[1], urnParts[2]);
+        Response response = restClient.getResponseWithAccept(path, accept);
+        assertThat(response.getStatusCode())
+                .as("DSD lookup for %s:%s(%s) must return HTTP 200", urnParts[0], urnParts[1], urnParts[2])
+                .isEqualTo(200);
+
+        JsonNode dimensions = objectMapper.readTree(response.getBody().asByteArray())
+                .path("data").path("dataStructures").path(0)
+                .path("dataStructureComponents").path("dimensionList").path("dimensions");
+        assertThat(dimensions.isArray() && !dimensions.isEmpty())
+                .as("DESCENDANTS response for %s:%s(%s) must carry the DSD dimension list", urnParts[0], urnParts[1], urnParts[2])
+                .isTrue();
+
+        List<String> declaredOrder = new ArrayList<>();
+        for (JsonNode dimension : dimensions) {
+            declaredOrder.add(dimension.path("id").asText());
+        }
+        return declaredOrder;
     }
 
     @SneakyThrows
