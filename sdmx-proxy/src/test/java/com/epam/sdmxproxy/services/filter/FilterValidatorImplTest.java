@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import java.util.Set;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -33,7 +33,7 @@ class FilterValidatorImplTest {
         version21.setSdmxVersion(SdmxVersion.SDMX_2_1);
         sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
         when(dimensionService.getTimeDimensionId(any(), anyString(), anyString(), anyString()))
                 .thenReturn("TIME_PERIOD");
     }
@@ -299,7 +299,7 @@ class FilterValidatorImplTest {
     void validateFilters_unknownComponent_returnsInvalid() {
         // GIVEN
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
         when(dimensionService.getTimeDimensionId(any(), anyString(), anyString(), anyString()))
                 .thenReturn("TIME_PERIOD");
         MultiValueMap<String, String> filters = new LinkedMultiValueMap<>();

@@ -225,7 +225,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
 
         // When - Generic Accept header (no SDMX version specified)
         TranslatedDataQuery query = queryTranslator.translateDataQuery(
@@ -248,7 +248,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
 
         // When - Accept header specifies SDMX 3.0
         TranslatedAvailabilityQuery query = queryTranslator.translateAvailabilityQuery(
@@ -271,7 +271,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
 
         // When - Accept header specifies SDMX 2.1
         TranslatedAvailabilityQuery query = queryTranslator.translateAvailabilityQuery(
@@ -336,7 +336,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
 
         // When - Accept header specifies SDMX 3.0, but only 2.1 is available
         TranslatedDataQuery query = queryTranslator.translateDataQuery(
@@ -450,7 +450,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
 
         // When - Default selection (3.0)
         TranslatedDataQuery query30 = queryTranslator.translateDataQuery(
@@ -491,7 +491,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
 
         // When - With Accept header
         TranslatedDataQuery query = queryTranslator.translateDataQuery(
@@ -516,7 +516,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
 
         // When - With null Accept header
         TranslatedDataQuery query = queryTranslator.translateDataQuery(
@@ -540,7 +540,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
         when(dimensionService.getTimeDimensionId(any(), anyString(), anyString(), anyString()))
                 .thenReturn("TIME_PERIOD");
         when(filterTranslator.mergeFiltersIntoKey(anyString(), any(), any())).thenAnswer(inv -> inv.getArgument(0));
@@ -568,7 +568,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
         when(dimensionService.getTimeDimensionId(any(), anyString(), anyString(), anyString()))
                 .thenReturn("TIME_PERIOD");
         when(filterTranslator.mergeFiltersIntoKey(anyString(), any(), any())).thenAnswer(inv -> inv.getArgument(0));
@@ -594,7 +594,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
 
         MultiValueMap<String, String> c = new LinkedMultiValueMap<>();
         c.add("c[TIME_PERIOD]", "ge:2020-01+le:2020-12");
@@ -688,7 +688,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
 
         MultiValueMap<String, String> c = new LinkedMultiValueMap<>();
         c.add("c[TIME_PERIOD]", "ge:2025-01-01+le:2025-01-31");
@@ -736,7 +736,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
         when(dimensionService.getTimeDimensionId(any(), anyString(), anyString(), anyString()))
                 .thenReturn("TIME_PERIOD");
         when(filterValidator.validateFilters(any(), any(), any(), anyString(), anyString(), anyString()))
@@ -889,7 +889,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
 
         // When
         TranslatedAvailabilityQuery query = queryTranslator.translateAvailabilityQuery(
@@ -917,7 +917,7 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(registryConfig);
         SdmxBeans sdmxBeans = mock(SdmxBeans.class);
         when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString()))
-                .thenReturn(Set.of("FREQ", "REF_AREA"));
+                .thenReturn(List.of("FREQ", "REF_AREA"));
 
         // When/Then
         assertThrows(IllegalRegistryConfigurationException.class, () ->

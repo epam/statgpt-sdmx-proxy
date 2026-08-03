@@ -44,7 +44,7 @@ public class FilterValidatorImpl implements FilterValidator {
             return FilterValidationResult.valid();
         }
 
-        Set<String> dimensionIds = dimensionService.getDimensionIds(sdmxBeans, agencyID, resourceID, version);
+        List<String> dimensionIds = dimensionService.getDimensionIds(sdmxBeans, agencyID, resourceID, version);
         String timeDimensionId = dimensionService.getTimeDimensionId(sdmxBeans, agencyID, resourceID, version);
 
         return validateFilters(filters, dimensionIds, timeDimensionId);
@@ -52,7 +52,7 @@ public class FilterValidatorImpl implements FilterValidator {
 
     private FilterValidationResult validateFilters(
             MultiValueMap<String, String> filters,
-            Set<String> dimensionIds,
+            List<String> dimensionIds,
             String timeDimensionId) {
         if (filters == null || filters.isEmpty()) {
             return FilterValidationResult.valid();

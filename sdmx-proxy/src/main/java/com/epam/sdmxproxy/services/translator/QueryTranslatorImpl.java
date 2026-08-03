@@ -572,13 +572,14 @@ public class QueryTranslatorImpl implements QueryTranslator {
         if (filters == null || filters.isEmpty()) {
             return key;
         }
-        Set<String> dimensionIds = dimensionService.getDimensionIds(
+        // DSD-declared order, never sorted: an SDMX 2.1 key is read by position, so sorting the
+        // dimension IDs would hand each value to whichever dimension happens to share its index.
+        List<String> dimensionOrder = dimensionService.getDimensionIds(
                 sdmxBeans,
                 agencyID,
                 resourceID,
                 version
         );
-        List<String> dimensionOrder = dimensionIds.stream().sorted().toList();
         return filterTranslator.mergeFiltersIntoKey(key, filters, dimensionOrder);
     }
 

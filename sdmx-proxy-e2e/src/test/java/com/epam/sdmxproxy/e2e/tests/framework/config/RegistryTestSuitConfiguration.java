@@ -37,4 +37,11 @@ public class RegistryTestSuitConfiguration {
      * {@link com.epam.sdmxproxy.e2e.tests.framework.BaseRegistryTestSuite}.
      */
     private MetadataDescendantsTestSuitConfiguration metadataDescendantsTestSuitConfiguration;
+
+    /**
+     * Optional. When present, enables the generic filter-to-key ordering pin in
+     * {@link com.epam.sdmxproxy.e2e.tests.framework.BaseRegistryTestSuite}. Only meaningful for
+     * SDMX 2.1 registries, where ID-keyed filters must be folded into a positional key.
+     */
+    private FilterKeyOrderTestSuitConfiguration filterKeyOrderTestSuitConfiguration;
 }

@@ -12,9 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
-import java.util.Set;
+import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Implementation of DimensionService.
@@ -27,7 +26,7 @@ public class DimensionServiceImpl implements DimensionService {
     private static final String DEFAULT_TIME_DIMENSION_ID = "TIME_PERIOD";
 
     @Override
-    public Set<String> getDimensionIds(SdmxBeans sdmxBeans, String agencyId, String resourceId, String version) {
+    public List<String> getDimensionIds(SdmxBeans sdmxBeans, String agencyId, String resourceId, String version) {
         // Find the dataflow
         DataflowBean dataflow = sdmxBeans.getDataflows().stream()
                 .filter(df -> df.getId().equals(resourceId) && df.getAgencyId().equals(agencyId))
@@ -43,14 +42,20 @@ public class DimensionServiceImpl implements DimensionService {
         return getDimensionIdsFromDsd(sdmxBeans, dsdAgency, dsdId, dsdVersion);
     }
 
+    /**
+     * {@code DimensionListBeanImpl} keeps its dimensions sorted by position, so the stream order
+     * here is the DSD-declared order. It must be preserved all the way to the caller -- an SDMX 2.1
+     * key is positional, so re-sorting (or routing through a {@code Set}) puts every value under
+     * the wrong dimension while still producing a well-formed key of the right arity.
+     */
     @Override
-    public Set<String> getDimensionIdsFromDsd(SdmxBeans sdmxBeans, String agency, String id, String version) {
+    public List<String> getDimensionIdsFromDsd(SdmxBeans sdmxBeans, String agency, String id, String version) {
         DataStructureBean dsd = resolveDsd(sdmxBeans, agency, id, version);
 
         return dsd.getDimensionList().getDimensions().stream()
                 .filter(dimension -> !dimension.isTimeDimension())
                 .map(IdentifiableBean::getId)
-                .collect(Collectors.toSet());
+                .toList();
     }
 
 
