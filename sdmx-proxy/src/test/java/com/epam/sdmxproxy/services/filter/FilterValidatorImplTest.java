@@ -266,6 +266,56 @@ class FilterValidatorImplTest {
     }
 
     @Test
+    void validateFilters_nonTimeDimension_multipleValues_returnsValid() {
+        // `,` is the SDMX 3.0 OR separator and SDMX 2.1 expresses the same thing as `A+B` inside a
+        // key position, so this is a translation job, not grounds for a 400.
+        MultiValueMap<String, String> filters = new LinkedMultiValueMap<>();
+        filters.add("FREQ", "M,Q");
+
+        FilterValidationResult result = validator.validateFilters(
+                version21, sdmxBeans, filters, "BIS", "TEST", "1.0");
+
+        assertTrue(result.isValid(), result.getErrorMessage());
+    }
+
+    @Test
+    void validateFilters_nonTimeDimension_multipleValuesWithOperator_returnsValid() {
+        MultiValueMap<String, String> filters = new LinkedMultiValueMap<>();
+        filters.add("FREQ", "eq:M,eq:Q");
+
+        FilterValidationResult result = validator.validateFilters(
+                version21, sdmxBeans, filters, "BIS", "TEST", "1.0");
+
+        assertTrue(result.isValid(), result.getErrorMessage());
+    }
+
+    @Test
+    void validateFilters_nonTimeDimension_multipleValuesWithBadOperator_returnsInvalid() {
+        // Every alternative is checked, not just the first -- an unsupported operator hiding behind
+        // a comma must still be caught.
+        MultiValueMap<String, String> filters = new LinkedMultiValueMap<>();
+        filters.add("FREQ", "M,ne:Q");
+
+        FilterValidationResult result = validator.validateFilters(
+                version21, sdmxBeans, filters, "BIS", "TEST", "1.0");
+
+        assertFalse(result.isValid());
+        assertTrue(result.getErrorMessage().contains("ne"));
+    }
+
+    @Test
+    void validateFilters_nonTimeDimension_emptyAlternative_returnsInvalid() {
+        MultiValueMap<String, String> filters = new LinkedMultiValueMap<>();
+        filters.add("FREQ", "M,,Q");
+
+        FilterValidationResult result = validator.validateFilters(
+                version21, sdmxBeans, filters, "BIS", "TEST", "1.0");
+
+        assertFalse(result.isValid());
+        assertTrue(result.getErrorMessage().contains("Empty filter value"));
+    }
+
+    @Test
     void validateFilters_nonTimeDimension_ne_returnsInvalid() {
         // GIVEN
         MultiValueMap<String, String> filters = new LinkedMultiValueMap<>();

@@ -890,9 +890,11 @@ public abstract class BaseRegistryTestSuite {
             assertThat(valuesByDimension)
                     .as("Constraint must report dimension %s, got %s", dimension, valuesByDimension.keySet())
                     .containsKey(dimension);
+            // A comma-separated value is the SDMX 3.0 OR spelling; every alternative must survive
+            // the translation into the 2.1 key's `+`-joined position.
             assertThat(valuesByDimension.get(dimension))
-                    .as("Dimension %s must be narrowed to the requested value -- a different value here means c[%s] was written to another dimension's position", dimension, dimension)
-                    .contains(value);
+                    .as("Dimension %s must be narrowed to exactly the requested values -- a different value here means c[%s] was written to another dimension's position, a missing one means the OR was dropped", dimension, dimension)
+                    .contains(value.split(","));
         });
 
         if (cfg.getMinConstrainedDimensions() != null) {

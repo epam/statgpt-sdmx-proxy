@@ -128,25 +128,28 @@ public class FilterValidatorImpl implements FilterValidator {
                     String.format("Empty filter value for component '%s' is not supported.", componentId)
             );
         }
-        if (value.contains(MULTIPLE_VALUES_SEPARATOR)) {
-            return FilterValidationResult.invalid(
-                    String.format("Multiple values (OR) for component '%s' are not supported by SDMX 2.1 API. " +
-                            "Please use a single value or remove this filter.", componentId)
-            );
-        }
+        // `,` is the SDMX 3.0 OR separator and SDMX 2.1 expresses the same thing with `+` inside a
+        // key position, so a multi-value filter is translated (see FilterTranslatorImpl), not refused.
         if (value.contains(AND_SEPARATOR)) {
             return FilterValidationResult.invalid(
                     String.format("AND operations (using '+') for component '%s' are not supported by SDMX 2.1 API. " +
                             "Please use a single value or remove this filter.", componentId)
             );
         }
-        String operator = extractOperator(value);
-        if (!SUPPORTED_OPERATORS.contains(operator)) {
-            return FilterValidationResult.invalid(
-                    String.format("Operator '%s' for component '%s' is not supported by SDMX 2.1 API. " +
-                                    "Only equals (eq) operator is supported. Please use 'c[%s]=value' format or remove this filter.",
-                            operator, componentId, componentId)
-            );
+        for (String alternative : value.split(MULTIPLE_VALUES_SEPARATOR)) {
+            if (alternative.trim().isEmpty()) {
+                return FilterValidationResult.invalid(
+                        String.format("Empty filter value for component '%s' is not supported.", componentId)
+                );
+            }
+            String operator = extractOperator(alternative);
+            if (!SUPPORTED_OPERATORS.contains(operator)) {
+                return FilterValidationResult.invalid(
+                        String.format("Operator '%s' for component '%s' is not supported by SDMX 2.1 API. " +
+                                        "Only equals (eq) operator is supported. Please use 'c[%s]=value' format or remove this filter.",
+                                operator, componentId, componentId)
+                );
+            }
         }
         return FilterValidationResult.valid();
     }
