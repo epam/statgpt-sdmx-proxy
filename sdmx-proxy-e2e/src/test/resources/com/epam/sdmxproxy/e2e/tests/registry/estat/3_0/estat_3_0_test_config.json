@@ -1,0 +1,121 @@
+{
+  "structuresTestSuitConfiguration": {
+    "artefacts": [
+      {
+        "type": "dataflow",
+        "urn": "ESTAT:TPS00001(1.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "ESTAT:NAMA_10_GDP(1.0)"
+      },
+      {
+        "type": "dataflow",
+        "urn": "ESTAT:DEMO_PJAN(1.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "ESTAT:TPS00001(33.0)"
+      },
+      {
+        "type": "datastructure",
+        "urn": "ESTAT:NAMA_10_GDP(137.1)"
+      },
+      {
+        "type": "codelist",
+        "urn": "ESTAT:FREQ(3.9)"
+      },
+      {
+        "type": "codelist",
+        "urn": "ESTAT:GEO(28.0)"
+      },
+      {
+        "type": "conceptscheme",
+        "urn": "ESTAT:TPS00001(24.0)"
+      },
+      {
+        "type": "dataconstraint",
+        "urn": "ESTAT:TPS00001(1.0)"
+      }
+    ],
+    "mediaTypes": [
+      "application/vnd.sdmx.structure+xml;version=2.1",
+      "application/vnd.sdmx.structure+xml;version=3.0.0",
+      "application/vnd.sdmx.structure+json; version=2.0.0"
+    ],
+    "registryReturnFormats": [
+      "XML_STRUCTURE_3_0_0"
+    ]
+  },
+  "dataTestSuitConfiguration": {
+    "dataflowConfigs": [
+      {
+        "urn": "ESTAT:TPS00001(1.0)",
+        "keys": [
+          "A.JAN.BE",
+          "A.JAN.*",
+          "A..BE",
+          "*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "ESTAT:TPS00001(1.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {
+          "geo": "BE,FR"
+        }
+      },
+      {
+        "urn": "ESTAT:NAMA_10_GDP(1.0)",
+        "keys": [
+          "A.CLV_I20.B1G.EU27_2020"
+        ],
+        "filters": {}
+      }
+    ],
+    "mediaTypes": [
+      "application/vnd.sdmx.data+json;version=2.0.0",
+      "application/vnd.sdmx.data+csv;version=2.0.0",
+      "application/vnd.sdmx.data+xml;version=3.0.0"
+    ],
+    "registryReturnFormats": [
+      "CSV_DATA_2_0_0"
+    ]
+  },
+  "availabilityTestSuitConfiguration": {
+    "dataflowConfigs": [
+      {
+        "urn": "ESTAT:TPS00001(1.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {}
+      },
+      {
+        "urn": "ESTAT:TPS00001(1.0)",
+        "keys": [
+          "*"
+        ],
+        "filters": {
+          "geo": "BE"
+        }
+      },
+      {
+        "urn": "ESTAT:TPS00001(1.0)",
+        "keys": [
+          "A.JAN.*"
+        ],
+        "filters": {}
+      }
+    ],
+    "mediaTypes": [
+      "application/vnd.sdmx.structure+json; version=2.0.0"
+    ],
+    "registryReturnFormats": [
+      "XML_STRUCTURE_3_0_0"
+    ]
+  }
+}

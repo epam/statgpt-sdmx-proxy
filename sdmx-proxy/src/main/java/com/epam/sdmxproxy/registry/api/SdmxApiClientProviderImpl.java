@@ -14,6 +14,7 @@ import com.epam.sdmxproxy.registry.api.client.SdmxApiBase;
 import com.epam.sdmxproxy.registry.api.config.InputStreamFeignDecoder;
 import com.epam.sdmxproxy.registry.api.config.ResilienceProperties;
 import com.epam.sdmxproxy.registry.api.config.Slf4jFeignLogger;
+import com.epam.sdmxproxy.registry.api.http.IdentityEncodingClientProvider;
 import com.epam.sdmxproxy.registry.api.http.RateLimitRetryClientProvider;
 import feign.Client;
 import feign.Feign;
@@ -41,6 +42,7 @@ public class SdmxApiClientProviderImpl implements SdmxApiClientProvider {
     private final ResilienceProperties resilienceConfig;
     private final Resilience4jComponentFactory resilience4JComponentFactory;
     private final RateLimitRetryClientProvider rateLimitRetryClientProvider;
+    private final IdentityEncodingClientProvider identityEncodingClientProvider;
 
     private final ConcurrentHashMap<String, SdmxApiBase> builtApiClients = new ConcurrentHashMap<>();
 
@@ -162,7 +164,7 @@ public class SdmxApiClientProviderImpl implements SdmxApiClientProvider {
                 .build();
 
         var builder = Resilience4jFeign.builder(decorators)
-                .client(rateLimitRetryClientProvider.wrap(baseOkHttpClient, selectedRegistry))
+                .client(rateLimitRetryClientProvider.wrap(identityEncodingClientProvider.wrap(baseOkHttpClient, selectedRegistry), selectedRegistry))
                 .options(getOptions(selectedRegistry.getVersionConfiguration()))
                 .encoder(encoder)
                 .decoder(decoder)

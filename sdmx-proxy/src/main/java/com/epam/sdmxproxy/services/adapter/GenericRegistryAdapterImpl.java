@@ -35,6 +35,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
 
+    private static final String NONE_DETAIL = "none";
+
     private final SdmxApiClientProvider sdmxApiClientProvider;
     private final Sdmx21QueryNormalizer sdmx21QueryNormalizer;
 
@@ -85,7 +87,7 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
         SdmxFormat structureReturnFormat = query.getRegistryReturnFormat();
         return structure21Client.getStructures(
                 structureReturnFormat.getContentType(),
-                structure.type(),
+                sdmx21QueryNormalizer.toSdmx21StructureType(structure.type()),
                 sdmx21QueryNormalizer.toSdmx21PathSlot(structure.agency()),
                 sdmx21QueryNormalizer.toSdmx21PathSlot(structure.id()),
                 sdmx21QueryNormalizer.toSdmx21PathSlot(structure.version()),
@@ -120,14 +122,20 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
         String providerRef = "all";
         String acceptHeader = resolveDataAcceptHeader(query);
 
-        //TODO support other query params
         Map<String, Object> dataQueryParams = new HashMap<>();
-        if (query.getStartPeriod() != null) {
-            dataQueryParams.put("startPeriod", query.getStartPeriod());
-        }
-        if (query.getEndPeriod() != null) {
-            dataQueryParams.put("endPeriod", query.getEndPeriod());
-        }
+        putIfPresent(dataQueryParams, "startPeriod", query.getStartPeriod());
+        putIfPresent(dataQueryParams, "endPeriod", query.getEndPeriod());
+        putIfPresent(dataQueryParams, "updatedAfter", formatInstant(query.getUpdatedAfter()));
+        putIfPresent(dataQueryParams, "firstNObservations", query.getFirstNObservations());
+        putIfPresent(dataQueryParams, "lastNObservations", query.getLastNObservations());
+        putIfPresent(dataQueryParams, "dimensionAtObservation", query.getDimensionAtObservation());
+        putIfPresent(dataQueryParams, "includeHistory", query.getIncludeHistory());
+        // An explicit detail is set only by the availability-emulation probe builder (design 040):
+        // `serieskeysonly` returns the series keys with neither attributes nor observations, and
+        // unlike firstN/lastNObservations it is not subject to Eurostat's extraction-size gate.
+        // It wins over the attributes/measures fold, which is what a client-facing SDMX 3.0 request
+        // carries instead -- 3.0 has no data `detail`, so the two can never both be meaningful.
+        putIfPresent(dataQueryParams, "detail", query.getDetail() != null ? query.getDetail() : toSdmx21Detail(query.getAttributes(), query.getMeasures()));
         return data21Client.getData(
                 acceptHeader,
                 flowRef,
@@ -274,11 +282,46 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
         return out;
     }
 
+    private static void putIfPresent(Map<String, Object> params, String name, Object value) {
+        if (value != null) {
+            params.put(name, value);
+        }
+    }
+
+    /**
+     * SDMX 3.0 replaced the 2.1 data {@code detail} parameter with the orthogonal pair
+     * {@code attributes} and {@code measures}, so a 2.1 registry needs the pair folded back into
+     * the single enumerated value it understands. Returns null for the full-detail combination,
+     * which drops the parameter and matches the 2.1 default.
+     * <p>
+     * Anything other than {@code none} counts as present: SDMX 3.0 {@code attributes} also takes
+     * an explicit attribute list, which 2.1 {@code detail} cannot express, so the mapping
+     * over-fetches rather than dropping data the client asked for.
+     */
+    private static String toSdmx21Detail(String attributes, String measures) {
+        boolean noAttributes = NONE_DETAIL.equalsIgnoreCase(attributes);
+        boolean noMeasures = NONE_DETAIL.equalsIgnoreCase(measures);
+        if (noAttributes && noMeasures) {
+            return "serieskeysonly";
+        }
+        if (noMeasures) {
+            return "nodata";
+        }
+        if (noAttributes) {
+            return "dataonly";
+        }
+        return null;
+    }
+
     private String formatInstant(Instant instant) {
         if (instant == null) {
             return null;
         }
-        return DateTimeFormatter.ISO_DATE_TIME.format(instant);
+        // ISO_DATE_TIME needs a year field, which Instant does not carry, so it throws
+        // UnsupportedTemporalTypeException for every non-null argument. ISO_INSTANT is the
+        // formatter defined for Instant and emits the 2024-01-01T00:00:00Z form that both
+        // SDMX 2.1 and SDMX 3.0 specify for updatedAfter and asOf.
+        return DateTimeFormatter.ISO_INSTANT.format(instant);
     }
 
     private InputStream getAvailability30(TranslatedAvailabilityQuery query, RegistrySelectionResult selectedRegistry) {

@@ -49,5 +49,14 @@ public interface Sdmx21QueryNormalizer {
      * {@link QueryTranslator#normalizePathSlot}, which is the inbound direction
      * ({@code "all"} to {@code "*"}) and would make things worse here.
      */
+    /**
+     * SDMX 3.0 structure type to the SDMX 2.1 resource name. {@code "dataconstraint"} becomes
+     * {@code "contentconstraint"}; every other type is passed through unchanged. Idempotent.
+     * <p>
+     * SDMX 3.0 renamed the resource; a 2.1 registry serves it under the older name and answers
+     * the 3.0 spelling with {@code 405}.
+     */
+    String toSdmx21StructureType(String structureType);
+
     String toSdmx21PathSlot(String slot);
 }

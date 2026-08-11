@@ -60,6 +60,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
     private final DimensionService dimensionService;
     private final ProxyConfigurationProvider configurationProvider;
     private final Sdmx21QueryNormalizer sdmx21QueryNormalizer;
+    private final ReferencesResolver referencesResolver;
 
     private static String getVersionSpecificQueryId(String id, VersionSpecificRegistryConfiguration versionConfig) {
         String queryId = id;
@@ -185,11 +186,12 @@ public class QueryTranslatorImpl implements QueryTranslator {
         );
 
         VersionSpecificRegistryConfiguration versionConfig = selectedRegistry.getVersionConfiguration();
+        String resolvedReferences = referencesResolver.resolve(references, resourceId, versionConfig.getStructureEndpointConfig());
         return TranslatedStructureQuery.builder()
                 .registryConfiguration(selectedRegistry.getRegistryConfiguration())
                 .versionConfiguration(versionConfig)
                 .structure(getStructure(versionConfig, structureType, agencyId, getVersionSpecificQueryId(resourceId, versionConfig), getVersionSpecificQueryId(version, versionConfig)))
-                .references(references)
+                .references(resolvedReferences)
                 .detail(detail)
                 .contentType(parsedMediaType.getMediaType())
                 .registryReturnFormat(returnFormat)
@@ -257,11 +259,13 @@ public class QueryTranslatorImpl implements QueryTranslator {
             String queryResourceId = getVersionSpecificQueryId(resourceId, versionConfig);
             String queryVersion = getVersionSpecificQueryId(version, versionConfig);
 
+            String resolvedReferences = referencesResolver.resolve(references, resourceId, versionConfig.getStructureEndpointConfig());
+
             queries.add(TranslatedStructureQuery.builder()
                     .registryConfiguration(registryConfig)
                     .versionConfiguration(versionConfig)
                     .structure(getStructure(versionConfig, structureType, queryAgencyId, queryResourceId, queryVersion))
-                    .references(references)
+                    .references(resolvedReferences)
                     .detail(detail)
                     .contentType(parsedMediaType.getMediaType())
                     .registryReturnFormat(returnFormat)

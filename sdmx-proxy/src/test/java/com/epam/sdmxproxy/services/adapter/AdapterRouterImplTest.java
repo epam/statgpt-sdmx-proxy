@@ -12,6 +12,8 @@ import com.epam.sdmxproxy.exception.UnexpectedStateException;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingAvailabilityConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingDataConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
+import com.epam.sdmxproxy.services.availability.AvailabilityEmulatorProvider;
+import com.epam.sdmxproxy.services.availability.AvailabilityQueryCanonicalizer;
 import com.epam.sdmxproxy.services.cache.CacheService;
 import com.epam.sdmxproxy.services.filter.FilterNormalizer;
 import com.epam.sdmxproxy.services.fixture.availability.AvailabilityFixtureService;
@@ -64,6 +66,7 @@ public class AdapterRouterImplTest {
     private StreamingStructureConversionService streamingStructureConversionService;
     private MetadataAttributeUsagePreserver metadataAttributeUsagePreserver;
     private MetadataAttributeUsageXmlInjector metadataAttributeUsageXmlInjector;
+    private AvailabilityEmulatorProvider availabilityEmulatorProvider;
     private AdapterRouterImpl router;
 
     @BeforeEach
@@ -85,6 +88,7 @@ public class AdapterRouterImplTest {
         SeriesLimitTruncatorProvider truncatorProvider = mock(SeriesLimitTruncatorProvider.class);
         FilterNormalizer filterNormalizer = mock(FilterNormalizer.class);
         ObjectMapper objectMapper = new ObjectMapper();
+        availabilityEmulatorProvider = mock(AvailabilityEmulatorProvider.class);
 
         router = new AdapterRouterImpl(
                 streamingDataConversionService,
@@ -103,7 +107,9 @@ public class AdapterRouterImplTest {
                 limitEmulationService,
                 truncatorProvider,
                 filterNormalizer,
-                objectMapper
+                objectMapper,
+                availabilityEmulatorProvider,
+                new AvailabilityQueryCanonicalizer()
         );
     }
 

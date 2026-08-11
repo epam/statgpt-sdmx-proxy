@@ -1,0 +1,98 @@
+{
+  "configs": [
+    {
+      "name": "ESTAT",
+      "description": "Eurostat (SDMX 3.0; no availability endpoint, emulated via data query -- designs 040 and 041)",
+      "versions": {
+        "SDMX_3_0": {
+          "sdmxVersion": "SDMX_3_0",
+          "disableCompression": true,
+          "structureEndpointConfig": {
+            "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/3.0/structure/",
+            "supportedFormats": [
+              "XML_STRUCTURE_3_0_0"
+            ],
+            "defaultFormat": "XML_STRUCTURE_3_0_0",
+            "bypassEnabled": false,
+            "supportedStructures": [
+              "datastructure",
+              "conceptscheme",
+              "codelist",
+              "dataflow",
+              "dataconstraint"
+            ],
+            "supportedReferences": [
+              "none",
+              "children",
+              "descendants"
+            ],
+            "supportedReferencesForAll": [
+              "none"
+            ],
+            "referencesDowngrade": {
+              "datastructure": "descendants",
+              "parents": "none",
+              "parentsandsiblings": "none",
+              "all": "descendants",
+              "children": "none",
+              "descendants": "none"
+            }
+          },
+          "dataEndpointConfig": {
+            "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/3.0/data/",
+            "supportedFormats": [
+              "CSV_DATA_2_0_0"
+            ],
+            "defaultFormat": "CSV_DATA_2_0_0",
+            "bypassEnabled": false,
+            "replaceEmptyDimensionsWithWildcard": true,
+            "supportsLimit": true
+          },
+          "availabilityEndpointConfig": {
+            "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/3.0/availability/",
+            "supportedFormats": [
+              "XML_STRUCTURE_3_0_0"
+            ],
+            "defaultFormat": "XML_STRUCTURE_3_0_0",
+            "bypassEnabled": false,
+            "availabilityEnabled": false,
+            "emulation": {
+              "type": "DATA_QUERY",
+              "unfilteredSource": "CONTENT_CONSTRAINT",
+              "probeDetail": null,
+              "probeFormat": "CSV_DATA_2_0_0",
+              "includeTimePeriod": false,
+              "probeTimeoutMillis": 180000,
+              "probeSplitThresholdBytes": 33554432,
+              "probeSplitChunkSize": 8,
+              "maxProbeFanOut": 16
+            }
+          },
+          "resilienceConfig": {
+            "connectionTimeout": 45000,
+            "readTimeout": 120000,
+            "circuitBreaker": {
+              "failureRateThreshold": 90.0,
+              "minimumNumberOfCalls": 50,
+              "waitDurationInOpenState": 30000,
+              "slidingWindowSize": 50
+            },
+            "retry": {
+              "maxAttempts": 3,
+              "initialIntervalMillis": 1000,
+              "multiplier": 2.0,
+              "maxIntervalMillis": 4000
+            }
+          }
+        }
+      }
+    }
+  ],
+  "agencies": [
+    {
+      "name": "ESTAT",
+      "primaryRegistry": "ESTAT",
+      "allowSubAgencies": true
+    }
+  ]
+}
