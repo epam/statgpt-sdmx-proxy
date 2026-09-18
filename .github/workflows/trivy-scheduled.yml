@@ -1,0 +1,85 @@
+name: Trivy Scheduled Scan
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image-name: "epam/statgpt-sdmx-proxy"
+            category: "trivy-image-sdmx-proxy-development"
+          - image-name: "epam/statgpt-sdmx-proxy-config-server"
+            category: "trivy-image-config-server-development"
+
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: development
+
+      - name: Resolve scanned commit
+        id: sha
+        shell: bash
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Trivy scanner
+        id: trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: "ghcr.io/${{ matrix.image-name }}:development"
+          format: "json"
+          exit-code: "0"
+          output: "trivy-results.json"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          scanners: "vuln,secret"
+        env:
+          TRIVY_DISABLE_VEX_NOTICE: true
+
+      - name: Generate Trivy report (SARIF)
+        run: trivy convert --format sarif --output trivy-results.sarif --exit-code 0 trivy-results.json
+        shell: bash
+        env:
+          TRIVY_SCANNERS: "vuln,secret"
+          TRIVY_SEVERITY: "CRITICAL,HIGH,MEDIUM"
+          TRIVY_DISABLE_VEX_NOTICE: true
+
+      - name: Upload Trivy report (SARIF)
+        uses: github/codeql-action/upload-sarif@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
+        with:
+          sarif_file: "trivy-results.sarif"
+          category: ${{ matrix.category }}
+          ref: "refs/heads/development"
+          sha: ${{ steps.sha.outputs.sha }}
+
+      - name: Generate Trivy report
+        run: trivy convert --format table --exit-code 1 trivy-results.json
+        shell: bash
+        env:
+          TRIVY_SCANNERS: "vuln,secret"
+          TRIVY_SEVERITY: "CRITICAL,HIGH,MEDIUM"
+          TRIVY_DISABLE_VEX_NOTICE: true
