@@ -184,7 +184,10 @@ public abstract class BaseRegistryTestSuite {
 
         specificStructureCases = getSpecificStructureCases().build().getGeneratedCases();
         dataCases = getDataCases().build().getGeneratedCases();
-        availabilityCases = getAvailabilityCases().build().getGeneratedCases();
+        // A registry with no availability endpoint omits the block entirely -- Eurostat serves no
+        // availability on either SDMX version. allpairs4j rejects a build with fewer than two
+        // parameters, so the absent case is handled here rather than inside getAvailabilityCases().
+        availabilityCases = testConfig.getAvailabilityTestSuitConfiguration() == null ? List.of() : getAvailabilityCases().build().getGeneratedCases();
 
         ProxyConfigPusher.push(restClient, CONFIG_PATH, objectMapper.writeValueAsString(proxyConfig));
     }
@@ -779,6 +782,13 @@ public abstract class BaseRegistryTestSuite {
     }
 
     Stream<Arguments> availabilityCases() {
+        if (availabilityCases.isEmpty()) {
+            // JUnit 5.10 treats a @ParameterizedTest with zero arguments as an initialization
+            // error, and allowZeroInvocations only arrives in 5.13. Emit one all-null case that
+            // the test skips on, so a registry with no availability endpoint reports a skip with
+            // a reason instead of a red suite.
+            return Stream.of(Arguments.of(null, null, null, null, null));
+        }
         return availabilityCases.stream()
                 .map(testCase -> {
                     DataflowKeyCase dc = (DataflowKeyCase) testCase.get("dataflowCase");
@@ -796,6 +806,7 @@ public abstract class BaseRegistryTestSuite {
     @DisplayName("Availability Endpoint Cases")
     @MethodSource("availabilityCases")
     void testAvailabilityEndpoint(String dataflowUrn, String key, String mode, SdmxFormat registryReturnFormat, String proxyFormat) {
+        Assumptions.assumeTrue(dataflowUrn != null, "No availabilityTestSuitConfiguration -- registry serves no availability endpoint");
         updateAvailabilityConfigToMatchRegistryReturnType(registryReturnFormat);
 
         String[] urnParts = parseUrn(dataflowUrn);
@@ -1058,6 +1069,7 @@ public abstract class BaseRegistryTestSuite {
     @DisplayName("Limit diagnostic: emulation strictly caps series at N (HARD FAIL)")
     @MethodSource("limitEmulationFormats")
     void testLimitEmulationStrict(SdmxFormat registryReturnFormat) throws Exception {
+        Assumptions.assumeTrue(registryReturnFormat != null, "No limitTestSuitConfiguration -- registry configures no limit area");
         LimitTestSuitConfiguration cfg = testConfig.getLimitTestSuitConfiguration();
         // limitEmulationFormats() already short-circuits to an empty stream when cfg is
         // null; reaching here means cfg is non-null. The parameterized source also filters
@@ -1103,7 +1115,11 @@ public abstract class BaseRegistryTestSuite {
     Stream<SdmxFormat> limitEmulationFormats() {
         LimitTestSuitConfiguration cfg = testConfig.getLimitTestSuitConfiguration();
         if (cfg == null) {
-            return Stream.empty();
+            // JUnit 5.10 treats a @ParameterizedTest with zero arguments as an initialization
+            // error, and allowZeroInvocations only arrives in 5.13. Emit one null case that the
+            // test skips on, so a registry that configures no limit area reports a skip with a
+            // reason instead of a red suite. Mirrors availabilityCases().
+            return Stream.of((SdmxFormat) null);
         }
         List<SdmxFormat> formats = cfg.getRegistryReturnFormats();
         if (formats != null && !formats.isEmpty()) {

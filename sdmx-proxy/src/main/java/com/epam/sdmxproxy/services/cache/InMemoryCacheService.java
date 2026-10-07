@@ -22,6 +22,7 @@ public class InMemoryCacheService implements CacheService {
     private final Cache<String, byte[]> rawStructuresCache;
     private final Cache<String, byte[]> readyResponseCache;
     private final Cache<String, byte[]> limitEmulationCache;
+    private final Cache<String, byte[]> availabilityEmulationCache;
 
     public InMemoryCacheService(CacheProperties cacheProperties) {
         // Configure parsed structures cache with TTL
@@ -42,9 +43,16 @@ public class InMemoryCacheService implements CacheService {
                 .expireAfterWrite(limitEmulationTtl)
                 .build();
 
+        // Configure emulated availability cache with TTL
+        Duration availabilityEmulationTtl = cacheProperties.getTtl().getAvailabilityEmulation().getDuration();
+        this.availabilityEmulationCache = Caffeine.newBuilder()
+                .expireAfterWrite(availabilityEmulationTtl)
+                .build();
+
         log.info(
-                "In-memory cache initialized (Caffeine) - Parsed structures TTL: {}, Ready responses TTL: {}, Limit emulation TTL: {}",
-                parsedStructuresTtl, readyResponseTtl, limitEmulationTtl
+                "In-memory cache initialized (Caffeine) - Parsed structures TTL: {}, Ready responses TTL: {}, "
+                        + "Limit emulation TTL: {}, Availability emulation TTL: {}",
+                parsedStructuresTtl, readyResponseTtl, limitEmulationTtl, availabilityEmulationTtl
         );
     }
 
@@ -94,6 +102,31 @@ public class InMemoryCacheService implements CacheService {
     @Override
     public void putLimitEmulationShrinkFilters(String key, byte[] value) {
         limitEmulationCache.put(key, value);
+    }
+
+    @Override
+    public Optional<byte[]> getEmulatedAvailability(String key) {
+        byte[] value = availabilityEmulationCache.getIfPresent(key);
+        if (value != null) {
+            log.debug("Cache hit for emulated availability: {}", key);
+            return Optional.of(value);
+        }
+        log.debug("Cache miss for emulated availability: {}", key);
+        return Optional.empty();
+    }
+
+    @Override
+    public void putEmulatedAvailability(String key, byte[] responseBytes) {
+        availabilityEmulationCache.put(key, responseBytes);
+    }
+
+    @Override
+    public void invalidateAll() {
+        rawStructuresCache.invalidateAll();
+        readyResponseCache.invalidateAll();
+        limitEmulationCache.invalidateAll();
+        availabilityEmulationCache.invalidateAll();
+        log.info("Cache invalidated: registry configuration changed");
     }
 
 }

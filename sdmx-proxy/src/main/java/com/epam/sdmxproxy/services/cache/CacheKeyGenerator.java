@@ -1,10 +1,14 @@
 package com.epam.sdmxproxy.services.cache;
 
 import com.epam.sdmxproxy.common.data.Structure;
+import com.epam.sdmxproxy.common.data.TranslatedAvailabilityQuery;
 import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
+import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
+import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationConfiguration;
 import com.epam.sdmxproxy.exception.UnexpectedStateException;
+import com.epam.sdmxproxy.services.availability.AvailabilityQueryCanonicalizer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
@@ -30,6 +34,7 @@ public class CacheKeyGenerator {
     private static final String RESPONSE_KEY_PREFIX = "response:structure:";
     private static final String FAN_OUT_RESPONSE_KEY_PREFIX = "response:structure:fanout:";
     private static final String LIMIT_EMULATION_PREFIX = "limit_emu:";
+    private static final String AVAILABILITY_EMULATION_PREFIX = "avail_emu:";
     private static final String KEY_SEPARATOR = ":";
 
     /**
@@ -171,6 +176,59 @@ public class CacheKeyGenerator {
         }
 
         return LIMIT_EMULATION_PREFIX
+                + registryName + KEY_SEPARATOR
+                + agencyId + KEY_SEPARATOR
+                + resourceId + KEY_SEPARATOR
+                + version + KEY_SEPARATOR
+                + md5Hash(fingerprint.toString());
+    }
+
+    /**
+     * Generate cache key for an emulated availability response.
+     * Format: {@code avail_emu:{registryName}:{agencyId}:{resourceId}:{version}:{md5Hash(canonicalKey+filters+componentId+mode+includeTimePeriod+mediaType)}}.
+     * <p>
+     * The key is <em>canonicalized</em> through {@code canonicalizer}, and that is load-bearing
+     * rather than cosmetic. The consumer issues the unfiltered availability request from two
+     * places in two shapes -- an absent key on the GET route, and a body of
+     * {@code {"filters": []}} on the POST route -- and one of those bypasses its own cache
+     * entirely. Collapsing both to one entry is what stops the most expensive request in the
+     * system from running twice. Passing the same canonicalizer the emulator routes on also means
+     * routing and cache identity cannot disagree about what "unfiltered" is. See design 040.
+     *
+     * @param query        translated availability query
+     * @param canonicalizer the shared definition of a narrowing-free request
+     */
+    public static String generateAvailabilityEmulationKey(
+            TranslatedAvailabilityQuery query,
+            AvailabilityQueryCanonicalizer canonicalizer
+    ) {
+        String registryName = query.getRegistryConfiguration() != null
+                && query.getRegistryConfiguration().getName() != null
+                ? query.getRegistryConfiguration().getName()
+                : "";
+        String agencyId = query.getAgencyID() != null ? query.getAgencyID() : "";
+        String resourceId = query.getResourceID() != null ? query.getResourceID() : "";
+        String version = query.getVersion() != null ? query.getVersion() : "";
+
+        AvailabilityEndpointConfiguration availabilityConfig = query.getVersionConfiguration() != null
+                ? query.getVersionConfiguration().getAvailabilityEndpointConfig()
+                : null;
+        AvailabilityEmulationConfiguration emulation = availabilityConfig != null
+                ? availabilityConfig.getEmulation()
+                : null;
+
+        StringBuilder fingerprint = new StringBuilder();
+        fingerprint.append("key=").append(canonicalizer.canonicalKey(query.getKey()));
+        fingerprint.append("&filters=").append(
+                canonicalizer.isEmptyFilters(query.getFilters()) ? "" : serializeFilters(query.getFilters()));
+        fingerprint.append("&componentId=").append(query.getComponentId() != null ? query.getComponentId() : "");
+        fingerprint.append("&mode=").append(query.getMode() != null ? query.getMode() : "");
+        fingerprint.append("&contentType=").append(query.getContentType() != null ? query.getContentType() : "");
+        if (emulation != null) {
+            fingerprint.append("&includeTimePeriod=").append(emulation.isIncludeTimePeriod());
+        }
+
+        return AVAILABILITY_EMULATION_PREFIX
                 + registryName + KEY_SEPARATOR
                 + agencyId + KEY_SEPARATOR
                 + resourceId + KEY_SEPARATOR

@@ -18,6 +18,7 @@ import com.epam.sdmxproxy.registry.api.client.Sdmx30DataClient;
 import com.epam.sdmxproxy.registry.api.client.Sdmx30StructureClient;
 import com.epam.sdmxproxy.registry.api.config.InputStreamFeignDecoder;
 import com.epam.sdmxproxy.registry.api.config.ResilienceProperties;
+import com.epam.sdmxproxy.registry.api.http.IdentityEncodingClientProvider;
 import com.epam.sdmxproxy.registry.api.http.RateLimitRetryClientProvider;
 import feign.Client;
 import feign.codec.Encoder;
@@ -49,6 +50,7 @@ class SdmxApiClientProviderImplTest {
     private ResilienceProperties resilienceConfig;
     private Resilience4jComponentFactory resilience4JComponentFactory;
     private RateLimitRetryClientProvider rateLimitRetryClientProvider;
+    private IdentityEncodingClientProvider identityEncodingClientProvider;
     private SdmxApiClientProviderImpl provider;
 
     @BeforeEach
@@ -67,13 +69,17 @@ class SdmxApiClientProviderImplTest {
         rateLimitRetryClientProvider = mock(RateLimitRetryClientProvider.class);
         when(rateLimitRetryClientProvider.wrap(any(), any())).thenReturn(baseOkHttpClient);
 
+        identityEncodingClientProvider = mock(IdentityEncodingClientProvider.class);
+        when(identityEncodingClientProvider.wrap(any(), any())).thenReturn(baseOkHttpClient);
+
         provider = new SdmxApiClientProviderImpl(
                 encoder,
                 decoder,
                 baseOkHttpClient,
                 resilienceConfig,
                 resilience4JComponentFactory,
-                rateLimitRetryClientProvider
+                rateLimitRetryClientProvider,
+                identityEncodingClientProvider
         );
     }
 
