@@ -239,6 +239,87 @@
           }
         }
       }
+    },
+    {
+      "name": "ESTAT",
+      "description": "Eurostat (SDMX 2.1 only; no availability endpoint, emulated via data query -- design 040)",
+      "versions": {
+        "SDMX_2_1": {
+          "sdmxVersion": "SDMX_2_1",
+          "structureEndpointConfig": {
+            "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/",
+            "supportedFormats": [
+              "XML_STRUCTURE_2_1"
+            ],
+            "defaultFormat": "XML_STRUCTURE_2_1",
+            "bypassEnabled": false,
+            "supportedStructures": [
+              "datastructure",
+              "conceptscheme",
+              "codelist",
+              "dataflow",
+              "categoryscheme",
+              "contentconstraint"
+            ]
+          },
+          "dataEndpointConfig": {
+            "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/",
+            "supportedFormats": [
+              "XML_GENERIC_DATA_2_1",
+              "XML_STRUCTURE_SPECIFIC_DATA_2_1",
+              "CSV_DATA_1_0_0"
+            ],
+            "defaultFormat": "XML_GENERIC_DATA_2_1",
+            "bypassEnabled": false,
+            "supportsLimit": true
+          },
+          "availabilityEndpointConfig": {
+            "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/",
+            "supportedFormats": [
+              "XML_STRUCTURE_2_1"
+            ],
+            "defaultFormat": "XML_STRUCTURE_2_1",
+            "bypassEnabled": false,
+            "availabilityEnabled": false,
+            "emulation": {
+              "type": "DATA_QUERY",
+              "unfilteredSource": "CONTENT_CONSTRAINT",
+              "constraintStructureType": "contentconstraint",
+              "probeFormat": "CSV_DATA_1_0_0",
+              "probeDetail": "serieskeysonly",
+              "includeTimePeriod": false,
+              "probeTimeoutMillis": 180000,
+              "probeSplitThresholdBytes": 33554432,
+              "probeSplitChunkSize": 8,
+              "maxProbeFanOut": 16
+            }
+          },
+          "resilienceConfig": {
+            "connectionTimeout": 45000,
+            "readTimeout": 180000,
+            "circuitBreaker": {
+              "failureRateThreshold": 90.0,
+              "minimumNumberOfCalls": 50,
+              "waitDurationInOpenState": 30000,
+              "slidingWindowSize": 50
+            },
+            "retry": {
+              "maxAttempts": 3,
+              "initialIntervalMillis": 1000,
+              "multiplier": 2.0,
+              "maxIntervalMillis": 4000
+            },
+            "rateLimitRetry": {
+              "enabled": true,
+              "maxAttempts": 5,
+              "initialIntervalMillis": 3000,
+              "multiplier": 2.0,
+              "maxIntervalMillis": 24000,
+              "maxTotalWaitMillis": 45000
+            }
+          }
+        }
+      }
     }
   ],
   "agencies": [
@@ -255,6 +336,11 @@
       "name": "OECD",
       "primaryRegistry": "OECD",
       "allowSubAgencies": true
+    },
+    {
+      "name": "ESTAT",
+      "primaryRegistry": "ESTAT",
+      "allowSubAgencies": false
     }
   ],
   "structureFanOutEnabled": true

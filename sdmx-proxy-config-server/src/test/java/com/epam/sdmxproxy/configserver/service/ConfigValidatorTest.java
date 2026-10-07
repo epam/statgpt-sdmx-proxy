@@ -5,14 +5,23 @@ import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
+import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
+import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationConfiguration;
+import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -156,6 +165,150 @@ class ConfigValidatorTest {
         registry.setVersions(Map.of(SdmxVersion.SDMX_2_1, version));
 
         assertDoesNotThrow(() -> validator.validate(configWith(registry)));
+    }
+
+    @Test
+    void acceptsTheShippedBaselineConfiguration() throws Exception {
+        // The config the proxy seeds itself from must pass the validator that guards config
+        // pushes. Without this, a baseline registry could ship a combination the config server
+        // would reject -- discovered only when someone tried to push it back.
+        try (InputStream shipped = ConfigValidatorTest.class.getResourceAsStream("/sdmx_registries_config.json")) {
+            assertNotNull(shipped, "sdmx_registries_config.json must be on the classpath");
+            ProxyConfiguration configuration = new ObjectMapper().readValue(shipped, ProxyConfiguration.class);
+
+            assertDoesNotThrow(() -> validator.validate(configuration));
+
+            // Also pins that the emulation block binds rather than being silently ignored: ESTAT
+            // is the only baseline registry whose availability endpoint does not work.
+            AvailabilityEmulationConfiguration estatEmulation = configuration.getConfigs().stream()
+                    .filter(registry -> "ESTAT".equals(registry.getName()))
+                    .flatMap(registry -> registry.getVersions().values().stream())
+                    .map(VersionSpecificRegistryConfiguration::getAvailabilityEndpointConfig)
+                    .map(AvailabilityEndpointConfiguration::getEmulation)
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("ESTAT must configure availability emulation"));
+            assertEquals(AvailabilityEmulationType.DATA_QUERY, estatEmulation.getType());
+            assertEquals(SdmxFormat.CSV_DATA_1_0_0, estatEmulation.getProbeFormat());
+        }
+    }
+
+    @Test
+    void rejectsEmulationWhileAvailabilityIsEnabled() {
+        // Both on would leave it unclear which answers a request, and the proxy would silently
+        // pick the endpoint.
+        RegistryConfiguration registry = estatWithEmulation(estatEmulation());
+        availabilityOf(registry).setAvailabilityEnabled(true);
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> validator.validate(configWith(registry)));
+        assertTrue(e.getMessage().contains("availabilityEnabled is true"), e.getMessage());
+    }
+
+    @Test
+    void rejectsEmulationCombinedWithLimitEmulation() {
+        // Limit emulation probes availability to shrink a query cheaply. With availability itself
+        // emulated by a data query, every probe becomes a data request -- see designs 014 and 040.
+        RegistryConfiguration registry = estatWithEmulation(estatEmulation());
+        versionOf(registry).getDataEndpointConfig().setSupportsLimit(false);
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> validator.validate(configWith(registry)));
+        assertTrue(e.getMessage().contains("supportsLimit"), e.getMessage());
+    }
+
+    @Test
+    void rejectsConstraintSourceMissingFromSupportedStructures() {
+        // Otherwise the internal constraint query is rejected at translation time and the client
+        // sees an opaque 500 instead of a configuration error.
+        RegistryConfiguration registry = estatWithEmulation(estatEmulation());
+        versionOf(registry).getStructureEndpointConfig().setSupportedStructures(Set.of("dataflow", "datastructure"));
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> validator.validate(configWith(registry)));
+        assertTrue(e.getMessage().contains("contentconstraint"), e.getMessage());
+    }
+
+    @Test
+    void rejectsProbeFormatTheDataEndpointDoesNotServe() {
+        AvailabilityEmulationConfiguration emulation = estatEmulation();
+        emulation.setProbeFormat(SdmxFormat.JSON_DATA_2_0_0);
+        RegistryConfiguration registry = estatWithEmulation(emulation);
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> validator.validate(configWith(registry)));
+        assertTrue(e.getMessage().contains("probeFormat"), e.getMessage());
+    }
+
+    @Test
+    void rejectsProbeDetailOnSdmx30() {
+        // `detail` exists only in SDMX-REST 1.5.0; SDMX-REST 2.x replaced it with attributes and
+        // measures, which the probe sends instead.
+        AvailabilityEmulationConfiguration emulation = estatEmulation();
+        emulation.setConstraintStructureType("dataconstraint");
+        RegistryConfiguration registry = estatWithEmulation(emulation);
+        VersionSpecificRegistryConfiguration version = versionOf(registry);
+        version.setSdmxVersion(SdmxVersion.SDMX_3_0);
+        version.getStructureEndpointConfig().setSupportedStructures(Set.of("dataflow", "dataconstraint"));
+        registry.setVersions(Map.of(SdmxVersion.SDMX_3_0, version));
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> validator.validate(configWith(registry)));
+        assertTrue(e.getMessage().contains("probeDetail"), e.getMessage());
+    }
+
+    @Test
+    void acceptsTheEstatEmulationConfiguration() {
+        assertDoesNotThrow(() -> validator.validate(configWith(estatWithEmulation(estatEmulation()))));
+    }
+
+    @Test
+    void ignoresEmulationBlockWithTypeNone() {
+        AvailabilityEmulationConfiguration emulation = new AvailabilityEmulationConfiguration();
+        RegistryConfiguration registry = estatWithEmulation(emulation);
+        // Everything the other cases reject is present, but type NONE means no emulation runs.
+        versionOf(registry).getDataEndpointConfig().setSupportsLimit(false);
+        versionOf(registry).getStructureEndpointConfig().setSupportedStructures(Set.of("dataflow"));
+
+        assertDoesNotThrow(() -> validator.validate(configWith(registry)));
+    }
+
+    private AvailabilityEmulationConfiguration estatEmulation() {
+        AvailabilityEmulationConfiguration emulation = new AvailabilityEmulationConfiguration();
+        emulation.setType(AvailabilityEmulationType.DATA_QUERY);
+        emulation.setProbeFormat(SdmxFormat.CSV_DATA_1_0_0);
+        return emulation;
+    }
+
+    private RegistryConfiguration estatWithEmulation(AvailabilityEmulationConfiguration emulation) {
+        StructureEndpointConfiguration structureConfig = new StructureEndpointConfiguration();
+        structureConfig.setSupportedStructures(Set.of("dataflow", "datastructure", "codelist", "contentconstraint"));
+
+        DataEndpointConfiguration dataConfig = new DataEndpointConfiguration();
+        dataConfig.setSupportedFormats(List.of(SdmxFormat.XML_GENERIC_DATA_2_1, SdmxFormat.CSV_DATA_1_0_0));
+        dataConfig.setDefaultFormat(SdmxFormat.XML_GENERIC_DATA_2_1);
+
+        AvailabilityEndpointConfiguration availabilityConfig = new AvailabilityEndpointConfiguration();
+        availabilityConfig.setAvailabilityEnabled(false);
+        availabilityConfig.setEmulation(emulation);
+
+        VersionSpecificRegistryConfiguration version = new VersionSpecificRegistryConfiguration();
+        version.setSdmxVersion(SdmxVersion.SDMX_2_1);
+        version.setStructureEndpointConfig(structureConfig);
+        version.setDataEndpointConfig(dataConfig);
+        version.setAvailabilityEndpointConfig(availabilityConfig);
+
+        RegistryConfiguration registry = new RegistryConfiguration();
+        registry.setName("ESTAT");
+        registry.setVersions(Map.of(SdmxVersion.SDMX_2_1, version));
+        return registry;
+    }
+
+    private VersionSpecificRegistryConfiguration versionOf(RegistryConfiguration registry) {
+        return registry.getVersions().values().iterator().next();
+    }
+
+    private AvailabilityEndpointConfiguration availabilityOf(RegistryConfiguration registry) {
+        return versionOf(registry).getAvailabilityEndpointConfig();
     }
 
     private ProxyConfiguration configWith(RegistryConfiguration registry) {

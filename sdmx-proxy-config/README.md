@@ -84,12 +84,81 @@ Shared by every `*EndpointConfig` block below.
 
 | Field                    | Required | Description                                                                                                                                                                      | Available Values                                         | Default |
 |--------------------------|:--------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|---------|
-| `availabilityEnabled`    |    No    | Enable availability queries for this version. If false, availability requests are rejected                                                                                       | `true`, `false`                                          | `false` |
+| `availabilityEnabled`    |    No    | Whether this registry's availability endpoint works. If false, the request is answered by the proxy itself per `emulation`, or rejected with HTTP 501 when no emulation is configured (design 040) | `true`, `false`                                          | `false` |
+| `emulation`              |    No    | How to answer availability when `availabilityEnabled` is false. Null or `type: NONE` means "reject with 501"                                                                     | `AvailabilityEmulationConfiguration`                     | (none)  |
 | `unwrapStarComponentId`  |    No    | Replace a `*` (or absent) component ID with the comma-joined list of the dataflow's non-time dimension IDs. SDMX 3.0 only -- rejected at config load on an `SDMX_2_1` version, whose availability grammar takes a single component ID or `all` | `true`, `false`                                          | `false` |
 | `unwrapFilterParameters` |    No    | Send filters as raw dimension query params (e.g. `FREQ=Q`) instead of the SDMX 3.0 `c[FREQ]=Q` wrapper                                                                           | `true`, `false`                                          | `false` |
 | `mergeAllWildcardKey`    |    No    | Collapse a key whose every position is `*` to a single `*`. Required for BIS and similar registries                                                                              | `true`, `false`                                          | `false` |
 | `fixtures`               |    No    | Response patches applied before conversion/bypass, in order                                                                                                                      | Array of `FixtureConfiguration<AvailabilityFixtureType>` | (empty) |
 | `convertKeyToFilters`    |    No    | When true, every dim filter is moved into `c[]` and the path key is sent as a single `*` on outbound availability requests. Workaround for BIS-style registries (see design 016). SDMX 3.0 only -- rejected at config load on an `SDMX_2_1` version, which has no `c[]` parameter | `true`, `false`                                          | `false` |
+
+### `AvailabilityEmulationConfiguration`
+
+Only consulted when `availabilityEndpointConfig.availabilityEnabled` is `false`. See
+`docs/designs/040-availability-emulation/DESIGN.md`.
+
+The emulation splits on whether the request narrows anything. A request with no narrowing at all
+(absent / `all` / `*` / all-wildcard key **and** no filters) may be answered from the registry's
+`Actual` content constraint, which answers exactly that question cheaply. **Any narrowed request
+is answered from a series-key data probe carrying the client's own key and filters, and never
+from the constraint** — the constraint is dataflow-scoped and silently ignores narrowing, so
+serving it for a filtered request would report the whole cube as if it had been narrowed.
+
+| Field                      | Required | Description                                                                                                                                                                                              | Available Values                             | Default          |
+|----------------------------|:--------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|------------------|
+| `type`                     |    No    | Emulation strategy. `NONE` rejects availability with HTTP 501                                                                                                                                             | `NONE`, `DATA_QUERY`                         | `NONE`           |
+| `unfilteredSource`         |    No    | Source for a request that narrows nothing. `CONTENT_CONSTRAINT` requires the constraint type in `structureEndpointConfig.supportedStructures`; `PROBE` probes with a wildcard key                          | `CONTENT_CONSTRAINT`, `PROBE`                | `CONTENT_CONSTRAINT` |
+| `constraintStructureType`  |    No    | Structure type holding the `Actual` constraint. Defaults per SDMX version: `contentconstraint` on 2.1, `dataconstraint` on 3.0                                                                             | Structure type name                          | (per version)    |
+| `probeFormat`              |    No    | Format requested for the probe. Must be in `dataEndpointConfig.supportedFormats`. Defaults to the cheapest CSV that endpoint serves, else its `defaultFormat`. Harvestable formats are SDMX-CSV and SDMX-ML | `SdmxFormat`                                 | (cheapest CSV)   |
+| `probeDetail`              |    No    | SDMX 2.1 `detail` value on the probe. SDMX 2.1 only — rejected at config load on an `SDMX_3_0` version, where the probe sends `attributes=none&measures=none` instead                                      | `serieskeysonly`, `nodata`                   | `serieskeysonly` |
+| `includeTimePeriod`        |    No    | Emit a `TIME_PERIOD` key value. Off because a probe cannot produce time coverage, so enabling it would make the two emulation paths structurally different                                                 | `true`, `false`                              | `false`          |
+| `maxProbeBytes`            |    No    | Byte ceiling on one probe response                                                                                                                                                                        | Long                                         | `268435456`      |
+| `maxProbeSeries`           |    No    | Row ceiling on one probe response; one row is one distinct series key                                                                                                                                     | Long                                         | `5000000`        |
+| `probeTimeoutMillis`       |    No    | Read timeout for the probe, separate from the registry's general `readTimeout`                                                                                                                             | Integer (ms)                                 | `180000`         |
+| `probeSplitThresholdBytes` |    No    | Probe size above which the request is decomposed by key. Bytes transferred are unchanged; each request becomes short                                                                                       | Long                                         | `33554432`       |
+| `probeSplitChunkSize`      |    No    | Values of the split dimension pinned per chunk                                                                                                                                                            | Integer                                      | `8`              |
+| `maxProbeFanOut`           |    No    | Hard cap on probes per availability request, including the first                                                                                                                                          | Integer                                      | `16`             |
+| `asyncRetry`               |    No    | Retry schedule for a probe answered with a queued-extraction envelope instead of data                                                                                                                     | `AvailabilityAsyncRetryConfig`               | (see below)      |
+
+`AvailabilityAsyncRetryConfig`: `enabled` (`true`), `maxAttempts` (`4`),
+`initialIntervalMillis` (`2000`), `multiplier` (`2.0`), `maxTotalWaitMillis` (`30000`).
+Eurostat answers a queued extraction with HTTP 200 and a SOAP `<queued>` body carrying the
+requested format's content type, so only the body distinguishes it; re-issuing the same URL once
+the job finishes is what returns the payload.
+
+Rejected at config load:
+
+- `type != NONE` together with `availabilityEnabled: true`
+- `type != NONE` with no `dataEndpointConfig`
+- `type != NONE` together with `dataEndpointConfig.supportsLimit: false` — limit emulation probes
+  availability to shrink a query cheaply, so with availability itself emulated by a data query
+  each probe would become a data request (designs 014 and 040)
+- `probeFormat` absent from `dataEndpointConfig.supportedFormats`
+- `probeDetail` set on an `SDMX_3_0` version
+- `unfilteredSource: CONTENT_CONSTRAINT` with the constraint type absent from
+  `structureEndpointConfig.supportedStructures`
+
+Example (Eurostat):
+
+```json
+"availabilityEndpointConfig": {
+  "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/",
+  "supportedFormats": ["XML_STRUCTURE_2_1"],
+  "defaultFormat": "XML_STRUCTURE_2_1",
+  "bypassEnabled": false,
+  "availabilityEnabled": false,
+  "emulation": {
+    "type": "DATA_QUERY",
+    "unfilteredSource": "CONTENT_CONSTRAINT",
+    "constraintStructureType": "contentconstraint",
+    "probeFormat": "CSV_DATA_1_0_0",
+    "probeDetail": "serieskeysonly"
+  }
+}
+```
+
+`contentconstraint` must also be present in that version's
+`structureEndpointConfig.supportedStructures`.
 
 ### `RegistryResilienceConfig`
 

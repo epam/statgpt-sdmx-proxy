@@ -24,6 +24,7 @@ public class RedisCacheService implements CacheService {
     private static final String RAW_STRUCTURES_PREFIX = "raw:";
     private static final String READY_RESPONSE_PREFIX = "response:";
     private static final String LIMIT_EMULATION_PREFIX = "limit_emu:";
+    private static final String AVAILABILITY_EMULATION_PREFIX = "avail_emu:";
 
     private final RedisTemplate<String, byte[]> rawStructuresRedisTemplate;
     private final RedisTemplate<String, byte[]> readyResponseRedisTemplate;
@@ -118,6 +119,37 @@ public class RedisCacheService implements CacheService {
             log.debug("Cached limit emulation entry: {} (TTL: {}s, size: {} bytes)", key, ttlWithJitter, value.length);
         } catch (Exception e) {
             log.error("Error putting limit emulation entry into Redis cache: {}", key, e);
+            throw new CacheUnavailableException("Redis cache operation failed", e);
+        }
+    }
+
+    @Override
+    public Optional<byte[]> getEmulatedAvailability(String key) {
+        try {
+            String redisKey = AVAILABILITY_EMULATION_PREFIX + key;
+            byte[] value = readyResponseRedisTemplate.opsForValue().get(redisKey);
+            if (value != null) {
+                log.debug("Cache hit for emulated availability: {}", key);
+                return Optional.of(value);
+            }
+            log.debug("Cache miss for emulated availability: {}", key);
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Error getting emulated availability from Redis cache: {}", key, e);
+            throw new CacheUnavailableException("Redis cache operation failed", e);
+        }
+    }
+
+    @Override
+    public void putEmulatedAvailability(String key, byte[] responseBytes) {
+        try {
+            long ttlSeconds = cacheProperties.getTtl().getAvailabilityEmulation().getDuration().getSeconds();
+            String redisKey = AVAILABILITY_EMULATION_PREFIX + key;
+            long ttlWithJitter = addJitter(ttlSeconds, cacheProperties.getTtl().getAvailabilityEmulation().getJitter().getSeconds());
+            readyResponseRedisTemplate.opsForValue().set(redisKey, responseBytes, ttlWithJitter, TimeUnit.SECONDS);
+            log.debug("Cached emulated availability: {} (TTL: {}s, size: {} bytes)", key, ttlWithJitter, responseBytes.length);
+        } catch (Exception e) {
+            log.error("Error putting emulated availability into Redis cache: {}", key, e);
             throw new CacheUnavailableException("Redis cache operation failed", e);
         }
     }

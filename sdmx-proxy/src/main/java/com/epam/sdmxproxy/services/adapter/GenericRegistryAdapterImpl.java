@@ -128,6 +128,12 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
         if (query.getEndPeriod() != null) {
             dataQueryParams.put("endPeriod", query.getEndPeriod());
         }
+        // Set only by the availability-emulation probe builder (design 040). `serieskeysonly`
+        // returns the series keys with neither attributes nor observations, and unlike
+        // firstN/lastNObservations it is not subject to Eurostat's extraction-size gate.
+        if (query.getDetail() != null) {
+            dataQueryParams.put("detail", query.getDetail());
+        }
         return data21Client.getData(
                 acceptHeader,
                 flowRef,
