@@ -28,6 +28,8 @@ repositories {
 }
 
 ext['jackson-bom.version'] = jackson_bom_version
+ext['jackson-2-bom.version'] = jackson_2_bom_version
+ext['spring-framework.version'] = spring_framework_version
 ext['tomcat.version'] = tomcat_version
 ext['log4j2.version'] = log4j2_version
 ext['netty.version'] = netty_version
