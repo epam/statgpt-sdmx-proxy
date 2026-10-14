@@ -73,15 +73,23 @@ public class QueryTranslatorImpl implements QueryTranslator {
     }
 
     /**
-     * Replaces the {@code latest} version keyword with the endpoint's {@code overrideLatestTo}, when
-     * one is configured. Every other version, and every endpoint without an override, is passed
-     * through unchanged.
+     * Replaces the {@code latest} version keyword with the endpoint's {@code overrideLatestTo}, or
+     * with {@code overrideLatestToForAll} when the resource id is a wildcard and that field is set.
+     * Every other version, and every endpoint without an override, is passed through unchanged.
      */
-    private static String overrideLatestVersion(String version, @Nullable EndpointConfiguration endpointConfig) {
-        if (!LATEST_VERSION.equals(version) || endpointConfig == null || endpointConfig.getOverrideLatestTo() == null) {
+    private static String overrideLatestVersion(String version, String resourceId, @Nullable EndpointConfiguration endpointConfig) {
+        if (!LATEST_VERSION.equals(version) || endpointConfig == null) {
             return version;
         }
-        return endpointConfig.getOverrideLatestTo();
+        String override = endpointConfig.getOverrideLatestTo();
+        if (isAllResources(resourceId) && endpointConfig.getOverrideLatestToForAll() != null) {
+            override = endpointConfig.getOverrideLatestToForAll();
+        }
+        return override != null ? override : version;
+    }
+
+    private static boolean isAllResources(String resourceId) {
+        return resourceId == null || resourceId.isEmpty() || SDMX_30_ALL_WILDCARD.equals(resourceId) || SDMX_21_ALL_WILDCARD.equals(resourceId);
     }
 
     @Override
@@ -201,7 +209,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
 
         VersionSpecificRegistryConfiguration versionConfig = selectedRegistry.getVersionConfiguration();
         String resolvedReferences = referencesResolver.resolve(references, resourceId, versionConfig.getStructureEndpointConfig());
-        String queryVersion = overrideLatestVersion(getVersionSpecificQueryId(version, versionConfig), versionConfig.getStructureEndpointConfig());
+        String queryVersion = overrideLatestVersion(getVersionSpecificQueryId(version, versionConfig), resourceId, versionConfig.getStructureEndpointConfig());
         return TranslatedStructureQuery.builder()
                 .registryConfiguration(selectedRegistry.getRegistryConfiguration())
                 .versionConfiguration(versionConfig)
@@ -272,7 +280,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
 
             String queryAgencyId = getVersionSpecificQueryId(SDMX_30_ALL_WILDCARD, versionConfig);
             String queryResourceId = getVersionSpecificQueryId(resourceId, versionConfig);
-            String queryVersion = overrideLatestVersion(getVersionSpecificQueryId(version, versionConfig), versionConfig.getStructureEndpointConfig());
+            String queryVersion = overrideLatestVersion(getVersionSpecificQueryId(version, versionConfig), resourceId, versionConfig.getStructureEndpointConfig());
 
             String resolvedReferences = referencesResolver.resolve(references, resourceId, versionConfig.getStructureEndpointConfig());
 
@@ -396,7 +404,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
                 .context(context)
                 .agencyID(agencyID)
                 .resourceID(resourceID)
-                .version(overrideLatestVersion(version, availabilityEndpointConfig))
+                .version(overrideLatestVersion(version, resourceID, availabilityEndpointConfig))
                 .key(processedKey)
                 .componentId(is21 ? sdmx21QueryNormalizer.toComponentId(componentId) : componentId)
                 .filters(filters)
@@ -567,7 +575,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
                 .context(context)
                 .agencyID(agencyID)
                 .resourceID(resourceID)
-                .version(overrideLatestVersion(version, dataEndpointConfig))
+                .version(overrideLatestVersion(version, resourceID, dataEndpointConfig))
                 .key(processedKey)
                 .startPeriod(startPeriod)
                 .endPeriod(endPeriod)

@@ -62,6 +62,7 @@ Shared by every `*EndpointConfig` block below.
 | `defaultFormat`    |    No    | Format requested from the registry when bypass is disabled or the requested format is not in `supportedFormats` | `SdmxFormat`            |         |
 | `bypassEnabled`    |    No    | When true, responses are streamed through unchanged if the requested format is in `supportedFormats`            | `true`, `false`         | `false` |
 | `overrideLatestTo`   |    No    | Version sent to the registry in place of the `latest` keyword. Required for Eurostat, which rejects `latest` with HTTP 400 and resolves the latest version only through `+`. Null forwards `latest` unchanged | e.g. `+`                | (none)  |
+| `overrideLatestToForAll` |    No    | Version sent in place of `latest` when the resource id is a wildcard (`*` or `all`). Eurostat answers `dataflow/ESTAT/*/+` with an empty list, so its structure endpoint sets `*`. Null falls back to `overrideLatestTo` | e.g. `*`                | (none)  |
 
 ### `StructureEndpointConfiguration` (extends `EndpointConfiguration`)
 

@@ -1175,10 +1175,47 @@ class QueryTranslatorImplTest {
         when(agencyRoutingService.resolveRegistry(eq("ESTAT"), isNull())).thenReturn(estat);
 
         TranslatedStructureQuery query = queryTranslator.translateStructureQuery(
+                "dataflow", "ESTAT", "NAMA_10_GDP", "latest", null, "full", null, null
+        );
+
+        assertEquals("+", query.getStructure().version());
+    }
+
+    @Test
+    void translateStructureQuery_latestForAllWithoutForAllOverride_fallsBackToOverrideLatestTo() {
+        RegistryConfiguration estat = createRegistryWithOverrideLatestTo("ESTAT", "+");
+        when(agencyRoutingService.resolveRegistry(eq("ESTAT"), isNull())).thenReturn(estat);
+
+        TranslatedStructureQuery query = queryTranslator.translateStructureQuery(
                 "dataflow", "ESTAT", "all", "latest", null, "full", null, null
         );
 
         assertEquals("*", query.getStructure().id());
+        assertEquals("+", query.getStructure().version());
+    }
+
+    @Test
+    void translateStructureQuery_latestForAllWithForAllOverride_sendsForAllOverride() {
+        RegistryConfiguration estat = createRegistryWithOverrideLatestTo("ESTAT", "+", "*");
+        when(agencyRoutingService.resolveRegistry(eq("ESTAT"), isNull())).thenReturn(estat);
+
+        TranslatedStructureQuery query = queryTranslator.translateStructureQuery(
+                "dataflow", "ESTAT", "all", "latest", null, "full", null, null
+        );
+
+        assertEquals("*", query.getStructure().id());
+        assertEquals("*", query.getStructure().version());
+    }
+
+    @Test
+    void translateStructureQuery_latestForOneArtefactWithForAllOverride_sendsOverrideLatestTo() {
+        RegistryConfiguration estat = createRegistryWithOverrideLatestTo("ESTAT", "+", "*");
+        when(agencyRoutingService.resolveRegistry(eq("ESTAT"), isNull())).thenReturn(estat);
+
+        TranslatedStructureQuery query = queryTranslator.translateStructureQuery(
+                "dataflow", "ESTAT", "NAMA_10_GDP", "latest", null, "full", null, null
+        );
+
         assertEquals("+", query.getStructure().version());
     }
 
@@ -1208,7 +1245,7 @@ class QueryTranslatorImplTest {
 
     @Test
     void translateWildcardStructureFanOut_latestWithOverride_onlyOverriddenRegistryChanges() {
-        RegistryConfiguration estat = createRegistryWithOverrideLatestTo("ESTAT", "+");
+        RegistryConfiguration estat = createRegistryWithOverrideLatestTo("ESTAT", "+", "*");
         RegistryConfiguration bis = createRegistryWithSingleVersion("BIS", SdmxVersion.SDMX_3_0);
         when(configurationProvider.getConfiguration()).thenReturn(proxyConfig(List.of(estat, bis)));
 
@@ -1217,7 +1254,7 @@ class QueryTranslatorImplTest {
         );
 
         assertEquals(2, queries.size());
-        assertEquals("+", queries.get(0).getStructure().version());
+        assertEquals("*", queries.get(0).getStructure().version());
         assertEquals("latest", queries.get(1).getStructure().version());
     }
 
@@ -1252,6 +1289,12 @@ class QueryTranslatorImplTest {
     }
 
     // ========== Helper Methods ==========
+
+    private RegistryConfiguration createRegistryWithOverrideLatestTo(String registryName, String overrideLatestTo, String overrideLatestToForAll) {
+        RegistryConfiguration registryConfig = createRegistryWithOverrideLatestTo(registryName, overrideLatestTo);
+        registryConfig.getVersionConfiguration(SdmxVersion.SDMX_3_0).getStructureEndpointConfig().setOverrideLatestToForAll(overrideLatestToForAll);
+        return registryConfig;
+    }
 
     private RegistryConfiguration createRegistryWithOverrideLatestTo(String registryName, String overrideLatestTo) {
         RegistryConfiguration registryConfig = createRegistryWithSingleVersion(registryName, SdmxVersion.SDMX_3_0);

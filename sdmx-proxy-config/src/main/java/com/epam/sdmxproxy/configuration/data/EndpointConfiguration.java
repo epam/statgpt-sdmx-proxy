@@ -46,4 +46,13 @@ public class EndpointConfiguration {
      */
     private String overrideLatestTo;
 
+    /**
+     * Version sent to the registry in place of the {@code latest} keyword when the query is a
+     * wildcard over all artefacts ({@code *} or {@code all} in the resource id slot).
+     * Eurostat resolves {@code +} for one dataflow but answers {@code ESTAT/*}{@code /+} with an
+     * empty dataflow list; only {@code *} returns the dataflows.
+     * If null, {@link #overrideLatestTo} applies to wildcard queries as well.
+     */
+    private String overrideLatestToForAll;
+
 }

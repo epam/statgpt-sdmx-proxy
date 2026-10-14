@@ -250,6 +250,7 @@
           "structureEndpointConfig": {
             "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/3.0/structure/",
             "overrideLatestTo": "+",
+            "overrideLatestToForAll": "*",
             "supportedFormats": [
               "XML_STRUCTURE_3_0_0"
             ],
