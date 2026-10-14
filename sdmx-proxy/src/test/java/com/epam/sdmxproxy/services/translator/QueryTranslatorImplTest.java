@@ -1167,7 +1167,101 @@ class QueryTranslatorImplTest {
         assertEquals("*", query.getStructure().version());
     }
 
+    // ========== overrideLatestTo ==========
+
+    @Test
+    void translateStructureQuery_latestWithOverride_sendsOverride() {
+        RegistryConfiguration estat = createRegistryWithOverrideLatestTo("ESTAT", "+");
+        when(agencyRoutingService.resolveRegistry(eq("ESTAT"), isNull())).thenReturn(estat);
+
+        TranslatedStructureQuery query = queryTranslator.translateStructureQuery(
+                "dataflow", "ESTAT", "all", "latest", null, "full", null, null
+        );
+
+        assertEquals("*", query.getStructure().id());
+        assertEquals("+", query.getStructure().version());
+    }
+
+    @Test
+    void translateStructureQuery_latestWithoutOverride_forwardsLatest() {
+        RegistryConfiguration bis = createRegistryWithSingleVersion("BIS", SdmxVersion.SDMX_3_0);
+        when(agencyRoutingService.resolveRegistry(eq("BIS"), isNull())).thenReturn(bis);
+
+        TranslatedStructureQuery query = queryTranslator.translateStructureQuery(
+                "dataflow", "BIS", "TEST_FLOW", "latest", null, "full", null, null
+        );
+
+        assertEquals("latest", query.getStructure().version());
+    }
+
+    @Test
+    void translateStructureQuery_specificVersionWithOverride_unchanged() {
+        RegistryConfiguration estat = createRegistryWithOverrideLatestTo("ESTAT", "+");
+        when(agencyRoutingService.resolveRegistry(eq("ESTAT"), isNull())).thenReturn(estat);
+
+        TranslatedStructureQuery query = queryTranslator.translateStructureQuery(
+                "codelist", "ESTAT", "GEO", "27.0", null, "full", null, null
+        );
+
+        assertEquals("27.0", query.getStructure().version());
+    }
+
+    @Test
+    void translateWildcardStructureFanOut_latestWithOverride_onlyOverriddenRegistryChanges() {
+        RegistryConfiguration estat = createRegistryWithOverrideLatestTo("ESTAT", "+");
+        RegistryConfiguration bis = createRegistryWithSingleVersion("BIS", SdmxVersion.SDMX_3_0);
+        when(configurationProvider.getConfiguration()).thenReturn(proxyConfig(List.of(estat, bis)));
+
+        List<TranslatedStructureQuery> queries = queryTranslator.translateWildcardStructureFanOut(
+                "dataflow", "all", "latest", null, "full", null
+        );
+
+        assertEquals(2, queries.size());
+        assertEquals("+", queries.get(0).getStructure().version());
+        assertEquals("latest", queries.get(1).getStructure().version());
+    }
+
+    @Test
+    void translateDataQuery_latestWithOverride_sendsOverride() {
+        RegistryConfiguration estat = createRegistryWithOverrideLatestTo("ESTAT", "+");
+        when(agencyRoutingService.resolveRegistry(eq("ESTAT"), isNull())).thenReturn(estat);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        TranslatedDataQuery query = queryTranslator.translateDataQuery(
+                "dataflow", "ESTAT", "NAMA_10_GDP", "latest", "A.CP_MEUR.B1GQ.DE",
+                null, null, null, null, null, null, null, null, null, null, false,
+                "application/json", sdmxBeans, null
+        );
+
+        assertEquals("+", query.getVersion());
+    }
+
+    @Test
+    void translateAvailabilityQuery_latestWithOverride_sendsOverride() {
+        RegistryConfiguration estat = createRegistryWithOverrideLatestTo("ESTAT", "+");
+        when(agencyRoutingService.resolveRegistry(eq("ESTAT"), isNull())).thenReturn(estat);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+
+        TranslatedAvailabilityQuery query = queryTranslator.translateAvailabilityQuery(
+                "dataflow", "ESTAT", "NAMA_10_GDP", "latest", "*", "*",
+                null, null, "exact", "none", null, null, null,
+                "application/vnd.sdmx.structure+xml;version=3.0.0", sdmxBeans, null
+        );
+
+        assertEquals("+", query.getVersion());
+    }
+
     // ========== Helper Methods ==========
+
+    private RegistryConfiguration createRegistryWithOverrideLatestTo(String registryName, String overrideLatestTo) {
+        RegistryConfiguration registryConfig = createRegistryWithSingleVersion(registryName, SdmxVersion.SDMX_3_0);
+        VersionSpecificRegistryConfiguration versionConfig = registryConfig.getVersionConfiguration(SdmxVersion.SDMX_3_0);
+        versionConfig.getStructureEndpointConfig().setSupportedStructures(Set.of("datastructure", "dataflow", "codelist"));
+        versionConfig.getStructureEndpointConfig().setOverrideLatestTo(overrideLatestTo);
+        versionConfig.getDataEndpointConfig().setOverrideLatestTo(overrideLatestTo);
+        versionConfig.getAvailabilityEndpointConfig().setOverrideLatestTo(overrideLatestTo);
+        return registryConfig;
+    }
 
     private ProxyConfiguration proxyConfig(List<RegistryConfiguration> configs) {
         ProxyConfiguration config = new ProxyConfiguration();

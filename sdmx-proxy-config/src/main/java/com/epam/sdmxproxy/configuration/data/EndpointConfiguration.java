@@ -38,4 +38,12 @@ public class EndpointConfiguration {
      */
     private boolean bypassEnabled;
 
+    /**
+     * Version sent to the registry in place of the {@code latest} keyword.
+     * Required for registries (e.g., Eurostat) that reject {@code latest} on SDMX 3.0 paths and
+     * resolve only the {@code +} operator. For example, {@code latest} becomes {@code +}.
+     * If null, {@code latest} is forwarded unchanged.
+     */
+    private String overrideLatestTo;
+
 }

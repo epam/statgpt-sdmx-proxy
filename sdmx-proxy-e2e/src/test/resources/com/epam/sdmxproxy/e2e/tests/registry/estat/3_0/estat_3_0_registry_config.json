@@ -9,6 +9,7 @@
           "disableCompression": true,
           "structureEndpointConfig": {
             "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/3.0/structure/",
+            "overrideLatestTo": "+",
             "supportedFormats": [
               "XML_STRUCTURE_3_0_0"
             ],
@@ -40,6 +41,7 @@
           },
           "dataEndpointConfig": {
             "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/3.0/data/",
+            "overrideLatestTo": "+",
             "supportedFormats": [
               "CSV_DATA_2_0_0"
             ],
@@ -50,6 +52,7 @@
           },
           "availabilityEndpointConfig": {
             "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/3.0/availability/",
+            "overrideLatestTo": "+",
             "supportedFormats": [
               "XML_STRUCTURE_3_0_0"
             ],
