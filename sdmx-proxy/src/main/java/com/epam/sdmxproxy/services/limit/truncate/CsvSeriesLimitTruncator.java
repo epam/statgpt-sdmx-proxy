@@ -62,10 +62,15 @@ public class CsvSeriesLimitTruncator implements SeriesLimitTruncator {
         );
     }
 
+    /**
+     * A header-only SDMX-CSV 2.0.0 message. The leading {@code STRUCTURE,STRUCTURE_ID} columns are
+     * what identifies the 2.0.0 format; the 1.0.0 {@code DATAFLOW} column leaves sdmx-core with no
+     * reader for a {@code CSV_DATA_2_0_0} stream.
+     */
     @Override
     public InputStream emptyStream(SdmxBeans sdmxBeans) {
         List<String> dimensionIds = orderedDimensionIds(sdmxBeans);
-        StringBuilder header = new StringBuilder("DATAFLOW");
+        StringBuilder header = new StringBuilder("STRUCTURE").append(SEPARATOR).append("STRUCTURE_ID");
         for (String id : dimensionIds) {
             header.append(SEPARATOR).append(id);
         }

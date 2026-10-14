@@ -109,7 +109,8 @@ public class AdapterRouterImplTest {
                 filterNormalizer,
                 objectMapper,
                 availabilityEmulatorProvider,
-                new AvailabilityQueryCanonicalizer()
+                new AvailabilityQueryCanonicalizer(),
+                new NoDataFaultDetector()
         );
     }
 

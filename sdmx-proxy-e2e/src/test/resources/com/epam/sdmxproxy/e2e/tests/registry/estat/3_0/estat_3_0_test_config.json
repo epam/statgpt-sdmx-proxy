@@ -117,5 +117,13 @@
     "registryReturnFormats": [
       "XML_STRUCTURE_3_0_0"
     ]
+  },
+  "queryShapeTestSuitConfiguration": {
+    "dataflowUrn": "ESTAT:EF_LU_PCOLIVE(1.0)",
+    "orKey": "*.TOTAL.TOTAL.G03A+G03+G03B.*.IT",
+    "keylessAvailabilityFilters": {
+      "unit": "HA"
+    },
+    "emptyTimeRange": "ge:2023+le:2026"
   }
 }

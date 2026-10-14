@@ -32,6 +32,7 @@ import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 import com.epam.sdmxproxy.exception.AvailabilityConversionException;
 import com.epam.sdmxproxy.exception.AvailabilityNotSupportedException;
 import com.epam.sdmxproxy.exception.DataConversionException;
+import com.epam.sdmxproxy.exception.RegistryNoDataException;
 import com.epam.sdmxproxy.exception.StructureConversionException;
 import com.epam.sdmxproxy.exception.StructureFanOutException;
 import com.epam.sdmxproxy.exception.UnexpectedStateException;
@@ -98,6 +99,7 @@ public class AdapterRouterImpl implements AdapterRouter {
     private final ObjectMapper objectMapper;
     private final AvailabilityEmulatorProvider availabilityEmulatorProvider;
     private final AvailabilityQueryCanonicalizer availabilityQueryCanonicalizer;
+    private final NoDataFaultDetector noDataFaultDetector;
 
     @Nullable
     private static List<FixtureConfiguration<AvailabilityFixtureType>> getFixtureConfigurations(TranslatedAvailabilityQuery query) {
@@ -131,6 +133,22 @@ public class AdapterRouterImpl implements AdapterRouter {
 
     private static InputStream orEmpty(InputStream stream) {
         return stream != null ? stream : InputStream.nullInputStream();
+    }
+
+    /**
+     * Fetches data from the registry, turning a registry error that means "no observations" into
+     * {@link RegistryNoDataException} so each caller can answer with its own empty result.
+     */
+    private InputStream fetchData(TranslatedDataQuery query) {
+        try {
+            return orEmpty(genericRegistryAdapter.getData(query));
+        } catch (FeignException e) {
+            if (noDataFaultDetector.isNoData(e, query.getVersionConfiguration().getDataEndpointConfig())) {
+                log.info("Registry {} reports no observations for {}:{}({}) key='{}' filters={}; answering with an empty result", query.getRegistryConfiguration().getName(), query.getAgencyID(), query.getResourceID(), query.getVersion(), query.getKey(), query.getFilters());
+                throw new RegistryNoDataException("Registry reports no observations for the query", e);
+            }
+            throw e;
+        }
     }
 
     private static List<String> nonTimeDimensionIds(SdmxBeans beans) {
@@ -445,18 +463,22 @@ public class AdapterRouterImpl implements AdapterRouter {
             SdmxBeans sdmxBeans,
             boolean emulateLimit
     ) {
-        if (!emulateLimit) {
-            return orEmpty(genericRegistryAdapter.getData(query));
+        try {
+            if (!emulateLimit) {
+                return fetchData(query);
+            }
+            int n = query.getLimit() == null ? 0 : query.getLimit();
+            SeriesLimitTruncator truncator = truncatorProvider.forFormat(query.getReturnFormat());
+            if (n <= 0) {
+                log.info("Limit emulation short-circuit: limit={} <= 0, returning empty stream", n);
+                return truncator.emptyStream(sdmxBeans);
+            }
+            TranslatedDataQuery shrunkQuery = resolveShrunkQuery(query, sdmxBeans);
+            InputStream raw = fetchData(shrunkQuery);
+            return truncator.truncate(raw, n, sdmxBeans);
+        } catch (RegistryNoDataException e) {
+            return truncatorProvider.forFormat(query.getReturnFormat()).emptyStream(sdmxBeans);
         }
-        int n = query.getLimit() == null ? 0 : query.getLimit();
-        SeriesLimitTruncator truncator = truncatorProvider.forFormat(query.getReturnFormat());
-        if (n <= 0) {
-            log.info("Limit emulation short-circuit: limit={} <= 0, returning empty stream", n);
-            return truncator.emptyStream(sdmxBeans);
-        }
-        TranslatedDataQuery shrunkQuery = resolveShrunkQuery(query, sdmxBeans);
-        InputStream raw = orEmpty(genericRegistryAdapter.getData(shrunkQuery));
-        return truncator.truncate(raw, n, sdmxBeans);
     }
 
     /**
@@ -620,9 +642,17 @@ public class AdapterRouterImpl implements AdapterRouter {
             return orEmpty(genericRegistryAdapter.getStructures(query));
         }
 
+        /**
+         * The probe is a data request, so the data endpoint's outbound shaping applies to it the
+         * same way it applies in {@link #getData}.
+         */
         @Override
         public InputStream fetchData(TranslatedDataQuery query) {
-            return orEmpty(genericRegistryAdapter.getData(query));
+            DataEndpointConfiguration dataConfig = query.getVersionConfiguration().getDataEndpointConfig();
+            if (dataConfig != null && dataConfig.isConvertKeyToFilters()) {
+                normalizeOutboundFilters(query);
+            }
+            return AdapterRouterImpl.this.fetchData(query);
         }
 
         @Override

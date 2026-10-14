@@ -5,6 +5,7 @@ import com.epam.sdmxproxy.configuration.data.SdmxMediaTypes;
 import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingDataConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
+import com.epam.sdmxproxy.services.limit.truncate.SeriesLimitTruncatorProvider;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,9 @@ public class StreamingDataConversionServiceTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private SeriesLimitTruncatorProvider truncatorProvider;
 
 
     @Test
@@ -604,5 +608,23 @@ public class StreamingDataConversionServiceTest {
             }
         }
         return count;
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldConvertEmptyCsv20StreamToJson() {
+        // The empty stream stands in for a registry answer with no observations: limit=0, and a
+        // Eurostat time filter that matches no period (emptyOnTimePeriodRejection). It must parse
+        // as SDMX-CSV 2.0, the format it replaces; an SDMX-CSV 1.0 header left sdmx-core with no
+        // reader and failed the request with a NullPointerException.
+        SdmxBeans sdmxBeans = parseBopStructures();
+        InputStream empty = truncatorProvider.forFormat(SdmxFormat.CSV_DATA_2_0_0).emptyStream(sdmxBeans);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        streamingDataConversionService.convert(empty, outputStream, sdmxBeans, SdmxFormat.CSV_DATA_2_0_0,
+                MediaType.valueOf(SdmxMediaTypes.DATA_JSON_2_0_0));
+
+        assertEquals(0, countNonNullPrimaryMeasures(outputStream.toString(StandardCharsets.UTF_8)),
+                "An empty CSV 2.0 stream must convert to a JSON message with no observations");
     }
 }

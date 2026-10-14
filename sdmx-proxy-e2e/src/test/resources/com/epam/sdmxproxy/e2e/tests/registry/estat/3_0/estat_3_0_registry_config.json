@@ -43,6 +43,8 @@
           "dataEndpointConfig": {
             "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/3.0/data/",
             "overrideLatestTo": "+",
+            "convertKeyToFilters": true,
+            "emptyOnTimePeriodRejection": true,
             "supportedFormats": [
               "CSV_DATA_2_0_0"
             ],

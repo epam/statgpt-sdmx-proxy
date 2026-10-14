@@ -20,6 +20,7 @@ import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationT
 import com.epam.sdmxproxy.configuration.data.availability.UnfilteredAvailabilitySource;
 import com.epam.sdmxproxy.exception.AvailabilityEmulationException;
 import com.epam.sdmxproxy.exception.AvailabilityProbeQueuedException;
+import com.epam.sdmxproxy.exception.RegistryNoDataException;
 import com.epam.sdmxproxy.exception.ResponseTooLargeException;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingAvailabilityConversionService;
 import com.epam.sdmxproxy.services.availability.harvest.HarvestLimits;
@@ -182,6 +183,10 @@ public class DataQueryAvailabilityEmulator implements AvailabilityEmulator {
                 }
                 InputStream checked = queuedResponseDetector.requireNotQueued(raw, description);
                 return harvester.harvest(checked, beans, limits);
+            } catch (RegistryNoDataException e) {
+                // The registry rejected the probe only because nothing matches it, which is an
+                // empty answer, not a failure.
+                return HarvestedCoverage.empty();
             } catch (AvailabilityProbeQueuedException e) {
                 lastQueued = e;
                 if (attempt == maxAttempts) {
