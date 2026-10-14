@@ -11,9 +11,11 @@ import com.epam.sdmxproxy.registry.api.SdmxApiClientProvider;
 import com.epam.sdmxproxy.services.translator.Sdmx21QueryNormalizerImpl;
 import com.epam.sdmxproxy.registry.api.client.Sdmx21DataClient;
 import com.epam.sdmxproxy.registry.api.client.Sdmx30AvailabilityClient;
+import com.epam.sdmxproxy.registry.api.client.Sdmx30DataClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -120,6 +122,60 @@ class GenericRegistryAdapterImplTest {
         ArgumentCaptor<String> flowRef = ArgumentCaptor.forClass(String.class);
         verify(dataClient).getData(anyString(), flowRef.capture(), anyString(), anyString(), any());
         assertEquals("ESTAT,TPS00001,latest", flowRef.getValue());
+    }
+
+    /**
+     * An availability-emulation probe for a filter-only request carries no key. On SDMX 3.0 the
+     * match-all key is {@code *}; {@code all} is a literal key value, and Eurostat rejects it as
+     * {@code FREQ=ALL}.
+     */
+    @Test
+    void shouldSendWildcardKeyForNullSdmx30DataKey() {
+        Sdmx30DataClient dataClient = stubData30Client();
+
+        adapter.getData(data30Query().toBuilder().key(null).build());
+
+        assertEquals("*", captureData30Key(dataClient));
+    }
+
+    @Test
+    void shouldForwardExplicitSdmx30DataKey() {
+        Sdmx30DataClient dataClient = stubData30Client();
+
+        adapter.getData(data30Query());
+
+        assertEquals("A.HA.*", captureData30Key(dataClient));
+    }
+
+    private Sdmx30DataClient stubData30Client() {
+        Sdmx30DataClient dataClient = mock(Sdmx30DataClient.class);
+        when(clientProvider.getData30Client(any())).thenReturn(dataClient);
+        when(dataClient.getData(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new ByteArrayInputStream(new byte[0]));
+        return dataClient;
+    }
+
+    private String captureData30Key(Sdmx30DataClient dataClient) {
+        ArgumentCaptor<String> key = ArgumentCaptor.forClass(String.class);
+        verify(dataClient).getData(any(), any(), any(), any(), any(), key.capture(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        return key.getValue();
+    }
+
+    private TranslatedDataQuery data30Query() {
+        RegistryConfiguration registry = new RegistryConfiguration();
+        registry.setName("ESTAT");
+        VersionSpecificRegistryConfiguration version = new VersionSpecificRegistryConfiguration();
+        version.setSdmxVersion(SdmxVersion.SDMX_3_0);
+        return TranslatedDataQuery.builder()
+                .registryConfiguration(registry)
+                .versionConfiguration(version)
+                .context("dataflow")
+                .agencyID("ESTAT")
+                .resourceID("EF_LU_PCOLIVE")
+                .version("1.0")
+                .key("A.HA.*")
+                .contentType(MediaType.parseMediaType(SdmxFormat.CSV_DATA_2_0_0.getContentType()))
+                .returnFormat(SdmxFormat.CSV_DATA_2_0_0)
+                .build();
     }
 
     private Sdmx21DataClient stubDataClient() {

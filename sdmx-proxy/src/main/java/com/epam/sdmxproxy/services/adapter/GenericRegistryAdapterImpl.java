@@ -238,7 +238,7 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
                 query.getAgencyID(),
                 query.getResourceID(),
                 query.getVersion(),
-                query.getKey() != null ? query.getKey() : "all",
+                query.getKey() != null ? query.getKey() : "*",
                 formatInstant(query.getUpdatedAfter()),
                 query.getFirstNObservations(),
                 query.getLastNObservations(),
