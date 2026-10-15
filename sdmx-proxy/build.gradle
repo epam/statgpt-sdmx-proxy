@@ -36,6 +36,7 @@ ext['jackson-2-bom.version'] = jackson_2_bom_version
 ext['spring-framework.version'] = spring_framework_version
 ext['tomcat.version'] = tomcat_version
 ext['log4j2.version'] = log4j2_version
+ext['opentelemetry.version'] = opentelemetry_version
 ext['commons-lang3.version'] = commons_lang3_version
 ext['netty.version'] = netty_version
 
@@ -129,6 +130,11 @@ dependencies {
 
     // Cloud provider Redis authentication
     implementation("com.azure:azure-identity:${azure_identity_version}")
+    constraints {
+        implementation("com.nimbusds:nimbus-jose-jwt:${nimbus_jose_jwt_version}") {
+            because "CVE-2025-53864: azure-identity pulls in a vulnerable version transitively"
+        }
+    }
     implementation("com.amazonaws:aws-java-sdk-core:${aws_sdk_core_version}")
     implementation("com.google.cloud:google-cloud-iamcredentials:${gcp_iamcredentials_version}")
 
