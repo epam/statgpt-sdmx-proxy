@@ -23,18 +23,26 @@ import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
+import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationConfiguration;
+import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationType;
 import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 import com.epam.sdmxproxy.exception.AvailabilityConversionException;
+import com.epam.sdmxproxy.exception.AvailabilityNotSupportedException;
 import com.epam.sdmxproxy.exception.DataConversionException;
+import com.epam.sdmxproxy.exception.RegistryNoDataException;
 import com.epam.sdmxproxy.exception.StructureConversionException;
 import com.epam.sdmxproxy.exception.StructureFanOutException;
 import com.epam.sdmxproxy.exception.UnexpectedStateException;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingAvailabilityConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingDataConversionService;
 import com.epam.sdmxproxy.services.adapter.conversion.StreamingStructureConversionService;
+import com.epam.sdmxproxy.services.availability.AvailabilityEmulationContext;
+import com.epam.sdmxproxy.services.availability.AvailabilityEmulator;
+import com.epam.sdmxproxy.services.availability.AvailabilityEmulatorProvider;
+import com.epam.sdmxproxy.services.availability.AvailabilityQueryCanonicalizer;
 import com.epam.sdmxproxy.services.cache.CacheKeyGenerator;
 import com.epam.sdmxproxy.services.cache.CacheService;
 import com.epam.sdmxproxy.services.filter.FilterNormalizer;
@@ -89,6 +97,9 @@ public class AdapterRouterImpl implements AdapterRouter {
     private final SeriesLimitTruncatorProvider truncatorProvider;
     private final FilterNormalizer filterNormalizer;
     private final ObjectMapper objectMapper;
+    private final AvailabilityEmulatorProvider availabilityEmulatorProvider;
+    private final AvailabilityQueryCanonicalizer availabilityQueryCanonicalizer;
+    private final NoDataFaultDetector noDataFaultDetector;
 
     @Nullable
     private static List<FixtureConfiguration<AvailabilityFixtureType>> getFixtureConfigurations(TranslatedAvailabilityQuery query) {
@@ -122,6 +133,22 @@ public class AdapterRouterImpl implements AdapterRouter {
 
     private static InputStream orEmpty(InputStream stream) {
         return stream != null ? stream : InputStream.nullInputStream();
+    }
+
+    /**
+     * Fetches data from the registry, turning a registry error that means "no observations" into
+     * {@link RegistryNoDataException} so each caller can answer with its own empty result.
+     */
+    private InputStream fetchData(TranslatedDataQuery query) {
+        try {
+            return orEmpty(genericRegistryAdapter.getData(query));
+        } catch (FeignException e) {
+            if (noDataFaultDetector.isNoData(e, query.getVersionConfiguration().getDataEndpointConfig())) {
+                log.info("Registry {} reports no observations for {}:{}({}) key='{}' filters={}; answering with an empty result", query.getRegistryConfiguration().getName(), query.getAgencyID(), query.getResourceID(), query.getVersion(), query.getKey(), query.getFilters());
+                throw new RegistryNoDataException("Registry reports no observations for the query", e);
+            }
+            throw e;
+        }
     }
 
     private static List<String> nonTimeDimensionIds(SdmxBeans beans) {
@@ -436,18 +463,22 @@ public class AdapterRouterImpl implements AdapterRouter {
             SdmxBeans sdmxBeans,
             boolean emulateLimit
     ) {
-        if (!emulateLimit) {
-            return orEmpty(genericRegistryAdapter.getData(query));
+        try {
+            if (!emulateLimit) {
+                return fetchData(query);
+            }
+            int n = query.getLimit() == null ? 0 : query.getLimit();
+            SeriesLimitTruncator truncator = truncatorProvider.forFormat(query.getReturnFormat());
+            if (n <= 0) {
+                log.info("Limit emulation short-circuit: limit={} <= 0, returning empty stream", n);
+                return truncator.emptyStream(sdmxBeans);
+            }
+            TranslatedDataQuery shrunkQuery = resolveShrunkQuery(query, sdmxBeans);
+            InputStream raw = fetchData(shrunkQuery);
+            return truncator.truncate(raw, n, sdmxBeans);
+        } catch (RegistryNoDataException e) {
+            return truncatorProvider.forFormat(query.getReturnFormat()).emptyStream(sdmxBeans);
         }
-        int n = query.getLimit() == null ? 0 : query.getLimit();
-        SeriesLimitTruncator truncator = truncatorProvider.forFormat(query.getReturnFormat());
-        if (n <= 0) {
-            log.info("Limit emulation short-circuit: limit={} <= 0, returning empty stream", n);
-            return truncator.emptyStream(sdmxBeans);
-        }
-        TranslatedDataQuery shrunkQuery = resolveShrunkQuery(query, sdmxBeans);
-        InputStream raw = orEmpty(genericRegistryAdapter.getData(shrunkQuery));
-        return truncator.truncate(raw, n, sdmxBeans);
     }
 
     /**
@@ -513,6 +544,10 @@ public class AdapterRouterImpl implements AdapterRouter {
         SdmxFormat returnFormat = query.getReturnFormat();
         AvailabilityEndpointConfiguration availabilityConfig = versionConfig.getAvailabilityEndpointConfig();
 
+        if (availabilityConfig != null && !availabilityConfig.isAvailabilityEnabled()) {
+            return emulateAvailability(query, availabilityConfig);
+        }
+
         if (availabilityConfig != null && availabilityConfig.isConvertKeyToFilters()) {
             normalizeOutboundFilters(query);
         }
@@ -549,6 +584,100 @@ public class AdapterRouterImpl implements AdapterRouter {
                 throw new AvailabilityConversionException("Failed to convert availability data", e);
             }
         };
+    }
+
+    /**
+     * Answers an availability request for a registry whose availability endpoint is disabled --
+     * see design 040.
+     * <p>
+     * Runs ahead of {@code convertKeyToFilters}, {@code unwrapStarComponentId} and the bypass
+     * check, all of which shape an outbound request that is never made on this path. Bypass in
+     * particular cannot apply: there is no upstream availability response to pass through, and
+     * the payload is always written by our own writer.
+     * <p>
+     * The rendered response is buffered rather than streamed. It is a constraint document of a
+     * few KB, and it has to be materialized to be cached at all -- the probe behind it is what
+     * streams.
+     */
+    private StreamingResponseBody emulateAvailability(
+            TranslatedAvailabilityQuery query,
+            AvailabilityEndpointConfiguration availabilityConfig
+    ) {
+        AvailabilityEmulationConfiguration emulation = availabilityConfig.getEmulation();
+        if (emulation == null || emulation.getType() == AvailabilityEmulationType.NONE) {
+            throw new AvailabilityNotSupportedException(
+                    "Registry " + query.getRegistryConfiguration().getName() + " does not serve availability for "
+                            + query.getVersionConfiguration().getSdmxVersion()
+                            + " and no emulation is configured for it");
+        }
+
+        String cacheKey = CacheKeyGenerator.generateAvailabilityEmulationKey(query, availabilityQueryCanonicalizer);
+        Optional<byte[]> cached = cacheService.getEmulatedAvailability(cacheKey);
+        if (cached.isPresent()) {
+            log.info("Emulated availability cache hit: {}", cacheKey);
+            byte[] bytes = cached.get();
+            return outputStream -> outputStream.write(bytes);
+        }
+
+        SdmxBeans beans = getSdmxBeans(getStructureQuery(query));
+        AvailabilityEmulator emulator = availabilityEmulatorProvider.forType(emulation.getType());
+        byte[] rendered = emulator.emulate(query, beans, new RouterAvailabilityEmulationContext());
+
+        cacheService.putEmulatedAvailability(cacheKey, rendered);
+        log.info("Emulated availability for {}:{}({}) key='{}' rendered {} bytes, cached as {}",
+                query.getAgencyID(), query.getResourceID(), query.getVersion(), query.getKey(),
+                rendered.length, cacheKey);
+        return outputStream -> outputStream.write(rendered);
+    }
+
+    /**
+     * The upstream calls an availability emulator is allowed to make. Bound to this router's own
+     * adapter and translator, so the rule that only {@code AdapterRouter} talks to
+     * {@code GenericRegistryAdapter} still holds.
+     */
+    private final class RouterAvailabilityEmulationContext implements AvailabilityEmulationContext {
+
+        @Override
+        public InputStream fetchStructure(TranslatedStructureQuery query) {
+            return orEmpty(genericRegistryAdapter.getStructures(query));
+        }
+
+        /**
+         * The probe is a data request, so the data endpoint's outbound shaping applies to it the
+         * same way it applies in {@link #getData}.
+         */
+        @Override
+        public InputStream fetchData(TranslatedDataQuery query) {
+            DataEndpointConfiguration dataConfig = query.getVersionConfiguration().getDataEndpointConfig();
+            if (dataConfig != null && dataConfig.isConvertKeyToFilters()) {
+                normalizeOutboundFilters(query);
+            }
+            return AdapterRouterImpl.this.fetchData(query);
+        }
+
+        @Override
+        public SdmxBeans fetchStructureBeans(TranslatedStructureQuery query) {
+            return getSdmxBeans(query);
+        }
+
+        @Override
+        public TranslatedStructureQuery structureQuery(
+                String structureType,
+                String agencyId,
+                String resourceId,
+                String version
+        ) {
+            return queryTranslator.translateStructureQuery(
+                    structureType,
+                    agencyId,
+                    resourceId,
+                    version,
+                    "none",
+                    "full",
+                    null,
+                    null
+            );
+        }
     }
 
     private InputStream getFixedAvailabilityStream(TranslatedAvailabilityQuery query) {

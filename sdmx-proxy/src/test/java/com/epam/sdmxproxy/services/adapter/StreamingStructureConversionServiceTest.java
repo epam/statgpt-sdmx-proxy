@@ -43,6 +43,47 @@ public class StreamingStructureConversionServiceTest {
     @Autowired
     private MetadataAttributeUsageFolder metadataAttributeUsageFolder;
 
+    /**
+     * Design 041 / P2. The proxy could not read SDMX-ML 3.0 structures because
+     * {@code getParserFactory} had no arm for {@code XML_STRUCTURE_3_0_0}, not because sdmx-core
+     * lacks a reader: {@code SdmxMLStructureReaderFactory} dispatches on the document namespace
+     * and returns {@code StaxStructureReaderEngineV3} for v3_0. This test is the evidence for
+     * that claim -- the fixture is a live Eurostat 3.0 response.
+     */
+    @Test
+    @SneakyThrows
+    void shouldParseSdmxMl30StructureDocument() {
+        //GIVEN
+        InputStream input = getClass().getResourceAsStream("structure_conversion/estat/3.0/dataflow_children.xml");
+        assertNotNull(input, "Eurostat SDMX-ML 3.0 fixture is missing");
+
+        //WHEN
+        var beans = sut.parseStructures(input, SdmxFormat.XML_STRUCTURE_3_0_0);
+
+        //THEN
+        assertNotNull(beans, "SDMX-ML 3.0 structure document must parse into SdmxBeans");
+        assertFalse(beans.getDataflows().isEmpty(), "the fixture declares one dataflow");
+        assertEquals("TPS00001", beans.getDataflows().iterator().next().getId());
+        assertFalse(beans.getDataStructures().isEmpty(), "references=children pulls in the DSD");
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldConvertSdmxMl30StructureDocumentToJson() {
+        //GIVEN
+        InputStream input = getClass().getResourceAsStream("structure_conversion/estat/3.0/dataflow_children.xml");
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MediaType targetMediaType = MediaType.valueOf(SdmxMediaTypes.STRUCTURE_JSON_2_0_0);
+
+        //WHEN
+        sut.convert(input, outputStream, SdmxFormat.XML_STRUCTURE_3_0_0, targetMediaType);
+
+        //THEN
+        JsonNode jsonNode = new ObjectMapper().readTree(outputStream.toByteArray());
+        assertTrue(jsonNode.has("data"), "converted payload must carry a data section");
+        assertFalse(jsonNode.path("data").path("dataflows").isEmpty(), "the dataflow must survive conversion");
+    }
+
     @Test
     @SneakyThrows
     void shouldConvertStructures_Imf_3_0_AllDsds_Detail_FULL() {

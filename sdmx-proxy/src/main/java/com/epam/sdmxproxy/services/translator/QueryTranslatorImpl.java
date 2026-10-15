@@ -8,6 +8,7 @@ import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.common.utils.FormatSupportChecker;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
+import com.epam.sdmxproxy.configuration.data.EndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistrySelectionResult;
@@ -48,6 +49,7 @@ import static com.epam.sdmxproxy.common.data.SdmxMediaTypeResolver.parseMediaTyp
 public class QueryTranslatorImpl implements QueryTranslator {
     public static final String SDMX_30_ALL_WILDCARD = "*";
     public static final String SDMX_21_ALL_WILDCARD = "all";
+    private static final String LATEST_VERSION = "latest";
     private static final String AND_SEPARATOR_REGEX = "\\+";
     private static final String AND_SEPARATOR = "+";
     private static final String OPERATOR_VALUE_SEPARATOR = ":";
@@ -60,6 +62,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
     private final DimensionService dimensionService;
     private final ProxyConfigurationProvider configurationProvider;
     private final Sdmx21QueryNormalizer sdmx21QueryNormalizer;
+    private final ReferencesResolver referencesResolver;
 
     private static String getVersionSpecificQueryId(String id, VersionSpecificRegistryConfiguration versionConfig) {
         String queryId = id;
@@ -67,6 +70,26 @@ public class QueryTranslatorImpl implements QueryTranslator {
             queryId = versionConfig.getSdmxVersion() == SdmxVersion.SDMX_2_1 ? SDMX_21_ALL_WILDCARD : SDMX_30_ALL_WILDCARD;
         }
         return queryId;
+    }
+
+    /**
+     * Replaces the {@code latest} version keyword with the endpoint's {@code overrideLatestTo}, or
+     * with {@code overrideLatestToForAll} when the resource id is a wildcard and that field is set.
+     * Every other version, and every endpoint without an override, is passed through unchanged.
+     */
+    private static String overrideLatestVersion(String version, String resourceId, @Nullable EndpointConfiguration endpointConfig) {
+        if (!LATEST_VERSION.equals(version) || endpointConfig == null) {
+            return version;
+        }
+        String override = endpointConfig.getOverrideLatestTo();
+        if (isAllResources(resourceId) && endpointConfig.getOverrideLatestToForAll() != null) {
+            override = endpointConfig.getOverrideLatestToForAll();
+        }
+        return override != null ? override : version;
+    }
+
+    private static boolean isAllResources(String resourceId) {
+        return resourceId == null || resourceId.isEmpty() || SDMX_30_ALL_WILDCARD.equals(resourceId) || SDMX_21_ALL_WILDCARD.equals(resourceId);
     }
 
     @Override
@@ -185,11 +208,13 @@ public class QueryTranslatorImpl implements QueryTranslator {
         );
 
         VersionSpecificRegistryConfiguration versionConfig = selectedRegistry.getVersionConfiguration();
+        String resolvedReferences = referencesResolver.resolve(references, resourceId, versionConfig.getStructureEndpointConfig());
+        String queryVersion = overrideLatestVersion(getVersionSpecificQueryId(version, versionConfig), resourceId, versionConfig.getStructureEndpointConfig());
         return TranslatedStructureQuery.builder()
                 .registryConfiguration(selectedRegistry.getRegistryConfiguration())
                 .versionConfiguration(versionConfig)
-                .structure(getStructure(versionConfig, structureType, agencyId, getVersionSpecificQueryId(resourceId, versionConfig), getVersionSpecificQueryId(version, versionConfig)))
-                .references(references)
+                .structure(getStructure(versionConfig, structureType, agencyId, getVersionSpecificQueryId(resourceId, versionConfig), queryVersion))
+                .references(resolvedReferences)
                 .detail(detail)
                 .contentType(parsedMediaType.getMediaType())
                 .registryReturnFormat(returnFormat)
@@ -255,13 +280,15 @@ public class QueryTranslatorImpl implements QueryTranslator {
 
             String queryAgencyId = getVersionSpecificQueryId(SDMX_30_ALL_WILDCARD, versionConfig);
             String queryResourceId = getVersionSpecificQueryId(resourceId, versionConfig);
-            String queryVersion = getVersionSpecificQueryId(version, versionConfig);
+            String queryVersion = overrideLatestVersion(getVersionSpecificQueryId(version, versionConfig), resourceId, versionConfig.getStructureEndpointConfig());
+
+            String resolvedReferences = referencesResolver.resolve(references, resourceId, versionConfig.getStructureEndpointConfig());
 
             queries.add(TranslatedStructureQuery.builder()
                     .registryConfiguration(registryConfig)
                     .versionConfiguration(versionConfig)
                     .structure(getStructure(versionConfig, structureType, queryAgencyId, queryResourceId, queryVersion))
-                    .references(references)
+                    .references(resolvedReferences)
                     .detail(detail)
                     .contentType(parsedMediaType.getMediaType())
                     .registryReturnFormat(returnFormat)
@@ -377,7 +404,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
                 .context(context)
                 .agencyID(agencyID)
                 .resourceID(resourceID)
-                .version(version)
+                .version(overrideLatestVersion(version, resourceID, availabilityEndpointConfig))
                 .key(processedKey)
                 .componentId(is21 ? sdmx21QueryNormalizer.toComponentId(componentId) : componentId)
                 .filters(filters)
@@ -548,7 +575,7 @@ public class QueryTranslatorImpl implements QueryTranslator {
                 .context(context)
                 .agencyID(agencyID)
                 .resourceID(resourceID)
-                .version(version)
+                .version(overrideLatestVersion(version, resourceID, dataEndpointConfig))
                 .key(processedKey)
                 .startPeriod(startPeriod)
                 .endPeriod(endPeriod)

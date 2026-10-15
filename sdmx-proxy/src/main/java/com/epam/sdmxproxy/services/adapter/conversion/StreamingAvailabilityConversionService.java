@@ -80,6 +80,52 @@ public class StreamingAvailabilityConversionService {
         );
     }
 
+    /**
+     * Writes an already-built availability artefact in {@code targetMediaType}.
+     * <p>
+     * Extracted from {@link #convert} so availability emulation (design 040) renders through the
+     * same writer as the conversion path. The emulator's probe path has no upstream constraint
+     * document to parse, so it constructs {@link Artefacts} itself and calls this directly; the
+     * constraint path parses and then calls it too. One writer means the two emulation paths
+     * cannot drift into producing different JSON for the same coverage.
+     *
+     * @param artefacts       artefact set to write; for availability, one data constraint
+     * @param outputStream    target stream
+     * @param targetMediaType media type requested by the client
+     */
+    public void write(Artefacts artefacts, OutputStream outputStream, MediaType targetMediaType) {
+        if (isXmlMediaType(targetMediaType)) {
+            throw new UnsupportedConversionException(
+                    String.format("Availability conversion to XML format (%s) is not supported in MVP", targetMediaType)
+            );
+        }
+        if (!isJsonMediaType(targetMediaType)) {
+            throw new UnsupportedConversionException(
+                    String.format("Availability conversion to %s is not supported", targetMediaType)
+            );
+        }
+
+        SdmxVersion extractedVersion = SdmxMediaTypeResolver.extractSdmxVersion(targetMediaType.toString());
+
+        switch (extractedVersion) {
+            case SDMX_3_0 -> {
+                JsonWriterFactory writerFactory = new JsonWriterFactory(
+                        objectMapper,
+                        List.of(),
+                        new DefaultReferenceAdapter(),
+                        new StubDataStructureLocalRepresentationAdapter()
+                );
+                writerFactory.newInstance(outputStream).write(artefacts);
+            }
+            case SDMX_2_1 -> throw new UnsupportedConversionException(
+                    "Availability conversion for SDMX 2.1 is not supported in MVP"
+            );
+            default -> throw new UnsupportedConversionException(
+                    String.format("Unsupported SDMX version for availability conversion: %s", extractedVersion)
+            );
+        }
+    }
+
     private boolean isJsonMediaType(MediaType mediaType) {
         return mediaType.getSubtype().contains("json");
     }
@@ -95,29 +141,7 @@ public class StreamingAvailabilityConversionService {
             MediaType targetMediaType
     ) {
         SdmxBeans sdmxBeans = parseAvailability(inputStream, sourceFormat);
-
-        SdmxVersion extractedVersion = SdmxMediaTypeResolver.extractSdmxVersion(targetMediaType.toString());
-
-        switch (extractedVersion) {
-            case SDMX_3_0 -> {
-                Artefacts artefacts = getArtefacts(sdmxBeans);
-                JsonWriterFactory writerFactory = new JsonWriterFactory(
-                        objectMapper,
-                        List.of(),
-                        new DefaultReferenceAdapter(),
-                        new StubDataStructureLocalRepresentationAdapter()
-                );
-                writerFactory.newInstance(outputStream).write(artefacts);
-            }
-            case SDMX_2_1 -> {
-                throw new UnsupportedConversionException(
-                        String.format("Availability conversion for SDMX 2.1 is not supported in MVP")
-                );
-            }
-            default -> throw new UnsupportedConversionException(
-                    String.format("Unsupported SDMX version for availability conversion: %s", extractedVersion)
-            );
-        }
+        write(getArtefacts(sdmxBeans), outputStream, targetMediaType);
     }
 
     public SdmxBeans parseAvailability(InputStream inputStream, SdmxFormat registryFormat) {
@@ -128,7 +152,10 @@ public class StreamingAvailabilityConversionService {
 
     private StructureReaderFactory getParserFactory(SdmxFormat returnFormat) {
         return switch (returnFormat) {
-            case XML_STRUCTURE_2_1 -> sdmxMLStructureReaderFactory;
+            // One factory covers 2.1 and 3.0: SdmxMLStructureReaderFactory dispatches on the
+            // document's own namespace rather than the requested media type, returning
+            // StaxStructureReaderEngineV3 for the v3_0 structure namespace.
+            case XML_STRUCTURE_2_1, XML_STRUCTURE_3_0_0 -> sdmxMLStructureReaderFactory;
             case JSON_DATA_1_0_0 -> jsonV1StructureReaderFactory;
             case JSON_STRUCTURE_2_0_0 -> jsonV2StructureReaderFactory;
             default ->

@@ -5,13 +5,16 @@ import com.epam.sdmxproxy.configuration.data.ProxyConfigurationSourceType;
 import com.epam.sdmxproxy.exception.ConfigurationLoadException;
 import com.epam.sdmxproxy.registry.configuration.configserver.ConfigServerFeignApi;
 import com.epam.sdmxproxy.registry.configuration.configserver.ConfigServerProperties;
+import com.epam.sdmxproxy.services.cache.CacheService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
@@ -25,6 +28,7 @@ public class ConfigServerConfigExtractor implements ProxyConfigurationExtractor 
     private final ConfigServerFeignApi configServerFeignApi;
     private final ConfigServerProperties properties;
     private final ObjectMapper objectMapper;
+    private final ObjectProvider<CacheService> cacheService;
 
     private final AtomicReference<ProxyConfiguration> cachedConfig = new AtomicReference<>();
 
@@ -56,7 +60,11 @@ public class ConfigServerConfigExtractor implements ProxyConfigurationExtractor 
                 log.warn("Config server returned invalid configuration (empty configs or agencies). Ignoring.");
                 return;
             }
-            cachedConfig.set(config);
+            ProxyConfiguration previous = cachedConfig.getAndSet(config);
+            if (!Objects.equals(previous, config)) {
+                log.info("Registry configuration changed; invalidating cache");
+                cacheService.getObject().invalidateAll();
+            }
             log.debug("Successfully fetched configuration from config server");
         } catch (Exception e) {
             log.warn("Failed to fetch configuration from config server: {}. Continuing with last known good config.", e.getMessage());

@@ -6,7 +6,11 @@ import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
+import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
+import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationConfiguration;
+import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationType;
+import com.epam.sdmxproxy.configuration.data.availability.UnfilteredAvailabilitySource;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -65,8 +69,87 @@ public class ConfigValidator {
         }
 
         for (RegistryConfiguration registry : configs) {
-            registry.getVersions().forEach((version, versionConfig) -> validateVersionCompatibility(registry.getName(), version, versionConfig));
+            registry.getVersions().forEach((version, versionConfig) -> {
+                validateVersionCompatibility(registry.getName(), version, versionConfig);
+                validateAvailabilityEmulation(registry.getName(), version, versionConfig);
+            });
         }
+    }
+
+    /**
+     * Rejects availability-emulation settings that cannot work as configured -- see design 040.
+     * <p>
+     * Each of these would otherwise fail at request time, and two of them would fail as an opaque
+     * 500 rather than as a configuration problem.
+     */
+    private void validateAvailabilityEmulation(String registryName, SdmxVersion declaredVersion, VersionSpecificRegistryConfiguration versionConfig) {
+        if (versionConfig == null) {
+            return;
+        }
+        AvailabilityEndpointConfiguration availabilityConfig = versionConfig.getAvailabilityEndpointConfig();
+        if (availabilityConfig == null) {
+            return;
+        }
+        AvailabilityEmulationConfiguration emulation = availabilityConfig.getEmulation();
+        if (emulation == null || emulation.getType() == AvailabilityEmulationType.NONE) {
+            return;
+        }
+
+        if (availabilityConfig.isAvailabilityEnabled()) {
+            throw new IllegalArgumentException("Registry '" + registryName + "' version " + declaredVersion
+                    + " sets availabilityEndpointConfig.emulation.type to " + emulation.getType()
+                    + " while availabilityEnabled is true. Emulation only applies when the registry's own"
+                    + " availability endpoint is declared unusable, so leaving both on hides which one is in effect.");
+        }
+
+        DataEndpointConfiguration dataConfig = versionConfig.getDataEndpointConfig();
+        if (dataConfig == null) {
+            throw new IllegalArgumentException("Registry '" + registryName + "' version " + declaredVersion
+                    + " enables availability emulation but has no dataEndpointConfig. Emulation answers a narrowed"
+                    + " availability request with a series-key data query, so a data endpoint is required.");
+        }
+
+        if (!dataConfig.isSupportsLimit()) {
+            throw new IllegalArgumentException("Registry '" + registryName + "' version " + declaredVersion
+                    + " combines dataEndpointConfig.supportsLimit=false with availabilityEndpointConfig."
+                    + "availabilityEnabled=false. Limit emulation probes availability to shrink a query cheaply,"
+                    + " but with availability itself emulated by a data query each probe becomes a data request."
+                    + " Supporting both gaps on one registry needs its own design; see designs 014 and 040.");
+        }
+
+        if (emulation.getProbeFormat() != null
+                && (dataConfig.getSupportedFormats() == null || !dataConfig.getSupportedFormats().contains(emulation.getProbeFormat()))) {
+            throw new IllegalArgumentException("Registry '" + registryName + "' version " + declaredVersion
+                    + " sets availabilityEndpointConfig.emulation.probeFormat to " + emulation.getProbeFormat()
+                    + ", which is not in dataEndpointConfig.supportedFormats "
+                    + dataConfig.getSupportedFormats() + ".");
+        }
+
+        if (declaredVersion == SdmxVersion.SDMX_3_0 && emulation.getProbeDetail() != null && !emulation.getProbeDetail().isBlank()) {
+            throw new IllegalArgumentException("Registry '" + registryName + "' version " + declaredVersion
+                    + " sets availabilityEndpointConfig.emulation.probeDetail, which exists only in SDMX-REST 1.5.0."
+                    + " SDMX-REST 2.x replaced `detail` with `attributes` and `measures`, which the probe sends"
+                    + " instead; set probeDetail to null on an SDMX 3.0 registry.");
+        }
+
+        if (emulation.getUnfilteredSource() == UnfilteredAvailabilitySource.CONTENT_CONSTRAINT) {
+            String constraintType = resolveConstraintStructureType(declaredVersion, emulation);
+            StructureEndpointConfiguration structureConfig = versionConfig.getStructureEndpointConfig();
+            Set<String> supportedStructures = structureConfig != null ? structureConfig.getSupportedStructures() : null;
+            if (supportedStructures == null || !supportedStructures.contains(constraintType)) {
+                throw new IllegalArgumentException("Registry '" + registryName + "' version " + declaredVersion
+                        + " serves unfiltered availability from '" + constraintType + "', but that type is not in"
+                        + " structureEndpointConfig.supportedStructures " + supportedStructures
+                        + ". Add it, or set emulation.unfilteredSource to PROBE.");
+            }
+        }
+    }
+
+    private String resolveConstraintStructureType(SdmxVersion declaredVersion, AvailabilityEmulationConfiguration emulation) {
+        if (emulation.getConstraintStructureType() != null && !emulation.getConstraintStructureType().isBlank()) {
+            return emulation.getConstraintStructureType();
+        }
+        return declaredVersion == SdmxVersion.SDMX_3_0 ? "dataconstraint" : "contentconstraint";
     }
 
     /**

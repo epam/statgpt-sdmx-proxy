@@ -15,6 +15,7 @@ import com.epam.sdmxproxy.e2e.support.util.RestClient;
 import com.epam.sdmxproxy.e2e.tests.framework.config.DataflowKeyCase;
 import com.epam.sdmxproxy.e2e.tests.framework.config.DsdFidelityTestSuitConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.config.FilterKeyOrderTestSuitConfiguration;
+import com.epam.sdmxproxy.e2e.tests.framework.config.QueryShapeTestSuitConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.config.LimitTestSuitConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.config.MetadataDescendantsTestSuitConfiguration;
 import com.epam.sdmxproxy.e2e.tests.framework.config.MetadataPreservationTestSuitConfiguration;
@@ -184,7 +185,10 @@ public abstract class BaseRegistryTestSuite {
 
         specificStructureCases = getSpecificStructureCases().build().getGeneratedCases();
         dataCases = getDataCases().build().getGeneratedCases();
-        availabilityCases = getAvailabilityCases().build().getGeneratedCases();
+        // A registry with no availability endpoint omits the block entirely -- Eurostat serves no
+        // availability on either SDMX version. allpairs4j rejects a build with fewer than two
+        // parameters, so the absent case is handled here rather than inside getAvailabilityCases().
+        availabilityCases = testConfig.getAvailabilityTestSuitConfiguration() == null ? List.of() : getAvailabilityCases().build().getGeneratedCases();
 
         ProxyConfigPusher.push(restClient, CONFIG_PATH, objectMapper.writeValueAsString(proxyConfig));
     }
@@ -779,6 +783,13 @@ public abstract class BaseRegistryTestSuite {
     }
 
     Stream<Arguments> availabilityCases() {
+        if (availabilityCases.isEmpty()) {
+            // JUnit 5.10 treats a @ParameterizedTest with zero arguments as an initialization
+            // error, and allowZeroInvocations only arrives in 5.13. Emit one all-null case that
+            // the test skips on, so a registry with no availability endpoint reports a skip with
+            // a reason instead of a red suite.
+            return Stream.of(Arguments.of(null, null, null, null, null));
+        }
         return availabilityCases.stream()
                 .map(testCase -> {
                     DataflowKeyCase dc = (DataflowKeyCase) testCase.get("dataflowCase");
@@ -796,6 +807,7 @@ public abstract class BaseRegistryTestSuite {
     @DisplayName("Availability Endpoint Cases")
     @MethodSource("availabilityCases")
     void testAvailabilityEndpoint(String dataflowUrn, String key, String mode, SdmxFormat registryReturnFormat, String proxyFormat) {
+        Assumptions.assumeTrue(dataflowUrn != null, "No availabilityTestSuitConfiguration -- registry serves no availability endpoint");
         updateAvailabilityConfigToMatchRegistryReturnType(registryReturnFormat);
 
         String[] urnParts = parseUrn(dataflowUrn);
@@ -866,21 +878,7 @@ public abstract class BaseRegistryTestSuite {
                 .as("Availability with c[] filters must return HTTP 200 for %s", cfg.getDataflowUrn())
                 .isEqualTo(200);
 
-        JsonNode cubeRegion = objectMapper.readTree(response.getBody().asByteArray())
-                .path("data").path("dataConstraints").path(0).path("cubeRegions").path(0);
-
-        // SDMX-JSON 2.0.0 names the narrowed dimensions `keyValues`, but some registries emit
-        // `components` instead -- JsonAvailabilityResponseParser accepts both, so this pin does too.
-        Map<String, List<String>> valuesByDimension = new LinkedHashMap<>();
-        for (String arrayName : List.of("keyValues", "components")) {
-            for (JsonNode dimension : cubeRegion.path(arrayName)) {
-                List<String> values = new ArrayList<>();
-                for (JsonNode value : dimension.path("values")) {
-                    values.add(value.isObject() ? value.path("value").asText() : value.asText());
-                }
-                valuesByDimension.put(dimension.path("id").asText(), values);
-            }
-        }
+        Map<String, List<String>> valuesByDimension = constraintValuesByDimension(response);
 
         assertThat(valuesByDimension)
                 .as("Constraint for %s came back with no dimensions. An empty constraint behind HTTP 200 is the signature of a key whose positions do not match the DSD-declared dimension order (declared: %s)", cfg.getDataflowUrn(), declaredOrder)
@@ -902,6 +900,124 @@ public abstract class BaseRegistryTestSuite {
                     .as("Constraint must cover at least %d dimensions, got %s", cfg.getMinConstrainedDimensions(), valuesByDimension.keySet())
                     .hasSizeGreaterThanOrEqualTo(cfg.getMinConstrainedDimensions());
         }
+    }
+
+    /**
+     * Reads the first cube region of an SDMX-JSON 2.0.0 availability response as
+     * {@code dimensionId -> values}.
+     * <p>
+     * SDMX-JSON 2.0.0 names the narrowed dimensions {@code keyValues}, but some registries emit
+     * {@code components} instead -- JsonAvailabilityResponseParser accepts both, so this does too.
+     */
+    @SneakyThrows
+    private Map<String, List<String>> constraintValuesByDimension(Response response) {
+        JsonNode cubeRegion = objectMapper.readTree(response.getBody().asByteArray())
+                .path("data").path("dataConstraints").path(0).path("cubeRegions").path(0);
+        Map<String, List<String>> valuesByDimension = new LinkedHashMap<>();
+        for (String arrayName : List.of("keyValues", "components")) {
+            for (JsonNode dimension : cubeRegion.path(arrayName)) {
+                List<String> values = new ArrayList<>();
+                for (JsonNode value : dimension.path("values")) {
+                    values.add(value.isObject() ? value.path("value").asText() : value.asText());
+                }
+                valuesByDimension.put(dimension.path("id").asText(), values);
+            }
+        }
+        return valuesByDimension;
+    }
+
+    // ========== Query-shape pins (gated by queryShapeTestSuitConfiguration) ==========
+
+    /**
+     * SDMX 3.0 has no OR in the {@code key} path parameter; OR belongs in {@code c[]} as a comma
+     * list. StatGPT still sends the 2.1 {@code +} spelling, and Eurostat rejects it with
+     * {@code INVALID_URL_VALUE: Invalid value '+' in key parameter} unless the proxy moves the key
+     * into {@code c[]} ({@code convertKeyToFilters}).
+     */
+    @Test
+    @DisplayName("Data Endpoint: a key with a + OR position returns data")
+    void testDataKeyWithOrReturnsData() {
+        QueryShapeTestSuitConfiguration cfg = testConfig.getQueryShapeTestSuitConfiguration();
+        Assumptions.assumeTrue(cfg != null && cfg.getOrKey() != null, "No queryShapeTestSuitConfiguration.orKey -- skipping OR-key pin");
+
+        String[] urnParts = parseUrn(cfg.getDataflowUrn());
+        String path = String.format("%s/sdmx/3.0/data/dataflow/%s/%s/%s/%s", BASE_PATH, urnParts[0], urnParts[1], urnParts[2], cfg.getOrKey());
+        Response response = restClient.getResponseWithAccept(path, dataMediaType(cfg));
+
+        assertThat(response.getStatusCode())
+                .as("Data with OR key %s must return HTTP 200 for %s, body: %s", cfg.getOrKey(), cfg.getDataflowUrn(), response.getBody().asString())
+                .isEqualTo(200);
+        assertThat(response.getBody().asString())
+                .as("Data with OR key %s must not be empty for %s", cfg.getOrKey(), cfg.getDataflowUrn())
+                .isNotEmpty();
+    }
+
+    /**
+     * StatGPT indexes availability with a POST that carries filters and no key. On a registry
+     * without an availability endpoint the proxy answers it with a keyless data probe, which once
+     * reached SDMX 3.0 as the 2.1 keyword {@code all} and failed on Eurostat as {@code FREQ=ALL}.
+     */
+    @Test
+    @DisplayName("Availability Endpoint: a filter-only POST with no key returns a constraint")
+    void testKeylessAvailabilityPostReturnsConstraint() {
+        QueryShapeTestSuitConfiguration cfg = testConfig.getQueryShapeTestSuitConfiguration();
+        Assumptions.assumeTrue(cfg != null && cfg.getKeylessAvailabilityFilters() != null, "No queryShapeTestSuitConfiguration.keylessAvailabilityFilters -- skipping keyless availability pin");
+
+        String[] urnParts = parseUrn(cfg.getDataflowUrn());
+        List<Map<String, String>> filters = new ArrayList<>();
+        cfg.getKeylessAvailabilityFilters().forEach((component, value) -> filters.add(Map.of("componentCode", component, "operator", "eq", "value", value)));
+        String path = String.format("%s/sdmx/3.0/availability/dataflow/%s/%s/%s", BASE_PATH, urnParts[0], urnParts[1], urnParts[2]);
+        Response response = restClient.postResponseWithHeaders(path, Map.of("filters", filters), Map.of("Accept", availabilityMediaType(cfg), "Content-Type", "application/json"));
+
+        assertThat(response.getStatusCode())
+                .as("Keyless availability POST must return HTTP 200 for %s, body: %s", cfg.getDataflowUrn(), response.getBody().asString())
+                .isEqualTo(200);
+        assertThat(constraintValuesByDimension(response))
+                .as("Keyless availability POST for %s must report at least one dimension", cfg.getDataflowUrn())
+                .isNotEmpty();
+    }
+
+    /**
+     * A {@code TIME_PERIOD} filter that matches no period is a question with an empty answer.
+     * Eurostat rejects it with {@code 400 INVALID_QUERY_DIMENSION_VALUE}; the proxy must answer
+     * 200 with no observations ({@code emptyOnTimePeriodRejection}).
+     */
+    @Test
+    @DisplayName("Data Endpoint: a time filter that matches no period returns HTTP 200")
+    void testDataWithEmptyTimeRangeReturnsOk() {
+        QueryShapeTestSuitConfiguration cfg = testConfig.getQueryShapeTestSuitConfiguration();
+        Assumptions.assumeTrue(cfg != null && cfg.getEmptyTimeRange() != null, "No queryShapeTestSuitConfiguration.emptyTimeRange -- skipping empty time range data pin");
+
+        String[] urnParts = parseUrn(cfg.getDataflowUrn());
+        String path = String.format("%s/sdmx/3.0/data/dataflow/%s/%s/%s/*", BASE_PATH, urnParts[0], urnParts[1], urnParts[2]);
+        Response response = restClient.getResponseWithAccept(path, dataMediaType(cfg), Map.of("c[TIME_PERIOD]", cfg.getEmptyTimeRange()));
+
+        assertThat(response.getStatusCode())
+                .as("Data with c[TIME_PERIOD]=%s must return HTTP 200 for %s, body: %s", cfg.getEmptyTimeRange(), cfg.getDataflowUrn(), response.getBody().asString())
+                .isEqualTo(200);
+    }
+
+    @Test
+    @DisplayName("Availability Endpoint: a time filter that matches no period returns HTTP 200")
+    void testAvailabilityWithEmptyTimeRangeReturnsOk() {
+        QueryShapeTestSuitConfiguration cfg = testConfig.getQueryShapeTestSuitConfiguration();
+        Assumptions.assumeTrue(cfg != null && cfg.getEmptyTimeRange() != null, "No queryShapeTestSuitConfiguration.emptyTimeRange -- skipping empty time range availability pin");
+
+        String[] urnParts = parseUrn(cfg.getDataflowUrn());
+        String path = String.format("%s/sdmx/3.0/availability/dataflow/%s/%s/%s/*/*", BASE_PATH, urnParts[0], urnParts[1], urnParts[2]);
+        Response response = restClient.getResponseWithAccept(path, availabilityMediaType(cfg), Map.of("mode", "exact", "c[TIME_PERIOD]", cfg.getEmptyTimeRange()));
+
+        assertThat(response.getStatusCode())
+                .as("Availability with c[TIME_PERIOD]=%s must return HTTP 200 for %s, body: %s", cfg.getEmptyTimeRange(), cfg.getDataflowUrn(), response.getBody().asString())
+                .isEqualTo(200);
+    }
+
+    private static String dataMediaType(QueryShapeTestSuitConfiguration cfg) {
+        return cfg.getDataMediaType() != null ? cfg.getDataMediaType() : "application/vnd.sdmx.data+json;version=2.0.0";
+    }
+
+    private static String availabilityMediaType(QueryShapeTestSuitConfiguration cfg) {
+        return cfg.getAvailabilityMediaType() != null ? cfg.getAvailabilityMediaType() : "application/vnd.sdmx.structure+json;version=2.0.0";
     }
 
     /**
@@ -1058,6 +1174,7 @@ public abstract class BaseRegistryTestSuite {
     @DisplayName("Limit diagnostic: emulation strictly caps series at N (HARD FAIL)")
     @MethodSource("limitEmulationFormats")
     void testLimitEmulationStrict(SdmxFormat registryReturnFormat) throws Exception {
+        Assumptions.assumeTrue(registryReturnFormat != null, "No limitTestSuitConfiguration -- registry configures no limit area");
         LimitTestSuitConfiguration cfg = testConfig.getLimitTestSuitConfiguration();
         // limitEmulationFormats() already short-circuits to an empty stream when cfg is
         // null; reaching here means cfg is non-null. The parameterized source also filters
@@ -1103,7 +1220,11 @@ public abstract class BaseRegistryTestSuite {
     Stream<SdmxFormat> limitEmulationFormats() {
         LimitTestSuitConfiguration cfg = testConfig.getLimitTestSuitConfiguration();
         if (cfg == null) {
-            return Stream.empty();
+            // JUnit 5.10 treats a @ParameterizedTest with zero arguments as an initialization
+            // error, and allowZeroInvocations only arrives in 5.13. Emit one null case that the
+            // test skips on, so a registry that configures no limit area reports a skip with a
+            // reason instead of a red suite. Mirrors availabilityCases().
+            return Stream.of((SdmxFormat) null);
         }
         List<SdmxFormat> formats = cfg.getRegistryReturnFormats();
         if (formats != null && !formats.isEmpty()) {

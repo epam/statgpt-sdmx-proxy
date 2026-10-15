@@ -95,7 +95,10 @@ public class StreamingStructureConversionService {
 
     private StructureReaderFactory getParserFactory(SdmxFormat returnFormat) {
         return switch (returnFormat) {
-            case XML_STRUCTURE_2_1 -> sdmxMLStructureReaderFactory;
+            // One factory covers 2.1 and 3.0: SdmxMLStructureReaderFactory dispatches on the
+            // document's own namespace rather than the requested media type, returning
+            // StaxStructureReaderEngineV3 for the v3_0 structure namespace.
+            case XML_STRUCTURE_2_1, XML_STRUCTURE_3_0_0 -> sdmxMLStructureReaderFactory;
             case JSON_DATA_1_0_0 -> jsonV1StructureReaderFactory;
             case JSON_STRUCTURE_2_0_0 -> jsonV2StructureReaderFactory;
             default ->

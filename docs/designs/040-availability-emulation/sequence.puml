@@ -1,0 +1,123 @@
+@startuml
+title Availability emulation -- two sources split on the filter (design 040)
+
+actor "statgpt-backend" as BE
+participant "AvailabilityQuery30Controller" as CTL
+participant "AdapterRouterImpl" as ROUTER
+participant "CacheService" as CACHE
+participant "DataQueryAvailabilityEmulator" as DQE
+participant "AvailabilityQueryCanonicalizer" as CANON
+participant "UnfilteredConstraintSource" as UCS
+participant "ProbeQueryBuilder" as PQB
+participant "ProbeDecomposer" as DEC
+participant "SeriesKeyHarvester" as HARV
+participant "AvailabilityConstraintSynthesizer" as SYN
+participant "StreamingAvailabilityConversionService" as CONV
+participant "GenericRegistryAdapter" as ADAPTER
+database "Registry (ESTAT)" as REG
+
+BE -> CTL: availability request (GET or POST)
+CTL -> CTL: getSdmxBeans(dataflow, references=descendants)
+CTL -> ROUTER: getAvailability(TranslatedAvailabilityQuery)
+
+alt availabilityEnabled == true
+  ROUTER -> ADAPTER: getAvailability(query)
+  note right: today's path, unchanged
+  ADAPTER -> REG: GET /availableconstraint/...
+else availabilityEnabled == false
+  alt emulation == null || type == NONE
+    ROUTER --> CTL: AvailabilityNotSupportedException (501)
+  else type == DATA_QUERY
+    ROUTER -> CACHE: getEmulatedAvailability(avail_emu:<canonical>)
+    alt cache hit
+      CACHE --> ROUTER: rendered bytes (few KB)
+    else cache miss
+      ROUTER -> DQE: emulate(query, beans, context)
+      DQE -> CANON: isUnfiltered(query)?
+      note right of CANON
+        absent / all / * / all-wildcard key
+        AND absent or empty filters
+        -- same predicate as the cache key,
+        so routing and caching cannot disagree
+      end note
+
+      alt UNFILTERED  (backend: dataset load + indicator-index build)
+        DQE -> UCS: render(query, beans)
+        UCS -> ADAPTER: getStructure(contentconstraint/ESTAT/{flow}/{version})
+        ADAPTER -> REG: GET /contentconstraint/...
+        REG --> ADAPTER: SDMX-ML 2.1 ContentConstraint (type=Actual), 5.6-40 KB, ~0.3 s
+        UCS -> UCS: fixtures: DROP_TIME_PERIOD_KEY_VALUE,\nKEEP_FIRST_CUBE_REGION
+        UCS -> CONV: convert(in, out, XML_STRUCTURE_2_1, structure+json;2.0.0)
+        CONV --> DQE: SDMX-JSON 2.0.0 dataConstraint
+        note right of UCS
+          Measured identical to a whole-cube probe:
+          NAMA_10_GDP 1/32/39/46, PRC_HICP_MINR 1/5/555/46
+          -- zero divergence either way.
+          Replaces a 139 MB / 71 s probe.
+        end note
+
+      else NARROWED  (backend: every query-time narrowing step)
+        DQE -> PQB: build(query)
+        note right of PQB
+          client key + filters carried through UNCHANGED
+          2.1 -> detail=serieskeysonly
+          3.0 -> attributes=none&measures=none
+          never limit / firstN / lastN
+          Accept: SDMX-CSV
+        end note
+        DQE -> ADAPTER: getData(probeQuery)
+        ADAPTER -> REG: GET /data/{flow}/{narrowedKey}?detail=serieskeysonly
+        REG --> ADAPTER: CSV -- one row per distinct series key (~52 KB typical)
+
+        alt body is a SOAP <queued> envelope (HTTP 200)
+          HARV -> DQE: AvailabilityProbeQueuedException
+          DQE -> ADAPTER: retry same URL per asyncRetry
+          note right of DQE: 503 when the retry budget is exhausted
+        else oversized: > probeSplitThresholdBytes, timeout, or 413
+          DQE -> DEC: split on the largest UNCONSTRAINED dimension
+          loop per chunk, up to maxProbeFanOut
+            DEC -> ADAPTER: getData(chunkProbe)
+            DEC -> HARV: harvest(stream, beans)
+          end
+          DEC -> DEC: union the per-dimension harvests\n(exact for a rectangular cube region)
+          DEC --> DQE: HarvestedCoverage
+        else
+          DQE -> HARV: harvest(stream, beans)
+          note right of HARV
+            streaming; memory O(sum |A_d|)
+            139 MB / 2 067 919 series -> 327 strings
+            guards: maxProbeBytes, maxProbeSeries, probeTimeoutMillis
+          end note
+          HARV --> DQE: HarvestedCoverage(valuesByDim, exact seriesCount)
+        end
+
+        DQE -> UCS: universe(query, beans)   [cached constraint]
+        DQE -> DQE: intersect(coverage, universe)
+        note right of DQE
+          Guards requirement 4: a probe-only code
+          would be a bare KeyError in the backend.
+          WARN if it ever fires. Measured: never.
+        end note
+        DQE -> SYN: synthesize(coverage, dsd, dataflowRef)
+        SYN --> DQE: Artefacts { one DataConstraint, one CubeRegion }
+        DQE -> CONV: write(artefacts, out, structure+json;2.0.0)
+        CONV --> DQE: SDMX-JSON 2.0.0 dataConstraint
+
+        note over DQE, REG
+          A narrowed request NEVER falls back to the
+          content constraint -- not even on probe failure.
+          That would report the full cube as narrowed.
+          Failure is a 5xx.
+        end note
+      end
+
+      DQE --> ROUTER: bytes
+      ROUTER -> CACHE: putEmulatedAvailability(key, bytes)
+    end
+    ROUTER --> CTL: StreamingResponseBody(bytes)
+  end
+end
+
+CTL --> BE: 200 SDMX-JSON 2.0.0\ndata.dataConstraints[0].cubeRegions[0].keyValues[*]
+
+@enduml

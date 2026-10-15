@@ -63,4 +63,34 @@ public interface CacheService {
      */
     void putLimitEmulationShrinkFilters(String key, byte[] value);
 
+    /**
+     * Get a cached emulated availability response. Entries are the rendered response bytes for a
+     * specific (dataset, key, filters, media type) shape.
+     * <p>
+     * This cache is load-bearing rather than an optimization. The consumer caches only its
+     * unfiltered availability call and forbids caching a filtered one, so every query-time
+     * narrowing step is a live round trip; and one of its two unfiltered call sites bypasses its
+     * cache entirely, so the broadest -- most expensive -- request recurs. See design 040.
+     *
+     * @param key cache key for the emulated availability entry
+     * @return Optional containing the rendered response bytes if found, empty otherwise
+     */
+    Optional<byte[]> getEmulatedAvailability(String key);
+
+    /**
+     * Put an emulated availability response into cache.
+     *
+     * @param key           cache key
+     * @param responseBytes rendered response bytes
+     */
+    void putEmulatedAvailability(String key, byte[] responseBytes);
+
+    /**
+     * Drops every cached entry, including the emulated-availability entries. Called when the
+     * registry configuration changes, because cache keys identify a registry by name only -- a
+     * registry re-pointed at a different endpoint or return format would otherwise keep serving
+     * responses fetched under the previous configuration.
+     */
+    void invalidateAll();
+
 }

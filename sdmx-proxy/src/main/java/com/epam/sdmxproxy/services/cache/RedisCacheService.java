@@ -1,5 +1,7 @@
 package com.epam.sdmxproxy.services.cache;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -8,7 +10,9 @@ import com.epam.sdmxproxy.services.cache.config.CacheProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Service;
 
 /**
@@ -24,6 +28,8 @@ public class RedisCacheService implements CacheService {
     private static final String RAW_STRUCTURES_PREFIX = "raw:";
     private static final String READY_RESPONSE_PREFIX = "response:";
     private static final String LIMIT_EMULATION_PREFIX = "limit_emu:";
+    private static final String AVAILABILITY_EMULATION_PREFIX = "avail_emu:";
+    private static final int SCAN_BATCH_SIZE = 500;
 
     private final RedisTemplate<String, byte[]> rawStructuresRedisTemplate;
     private final RedisTemplate<String, byte[]> readyResponseRedisTemplate;
@@ -120,6 +126,80 @@ public class RedisCacheService implements CacheService {
             log.error("Error putting limit emulation entry into Redis cache: {}", key, e);
             throw new CacheUnavailableException("Redis cache operation failed", e);
         }
+    }
+
+    @Override
+    public Optional<byte[]> getEmulatedAvailability(String key) {
+        try {
+            String redisKey = AVAILABILITY_EMULATION_PREFIX + key;
+            byte[] value = readyResponseRedisTemplate.opsForValue().get(redisKey);
+            if (value != null) {
+                log.debug("Cache hit for emulated availability: {}", key);
+                return Optional.of(value);
+            }
+            log.debug("Cache miss for emulated availability: {}", key);
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Error getting emulated availability from Redis cache: {}", key, e);
+            throw new CacheUnavailableException("Redis cache operation failed", e);
+        }
+    }
+
+    @Override
+    public void putEmulatedAvailability(String key, byte[] responseBytes) {
+        try {
+            long ttlSeconds = cacheProperties.getTtl().getAvailabilityEmulation().getDuration().getSeconds();
+            String redisKey = AVAILABILITY_EMULATION_PREFIX + key;
+            long ttlWithJitter = addJitter(ttlSeconds, cacheProperties.getTtl().getAvailabilityEmulation().getJitter().getSeconds());
+            readyResponseRedisTemplate.opsForValue().set(redisKey, responseBytes, ttlWithJitter, TimeUnit.SECONDS);
+            log.debug("Cached emulated availability: {} (TTL: {}s, size: {} bytes)", key, ttlWithJitter, responseBytes.length);
+        } catch (Exception e) {
+            log.error("Error putting emulated availability into Redis cache: {}", key, e);
+            throw new CacheUnavailableException("Redis cache operation failed", e);
+        }
+    }
+
+    /**
+     * Deletes every key the proxy owns, matched by the three prefixes this class writes under.
+     * <p>
+     * Scans rather than calling {@code KEYS}, which blocks the server, and never calls
+     * {@code FLUSHDB}: the Redis instance can be shared, so wiping the whole database would take
+     * other tenants' data with it.
+     */
+    @Override
+    public void invalidateAll() {
+        try {
+            long deleted = deleteByPrefix(rawStructuresRedisTemplate, RAW_STRUCTURES_PREFIX) + deleteByPrefix(readyResponseRedisTemplate, READY_RESPONSE_PREFIX) + deleteByPrefix(readyResponseRedisTemplate, LIMIT_EMULATION_PREFIX) + deleteByPrefix(readyResponseRedisTemplate, AVAILABILITY_EMULATION_PREFIX);
+            log.info("Cache invalidated: registry configuration changed, {} keys deleted", deleted);
+        } catch (Exception e) {
+            log.error("Failed to invalidate Redis cache after a configuration change", e);
+            throw new CacheUnavailableException("Redis cache operation failed", e);
+        }
+    }
+
+    private long deleteByPrefix(RedisTemplate<String, byte[]> template, String prefix) {
+        ScanOptions options = ScanOptions.scanOptions().match(prefix + "*").count(SCAN_BATCH_SIZE).build();
+        List<String> batch = new ArrayList<>();
+        long deleted = 0L;
+        try (Cursor<String> cursor = template.scan(options)) {
+            while (cursor.hasNext()) {
+                batch.add(cursor.next());
+                if (batch.size() >= SCAN_BATCH_SIZE) {
+                    deleted += deleteBatch(template, batch);
+                }
+            }
+        }
+        deleted += deleteBatch(template, batch);
+        return deleted;
+    }
+
+    private long deleteBatch(RedisTemplate<String, byte[]> template, List<String> batch) {
+        if (batch.isEmpty()) {
+            return 0L;
+        }
+        Long removed = template.delete(batch);
+        batch.clear();
+        return removed == null ? 0L : removed;
     }
 
     /**

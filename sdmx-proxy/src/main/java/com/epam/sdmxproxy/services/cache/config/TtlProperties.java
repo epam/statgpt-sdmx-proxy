@@ -21,4 +21,9 @@ public class TtlProperties {
      * TTL configuration for limit-emulation shrunk-query results
      */
     private LimitEmulationProperties limitEmulation = new LimitEmulationProperties();
+
+    /**
+     * TTL configuration for emulated availability responses
+     */
+    private AvailabilityEmulationProperties availabilityEmulation = new AvailabilityEmulationProperties();
 }

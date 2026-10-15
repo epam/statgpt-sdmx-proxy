@@ -44,4 +44,11 @@ public class RegistryTestSuitConfiguration {
      * SDMX 2.1 registries, where ID-keyed filters must be folded into a positional key.
      */
     private FilterKeyOrderTestSuitConfiguration filterKeyOrderTestSuitConfiguration;
+
+    /**
+     * Optional. When present, enables the generic query-shape pins in
+     * {@link com.epam.sdmxproxy.e2e.tests.framework.BaseRegistryTestSuite}: OR in the data key, a
+     * keyless availability POST, and a time filter that matches no period.
+     */
+    private QueryShapeTestSuitConfiguration queryShapeTestSuitConfiguration;
 }

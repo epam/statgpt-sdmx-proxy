@@ -75,7 +75,7 @@ class CsvSeriesLimitTruncatorTest {
         SdmxBeans beans = beansWithDimensions("FREQ", "COUNTRY", "TIME_PERIOD");
         try (InputStream in = truncator.emptyStream(beans)) {
             String output = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-            assertThat(output).contains("DATAFLOW").contains("FREQ").contains("COUNTRY").contains("TIME_PERIOD");
+            assertThat(output).startsWith("STRUCTURE,STRUCTURE_ID,").contains("FREQ").contains("COUNTRY").contains("TIME_PERIOD");
             long dataRows = output.lines().skip(1).filter(s -> !s.isBlank()).count();
             assertThat(dataRows).isZero();
         }
@@ -87,7 +87,7 @@ class CsvSeriesLimitTruncatorTest {
             byte[] out = in.readAllBytes();
             assertThat(out.length).isGreaterThan(0);
             String output = new String(out, StandardCharsets.UTF_8);
-            assertThat(output).contains("DATAFLOW");
+            assertThat(output).startsWith("STRUCTURE,STRUCTURE_ID,");
         }
     }
 

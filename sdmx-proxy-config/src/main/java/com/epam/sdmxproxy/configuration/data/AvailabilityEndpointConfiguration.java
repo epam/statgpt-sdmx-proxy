@@ -2,6 +2,7 @@ package com.epam.sdmxproxy.configuration.data;
 
 import java.util.List;
 
+import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationConfiguration;
 import com.epam.sdmxproxy.configuration.data.fixture.AvailabilityFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import lombok.Data;
@@ -12,7 +13,19 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class AvailabilityEndpointConfiguration extends EndpointConfiguration {
 
+    /**
+     * Whether this registry's availability endpoint works. When true, availability requests are
+     * forwarded to it as before. When false, the request is answered by the proxy itself
+     * according to {@link #emulation}, or rejected with HTTP 501 when no emulation is
+     * configured -- see design 040.
+     */
     private boolean availabilityEnabled;
+
+    /**
+     * How to answer availability requests when {@link #availabilityEnabled} is false.
+     * Null or {@code type: NONE} means "reject with 501".
+     */
+    private AvailabilityEmulationConfiguration emulation;
 
     private boolean unwrapStarComponentId;
 

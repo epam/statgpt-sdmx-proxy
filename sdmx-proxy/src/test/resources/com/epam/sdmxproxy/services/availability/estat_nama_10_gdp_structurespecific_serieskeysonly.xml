@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The same two series in structure-specific packaging, where the whole key sits on the Series
+  element as attributes rather than in a SeriesKey child. Both packagings must harvest to the
+  same coverage; a cross-format parity test asserts that against the CSV fixture.
+
+  The Attributes-shaped `Value` elements a generic message can carry are exercised in
+  estat_nama_10_gdp_generic_with_attributes.xml - they must not be folded into dimension
+  coverage.
+-->
+<m:StructureSpecificData xmlns:m="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message"
+                         xmlns:ss="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/data/structurespecific">
+    <m:Header>
+        <m:ID>B001210C56854E469144254B61B3CB70</m:ID>
+        <m:Test>false</m:Test>
+        <m:Prepared>2026-09-04T08:23:54.559Z</m:Prepared>
+        <m:Sender id="ESTAT"/>
+        <m:DataSetID>NAMA_10_GDP</m:DataSetID>
+    </m:Header>
+    <m:DataSet ss:structureRef="STR1">
+        <Series freq="A" unit="CLV05_MEUR" na_item="B1GQ" geo="AT"/>
+        <Series freq="A" unit="CLV05_MEUR" na_item="B1GQ" geo="EL"/>
+    </m:DataSet>
+</m:StructureSpecificData>

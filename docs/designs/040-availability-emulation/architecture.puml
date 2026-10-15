@@ -1,0 +1,127 @@
+@startuml
+title Availability emulation -- components (design 040)
+
+skinparam componentStyle rectangle
+
+package "sdmx-proxy-config" {
+  [AvailabilityEndpointConfiguration] as AEC
+  [AvailabilityEmulationConfiguration] as AEMC
+  [AvailabilityEmulationType\nNONE | DATA_QUERY] as TYPE
+  [UnfilteredAvailabilitySource\nCONTENT_CONSTRAINT | PROBE] as UNFSRC
+  [AvailabilityFixtureType\n+ DROP_TIME_PERIOD_KEY_VALUE\n+ KEEP_FIRST_CUBE_REGION] as FIX
+  [ConfigValidator] as CV
+}
+
+AEC --> AEMC : emulation
+AEMC --> TYPE
+AEMC --> UNFSRC
+AEC --> FIX : fixtures
+CV ..> AEMC : rejects\n- type != NONE && availabilityEnabled\n- CONTENT_CONSTRAINT && constraint type\n  not in supportedStructures\n- probeFormat not in supportedFormats\n- probeDetail set on SDMX_3_0\n- supportsLimit=false && availabilityEnabled=false
+
+package "sdmx-proxy :: controller" {
+  [AvailabilityQuery30Controller] as CTL
+}
+
+package "sdmx-proxy :: services.adapter" {
+  [AdapterRouterImpl] as ROUTER
+  [GenericRegistryAdapter] as ADAPTER
+  [StreamingAvailabilityConversionService\n+ write(Artefacts, OutputStream, MediaType)] as CONV
+  [AvailabilityFixtureService] as FIXSVC
+  [ContentConstraintMapper] as CCM
+}
+
+package "sdmx-proxy :: services.availability  (new)" {
+  interface AvailabilityEmulator
+  [AvailabilityEmulatorProvider] as PROV
+  [AvailabilityEmulationContext\nfetchStructure + fetchData] as CTX
+  [DataQueryAvailabilityEmulator] as DQE
+  [AvailabilityQueryCanonicalizer\nthe single definition of "narrowed"] as CANON
+  [UnfilteredConstraintSource] as UCS
+  [ProbeQueryBuilder] as PQB
+  [ProbeDecomposer] as DEC
+  [AvailabilityConstraintSynthesizer] as SYN
+
+  package "harvest" {
+    interface SeriesKeyHarvester
+    [SeriesKeyHarvesterProvider] as HPROV
+    [CsvSeriesKeyHarvester] as CSVH
+    [XmlSeriesKeyHarvester] as XMLH
+    [JsonSeriesKeyHarvester] as JSONH
+    [QueuedResponseDetector] as QRD
+    [HarvestedCoverage\nMap<dim, Set<value>> + exact seriesCount] as HC
+  }
+}
+
+package "sdmx-proxy :: services.cache" {
+  [CacheService\n+ get/putEmulatedAvailability] as CACHE
+  [CacheKeyGenerator\n+ generateAvailabilityEmulationKey] as CKG
+}
+
+package "sdmx-proxy :: services.limit  (design 014)" {
+  [LimitEmulationServiceImpl] as LIMIT
+  [CodelistSizeResolver] as CSR
+}
+
+CTL --> ROUTER
+ROUTER --> AEC : reads availabilityEnabled + emulation
+ROUTER --> CACHE
+ROUTER --> CKG
+ROUTER --> PROV
+ROUTER --> CTX : constructs
+ROUTER --> ADAPTER : only the router talks to the adapter
+
+PROV --> AvailabilityEmulator
+DQE ..|> AvailabilityEmulator
+
+DQE --> CANON : route: unfiltered vs narrowed
+CKG --> CANON : same predicate -- routing and\ncache identity cannot disagree
+
+DQE --> UCS : UNFILTERED -> the response
+DQE --> UCS : NARROWED -> the intersection universe
+UCS --> CTX : fetchStructure(contentconstraint | dataconstraint)
+UCS --> FIXSVC
+UCS --> CONV : convert(XML_STRUCTURE_2_1 -> target)
+CONV --> CCM
+
+DQE --> PQB : key + filters carried through unchanged
+DQE --> CTX : fetchData(probe)
+DQE --> HPROV
+DQE --> DEC : only when oversized / timed out
+DQE --> SYN
+DQE --> CONV : write(Artefacts -> target)
+
+DEC --> CSR : split on the largest UNCONSTRAINED dimension
+DEC --> HC : union merge (exact for a rectangular cube region)
+
+HPROV --> SeriesKeyHarvester
+CSVH ..|> SeriesKeyHarvester
+XMLH ..|> SeriesKeyHarvester
+JSONH ..|> SeriesKeyHarvester
+SeriesKeyHarvester --> HC
+SeriesKeyHarvester --> QRD : detects SOAP <queued> inside a 200
+
+SYN --> HC
+FIXSVC --> FIX
+LIMIT ..> ADAPTER : availability as a *cheap* probe;\nits probes are always narrowed, so they\nland on the probe path -- ConfigValidator\nforbids the overlap
+
+note bottom of UCS
+  Serves the unfiltered request only.
+  A NARROWED request is never answered from it --
+  not as strategy, not as fallback, not on failure.
+  It ignores narrowing (c[] byte-identical, key -> 405),
+  so it would report the full cube as narrowed.
+end note
+
+note bottom of HC
+  Why streaming works: 139 610 759 B / 2 067 919 series
+  harvests to 327 strings (BD_9BD_SZ_CL_R2).
+  Memory is O(sum |A_d|), bounded by the DSD.
+end note
+
+note bottom of CONV
+  XML and SDMX 2.1 availability output still throw
+  UnsupportedConversionException -- both emulation
+  paths share the writer and the limitation.
+end note
+
+@enduml

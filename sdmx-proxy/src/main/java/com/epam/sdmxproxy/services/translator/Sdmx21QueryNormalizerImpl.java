@@ -10,6 +10,10 @@ public class Sdmx21QueryNormalizerImpl implements Sdmx21QueryNormalizer {
 
     private static final String POSITION_SEPARATOR = ".";
     private static final String POSITION_SEPARATOR_REGEX = "\\.";
+    private static final String SDMX_30_DATA_CONSTRAINT = "dataconstraint";
+    private static final String SDMX_21_CONTENT_CONSTRAINT = "contentconstraint";
+    private static final String SDMX_30_LATEST_WILDCARD = "+";
+    private static final String SDMX_21_LATEST = "latest";
 
     @Override
     public String toKey(String key) {
@@ -48,9 +52,20 @@ public class Sdmx21QueryNormalizerImpl implements Sdmx21QueryNormalizer {
     }
 
     @Override
+    public String toSdmx21StructureType(String structureType) {
+        if (SDMX_30_DATA_CONSTRAINT.equalsIgnoreCase(structureType)) {
+            return SDMX_21_CONTENT_CONSTRAINT;
+        }
+        return structureType;
+    }
+
+    @Override
     public String toSdmx21PathSlot(String slot) {
         if (slot == null || slot.isEmpty() || SDMX_30_ALL_WILDCARD.equals(slot)) {
             return SDMX_21_ALL_WILDCARD;
+        }
+        if (SDMX_30_LATEST_WILDCARD.equals(slot)) {
+            return SDMX_21_LATEST;
         }
         return slot;
     }

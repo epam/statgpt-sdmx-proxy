@@ -74,6 +74,29 @@ class Sdmx21QueryNormalizerImplTest {
     }
 
     @Test
+    void shouldMapDataconstraintToContentconstraint() {
+        assertThat(normalizer.toSdmx21StructureType("dataconstraint")).isEqualTo("contentconstraint");
+        assertThat(normalizer.toSdmx21StructureType("DataConstraint")).isEqualTo("contentconstraint");
+        assertThat(normalizer.toSdmx21StructureType(normalizer.toSdmx21StructureType("dataconstraint"))).isEqualTo("contentconstraint");
+    }
+
+    @Test
+    void shouldPassOtherStructureTypesThrough() {
+        assertThat(normalizer.toSdmx21StructureType("dataflow")).isEqualTo("dataflow");
+        assertThat(normalizer.toSdmx21StructureType("codelist")).isEqualTo("codelist");
+        assertThat(normalizer.toSdmx21StructureType("datastructure")).isEqualTo("datastructure");
+        assertThat(normalizer.toSdmx21StructureType(null)).isNull();
+    }
+
+    @Test
+    void shouldMapPlusToLatest() {
+        assertThat(normalizer.toSdmx21PathSlot("+")).isEqualTo("latest");
+        assertThat(normalizer.toSdmx21PathSlot("*")).isEqualTo("all");
+        assertThat(normalizer.toSdmx21PathSlot("1.0")).isEqualTo("1.0");
+        assertThat(normalizer.toSdmx21PathSlot(normalizer.toSdmx21PathSlot("+"))).isEqualTo("latest");
+    }
+
+    @Test
     void shouldBeIdempotent() {
         String key = normalizer.toKey(normalizer.toKey("USA.A.*.*.*"));
         assertThat(key).isEqualTo("USA.A...");

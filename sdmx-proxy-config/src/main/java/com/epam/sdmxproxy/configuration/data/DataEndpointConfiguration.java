@@ -68,4 +68,14 @@ public class DataEndpointConfiguration extends EndpointConfiguration {
      * narrowed path key and an enum-dim {@code c[]} filter -- see design 016.
      */
     private boolean convertKeyToFilters;
+
+    /**
+     * When true, a registry 400 that rejects the requested {@code TIME_PERIOD} values is read as
+     * "no observations in that range" and answered with an empty result instead of an error.
+     * Eurostat answers a time filter that matches no period of the dataflow with
+     * {@code 400 INVALID_QUERY_DIMENSION_VALUE ... TIME_PERIOD: >=2023-01-01}, while a range that
+     * overlaps at least one period returns 200 with the overlap. Applies to data queries and to
+     * availability emulation probes.
+     */
+    private boolean emptyOnTimePeriodRejection;
 }

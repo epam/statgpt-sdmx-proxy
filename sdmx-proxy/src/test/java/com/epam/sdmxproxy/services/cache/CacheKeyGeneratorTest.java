@@ -1,13 +1,20 @@
 package com.epam.sdmxproxy.services.cache;
 
+import com.epam.sdmxproxy.common.data.TranslatedAvailabilityQuery;
 import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
+import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
+import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationConfiguration;
+import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationType;
+import com.epam.sdmxproxy.services.availability.AvailabilityQueryCanonicalizer;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -150,6 +157,91 @@ class CacheKeyGeneratorTest {
         LinkedMultiValueMap<String, String> filters = new LinkedMultiValueMap<>();
         filters.add(dim, value);
         return filters;
+    }
+
+    @Test
+    void generateAvailabilityEmulationKey_collapsesEveryUnfilteredShapeToOneEntry() {
+        // The consumer issues the unfiltered availability request from two places in two shapes:
+        // an absent key on the GET route, and a body of {"filters": []} on the POST route. One of
+        // them bypasses its own cache entirely, so without collapsing both to a single entry the
+        // most expensive request in the system runs twice. See design 040.
+        AvailabilityQueryCanonicalizer canonicalizer = new AvailabilityQueryCanonicalizer();
+
+        String absentKeyNoFilters = CacheKeyGenerator.generateAvailabilityEmulationKey(
+                availabilityQuery(null, null), canonicalizer);
+        String emptyFilterMap = CacheKeyGenerator.generateAvailabilityEmulationKey(
+                availabilityQuery(null, new LinkedMultiValueMap<>()), canonicalizer);
+        String allKeyword = CacheKeyGenerator.generateAvailabilityEmulationKey(
+                availabilityQuery("all", null), canonicalizer);
+        String starKey = CacheKeyGenerator.generateAvailabilityEmulationKey(
+                availabilityQuery("*", null), canonicalizer);
+        String allWildcardPositionalKey = CacheKeyGenerator.generateAvailabilityEmulationKey(
+                availabilityQuery("*.*.*.*", new LinkedMultiValueMap<>()), canonicalizer);
+
+        assertThat(List.of(absentKeyNoFilters, emptyFilterMap, allKeyword, starKey, allWildcardPositionalKey))
+                .containsOnly(absentKeyNoFilters);
+    }
+
+    @Test
+    void generateAvailabilityEmulationKey_separatesNarrowedRequests() {
+        AvailabilityQueryCanonicalizer canonicalizer = new AvailabilityQueryCanonicalizer();
+
+        String unfiltered = CacheKeyGenerator.generateAvailabilityEmulationKey(
+                availabilityQuery("*", null), canonicalizer);
+        String narrowedKey = CacheKeyGenerator.generateAvailabilityEmulationKey(
+                availabilityQuery("A...EL", null), canonicalizer);
+        String narrowedFilter = CacheKeyGenerator.generateAvailabilityEmulationKey(
+                availabilityQuery("*", filtersOf("geo", "EL")), canonicalizer);
+        String otherFilterValue = CacheKeyGenerator.generateAvailabilityEmulationKey(
+                availabilityQuery("*", filtersOf("geo", "AT")), canonicalizer);
+
+        assertThat(List.of(unfiltered, narrowedKey, narrowedFilter, otherFilterValue))
+                .doesNotHaveDuplicates();
+    }
+
+    @Test
+    void generateAvailabilityEmulationKey_separatesMediaTypesAndComponentIds() {
+        AvailabilityQueryCanonicalizer canonicalizer = new AvailabilityQueryCanonicalizer();
+
+        TranslatedAvailabilityQuery json = availabilityQuery("*", null);
+        TranslatedAvailabilityQuery otherComponent = availabilityQuery("*", null).toBuilder()
+                .componentId("geo")
+                .build();
+        TranslatedAvailabilityQuery otherMediaType = availabilityQuery("*", null).toBuilder()
+                .contentType(MediaType.APPLICATION_JSON)
+                .build();
+
+        assertThat(List.of(
+                CacheKeyGenerator.generateAvailabilityEmulationKey(json, canonicalizer),
+                CacheKeyGenerator.generateAvailabilityEmulationKey(otherComponent, canonicalizer),
+                CacheKeyGenerator.generateAvailabilityEmulationKey(otherMediaType, canonicalizer)
+        )).doesNotHaveDuplicates();
+    }
+
+    private static TranslatedAvailabilityQuery availabilityQuery(String key, MultiValueMap<String, String> filters) {
+        AvailabilityEmulationConfiguration emulation = new AvailabilityEmulationConfiguration();
+        emulation.setType(AvailabilityEmulationType.DATA_QUERY);
+
+        AvailabilityEndpointConfiguration availabilityConfig = new AvailabilityEndpointConfiguration();
+        availabilityConfig.setEmulation(emulation);
+
+        VersionSpecificRegistryConfiguration versionConfig = new VersionSpecificRegistryConfiguration();
+        versionConfig.setAvailabilityEndpointConfig(availabilityConfig);
+
+        RegistryConfiguration registryConfig = new RegistryConfiguration();
+        registryConfig.setName("TEST");
+
+        return TranslatedAvailabilityQuery.builder()
+                .registryConfiguration(registryConfig)
+                .versionConfiguration(versionConfig)
+                .agencyID("AGY")
+                .resourceID("RES")
+                .version("1.0")
+                .key(key)
+                .filters(filters)
+                .mode("exact")
+                .contentType(MediaType.parseMediaType("application/vnd.sdmx.structure+json;version=2.0.0"))
+                .build();
     }
 
     private static TranslatedDataQuery baseQuery(String key, MultiValueMap<String, String> filters, Integer limit) {

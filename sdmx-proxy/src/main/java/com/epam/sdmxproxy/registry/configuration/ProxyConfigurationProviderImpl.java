@@ -3,11 +3,14 @@ package com.epam.sdmxproxy.registry.configuration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfigurationSourceType;
 import com.epam.sdmxproxy.registry.configuration.extractor.ProxyConfigurationExtractor;
+import com.epam.sdmxproxy.services.cache.CacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -17,6 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ProxyConfigurationProviderImpl implements ProxyConfigurationProvider {
 
     private final Set<ProxyConfigurationExtractor> configExtractors;
+    private final ObjectProvider<CacheService> cacheService;
     @Value("${sdmxproxy.registry.config.source.type}")
     private ProxyConfigurationSourceType sourceType;
 
@@ -45,6 +49,10 @@ public class ProxyConfigurationProviderImpl implements ProxyConfigurationProvide
      * Pass null to clear the override and revert to the configured extractor.
      */
     public void setRuntimeOverride(ProxyConfiguration configuration) {
-        runtimeOverride.set(configuration);
+        ProxyConfiguration previous = runtimeOverride.getAndSet(configuration);
+        if (!Objects.equals(previous, configuration)) {
+            log.info("Registry configuration changed; invalidating cache");
+            cacheService.getObject().invalidateAll();
+        }
     }
 }
