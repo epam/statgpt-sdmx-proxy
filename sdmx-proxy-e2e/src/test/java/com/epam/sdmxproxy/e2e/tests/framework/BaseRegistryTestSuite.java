@@ -78,6 +78,7 @@ public abstract class BaseRegistryTestSuite {
     private static final Set<SdmxFormat> TRUNCATOR_SUPPORTED_FORMATS = Set.of(
             SdmxFormat.JSON_DATA_1_0_0,
             SdmxFormat.JSON_DATA_2_0_0,
+            SdmxFormat.CSV_DATA_1_0_0,
             SdmxFormat.CSV_DATA_2_0_0,
             SdmxFormat.XML_GENERIC_DATA_2_1,
             SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1
@@ -1164,16 +1165,16 @@ public abstract class BaseRegistryTestSuite {
 
     /**
      * Diagnostic: proxy-side emulation strictly caps series at the requested limit.
-     * Parameterized per {@code registryReturnFormats} so a single test config exercises
-     * JSON 1.0 / JSON 2.0 / CSV / XML truncators across all formats the registry can
-     * emit. Hard-fails if emulation is broken for any tested format. Softly aborts when
-     * the registry can't support emulation at all (no availability endpoint, or the
-     * format has no truncator yet).
+     * Parameterized per {@code registryReturnFormats} and client {@code mediaTypes} so a
+     * single test config exercises JSON 1.0 / JSON 2.0 / CSV / XML truncators across all
+     * formats the registry can emit, and both JSON and CSV client output. Hard-fails if
+     * emulation is broken for any tested format. Softly aborts when the registry can't
+     * support emulation at all (no availability endpoint, or the format has no truncator yet).
      */
-    @ParameterizedTest(name = "registryReturnFormat: {0}")
+    @ParameterizedTest(name = "registryReturnFormat: {0}, mediaType: {1}")
     @DisplayName("Limit diagnostic: emulation strictly caps series at N (HARD FAIL)")
     @MethodSource("limitEmulationFormats")
-    void testLimitEmulationStrict(SdmxFormat registryReturnFormat) throws Exception {
+    void testLimitEmulationStrict(SdmxFormat registryReturnFormat, String mediaType) throws Exception {
         Assumptions.assumeTrue(registryReturnFormat != null, "No limitTestSuitConfiguration -- registry configures no limit area");
         LimitTestSuitConfiguration cfg = testConfig.getLimitTestSuitConfiguration();
         // limitEmulationFormats() already short-circuits to an empty stream when cfg is
@@ -1198,44 +1199,47 @@ public abstract class BaseRegistryTestSuite {
         setSupportsLimitOnAllVersions(fresh, false);
         restClient.postResponse(CONFIG_PATH, objectMapper.writeValueAsString(fresh));
 
-        Response response = issueLimitRequest(cfg);
+        Response response = issueLimitRequest(cfg, mediaType);
         assertThat(response.getStatusCode())
-                .as("Emulation path must return HTTP 200 (registryReturnFormat=%s)", registryReturnFormat)
+                .as("Emulation path must return HTTP 200 (registryReturnFormat=%s, mediaType=%s)", registryReturnFormat, mediaType)
                 .isEqualTo(200);
 
-        int actual = countDistinctSeries(response.getBody().asString());
+        int actual = isCsvMediaType(mediaType)
+                ? countDistinctCsvSeries(response.getBody().asString(), fetchDeclaredDimensionOrder(parseUrn(cfg.getUrn()), "application/vnd.sdmx.structure+json;version=2.0.0"))
+                : countDistinctSeries(response.getBody().asString());
         assertThat(actual)
-                .as("Limit emulation MUST cap series count at limit=%d; got %d (registryReturnFormat=%s)",
-                        cfg.getLimit(), actual, registryReturnFormat)
+                .as("Limit emulation MUST cap series count at limit=%d; got %d (registryReturnFormat=%s, mediaType=%s)",
+                        cfg.getLimit(), actual, registryReturnFormat, mediaType)
                 .isLessThanOrEqualTo(cfg.getLimit());
     }
 
     /**
-     * Yields the set of {@link SdmxFormat}s to parameterize the emulation test over.
-     * If {@code limitTestSuitConfiguration} is absent or its {@code registryReturnFormats}
-     * is empty, yields a single entry (the registry's own {@code defaultFormat}) or
-     * nothing (the outer test then skips via assumption).
+     * Yields the (registry return format, client media type) pairs to parameterize the
+     * emulation test over. Formats come from {@code registryReturnFormats}, falling back to
+     * the registry's own {@code defaultFormat}; media types come from {@code mediaTypes},
+     * falling back to {@code mediaType}. If {@code limitTestSuitConfiguration} is absent,
+     * yields a single null case the outer test skips on.
      */
     @SuppressWarnings("unused")
-    Stream<SdmxFormat> limitEmulationFormats() {
+    Stream<Arguments> limitEmulationFormats() {
         LimitTestSuitConfiguration cfg = testConfig.getLimitTestSuitConfiguration();
         if (cfg == null) {
             // JUnit 5.10 treats a @ParameterizedTest with zero arguments as an initialization
             // error, and allowZeroInvocations only arrives in 5.13. Emit one null case that the
             // test skips on, so a registry that configures no limit area reports a skip with a
             // reason instead of a red suite. Mirrors availabilityCases().
-            return Stream.of((SdmxFormat) null);
+            return Stream.of(Arguments.of(null, null));
         }
         List<SdmxFormat> formats = cfg.getRegistryReturnFormats();
-        if (formats != null && !formats.isEmpty()) {
-            return formats.stream();
+        if (formats == null || formats.isEmpty()) {
+            DataEndpointConfiguration dataCfg =
+                    getVersionSpecificRegistryConfiguration(proxyConfig).getDataEndpointConfig();
+            formats = dataCfg != null && dataCfg.getDefaultFormat() != null ? List.of(dataCfg.getDefaultFormat()) : List.of();
         }
-        DataEndpointConfiguration dataCfg =
-                getVersionSpecificRegistryConfiguration(proxyConfig).getDataEndpointConfig();
-        if (dataCfg != null && dataCfg.getDefaultFormat() != null) {
-            return Stream.of(dataCfg.getDefaultFormat());
-        }
-        return Stream.empty();
+        List<String> mediaTypes = cfg.getMediaTypes() != null && !cfg.getMediaTypes().isEmpty()
+                ? cfg.getMediaTypes()
+                : java.util.Collections.singletonList(cfg.getMediaType());
+        return formats.stream().flatMap(format -> mediaTypes.stream().map(mediaType -> Arguments.of(format, mediaType)));
     }
 
     /**
@@ -1280,6 +1284,10 @@ public abstract class BaseRegistryTestSuite {
     }
 
     private Response issueLimitRequest(LimitTestSuitConfiguration cfg) {
+        return issueLimitRequest(cfg, cfg.getMediaType());
+    }
+
+    private Response issueLimitRequest(LimitTestSuitConfiguration cfg, String mediaType) {
         String[] urnParts = parseUrn(cfg.getUrn());
         String path = String.format("%s/sdmx/3.0/data/dataflow/%s/%s/%s/%s",
                 BASE_PATH,
@@ -1298,10 +1306,71 @@ public abstract class BaseRegistryTestSuite {
                 queryParams.put("c[" + e.getKey() + "]", e.getValue());
             }
         }
-        String acceptHeader = cfg.getMediaType() != null
-                ? cfg.getMediaType()
+        String acceptHeader = mediaType != null
+                ? mediaType
                 : "application/vnd.sdmx.data+json;version=2.0.0";
         return restClient.getResponseWithAccept(path, acceptHeader, queryParams);
+    }
+
+    private static boolean isCsvMediaType(String mediaType) {
+        return mediaType != null && mediaType.toLowerCase().contains("csv");
+    }
+
+    /**
+     * Counts distinct series in an SDMX-CSV body (1.0 or 2.0). A series key is the tuple of
+     * the non-time DSD dimension columns, located by ID in the header row, so envelope columns
+     * ({@code DATAFLOW}, {@code STRUCTURE}, ...) and attribute columns never affect the count.
+     */
+    private static int countDistinctCsvSeries(String responseBody, List<String> dimensionIds) {
+        List<String> lines = responseBody.lines().filter(line -> !line.isBlank()).toList();
+        assertThat(lines).as("CSV response must carry a header row").isNotEmpty();
+
+        List<String> header = splitCsvLine(lines.get(0));
+        List<Integer> keyColumns = new ArrayList<>();
+        for (String dimensionId : dimensionIds) {
+            if ("TIME_PERIOD".equals(dimensionId)) {
+                continue;
+            }
+            int column = header.indexOf(dimensionId);
+            assertThat(column).as("CSV header %s must carry dimension column %s", header, dimensionId).isNotNegative();
+            keyColumns.add(column);
+        }
+
+        Set<String> seriesKeys = new java.util.HashSet<>();
+        for (String line : lines.subList(1, lines.size())) {
+            List<String> fields = splitCsvLine(line);
+            StringBuilder key = new StringBuilder();
+            for (int column : keyColumns) {
+                key.append(column < fields.size() ? fields.get(column) : "").append('.');
+            }
+            seriesKeys.add(key.toString());
+        }
+        return seriesKeys.size();
+    }
+
+    /** RFC 4180 field split for one line: commas inside double quotes do not separate fields. */
+    private static List<String> splitCsvLine(String line) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder field = new StringBuilder();
+        boolean quoted = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                if (quoted && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    field.append('"');
+                    i++;
+                } else {
+                    quoted = !quoted;
+                }
+            } else if (c == ',' && !quoted) {
+                fields.add(field.toString());
+                field.setLength(0);
+            } else {
+                field.append(c);
+            }
+        }
+        fields.add(field.toString());
+        return fields;
     }
 
     /**

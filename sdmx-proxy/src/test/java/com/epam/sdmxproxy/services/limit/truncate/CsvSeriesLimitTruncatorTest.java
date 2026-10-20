@@ -1,5 +1,6 @@
 package com.epam.sdmxproxy.services.limit.truncate;
 
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.services.fixture.data.StreamingFixtureIO;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.datastructure.DataStructureBean;
@@ -20,11 +21,38 @@ import static org.mockito.Mockito.when;
 
 class CsvSeriesLimitTruncatorTest {
 
-    private CsvSeriesLimitTruncator truncator;
+    private CsvSeriesLimitTruncator v10Truncator;
+    private CsvSeriesLimitTruncator v20Truncator;
 
     @BeforeEach
     void setUp() {
-        truncator = new CsvSeriesLimitTruncator(new StreamingFixtureIO());
+        v10Truncator = new CsvDataV10SeriesLimitTruncator(new StreamingFixtureIO());
+        v20Truncator = new CsvDataV20SeriesLimitTruncator(new StreamingFixtureIO());
+    }
+
+    @Test
+    void supportedFormats_oneCsvVersionPerTruncator() {
+        assertThat(v10Truncator.supportedFormats()).containsExactly(SdmxFormat.CSV_DATA_1_0_0);
+        assertThat(v20Truncator.supportedFormats()).containsExactly(SdmxFormat.CSV_DATA_2_0_0);
+    }
+
+    @Test
+    void truncate_v20Header_emitsFirstNDistinctKeys() throws Exception {
+        SdmxBeans beans = beansWithDimensions("FREQ", "COUNTRY", "TIME_PERIOD");
+
+        String csv = """
+                STRUCTURE,STRUCTURE_ID,FREQ,COUNTRY,TIME_PERIOD,OBS_VALUE
+                dataflow,BIS:WS(1.0),A,UK,2020,1.0
+                dataflow,BIS:WS(1.0),A,UK,2021,1.1
+                dataflow,BIS:WS(1.0),A,PL,2020,2.0
+                """;
+
+        byte[] out;
+        try (InputStream in = v20Truncator.truncate(toStream(csv), 1, beans)) {
+            out = in.readAllBytes();
+        }
+        long dataRows = new String(out, StandardCharsets.UTF_8).lines().skip(1).filter(s -> !s.isBlank()).count();
+        assertThat(dataRows).isEqualTo(2);
     }
 
     @Test
@@ -41,7 +69,7 @@ class CsvSeriesLimitTruncatorTest {
                 """;
 
         byte[] out;
-        try (InputStream in = truncator.truncate(toStream(csv), 2, beans)) {
+        try (InputStream in = v10Truncator.truncate(toStream(csv), 2, beans)) {
             out = in.readAllBytes();
         }
         String output = new String(out, StandardCharsets.UTF_8);
@@ -63,7 +91,7 @@ class CsvSeriesLimitTruncatorTest {
                 """;
 
         byte[] out;
-        try (InputStream in = truncator.truncate(toStream(csv), 10, beans)) {
+        try (InputStream in = v10Truncator.truncate(toStream(csv), 10, beans)) {
             out = in.readAllBytes();
         }
         long dataRows = new String(out, StandardCharsets.UTF_8).lines().skip(1).filter(s -> !s.isBlank()).count();
@@ -71,19 +99,26 @@ class CsvSeriesLimitTruncatorTest {
     }
 
     @Test
-    void emptyStream_emitsValidHeader() throws Exception {
+    void emptyStream_v10_emitsDataflowHeader() throws Exception {
         SdmxBeans beans = beansWithDimensions("FREQ", "COUNTRY", "TIME_PERIOD");
-        try (InputStream in = truncator.emptyStream(beans)) {
+        try (InputStream in = v10Truncator.emptyStream(beans)) {
             String output = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-            assertThat(output).startsWith("STRUCTURE,STRUCTURE_ID,").contains("FREQ").contains("COUNTRY").contains("TIME_PERIOD");
-            long dataRows = output.lines().skip(1).filter(s -> !s.isBlank()).count();
-            assertThat(dataRows).isZero();
+            assertThat(output).isEqualTo("DATAFLOW,FREQ,COUNTRY,TIME_PERIOD,OBS_VALUE\n");
+        }
+    }
+
+    @Test
+    void emptyStream_v20_emitsStructureHeader() throws Exception {
+        SdmxBeans beans = beansWithDimensions("FREQ", "COUNTRY", "TIME_PERIOD");
+        try (InputStream in = v20Truncator.emptyStream(beans)) {
+            String output = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            assertThat(output).isEqualTo("STRUCTURE,STRUCTURE_ID,FREQ,COUNTRY,TIME_PERIOD,OBS_VALUE\n");
         }
     }
 
     @Test
     void emptyStream_handlesNullBeans() throws Exception {
-        try (InputStream in = truncator.emptyStream(null)) {
+        try (InputStream in = v20Truncator.emptyStream(null)) {
             byte[] out = in.readAllBytes();
             assertThat(out.length).isGreaterThan(0);
             String output = new String(out, StandardCharsets.UTF_8);
