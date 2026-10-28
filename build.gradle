@@ -34,6 +34,10 @@ subprojects {
             force "org.apache.commons:commons-lang3:${commons_lang3_version}"
             force "com.jayway.jsonpath:json-path:${json_path_version}"
             force "net.minidev:json-smart:${json_smart_version}"
+            force "com.google.guava:guava:${guava_version}"
+            force "org.apache.httpcomponents.client5:httpclient5:${httpclient5_version}"
+            force "org.apache.httpcomponents.core5:httpcore5:${httpcore5_version}"
+            force "org.apache.httpcomponents.core5:httpcore5-h2:${httpcore5_version}"
         }
     }
 }
