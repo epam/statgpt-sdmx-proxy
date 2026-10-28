@@ -39,6 +39,13 @@ public class LimitTestSuitConfiguration {
     private String mediaType;
 
     /**
+     * Optional Accept headers to run the emulation test with, one run per entry and per
+     * {@link #registryReturnFormats} entry. Supports SDMX-JSON and SDMX-CSV data media types.
+     * {@code null} / empty -> the test uses {@link #mediaType} alone.
+     */
+    private List<String> mediaTypes;
+
+    /**
      * Registry return formats to exercise the emulation test against. For each entry the
      * test POSTs a config with {@code dataEndpointConfig.defaultFormat} set to that value,
      * adds it to {@code supportedFormats}, then issues a request and parses the response

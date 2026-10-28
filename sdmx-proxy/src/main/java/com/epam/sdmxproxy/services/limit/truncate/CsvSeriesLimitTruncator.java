@@ -1,6 +1,5 @@
 package com.epam.sdmxproxy.services.limit.truncate;
 
-import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.services.fixture.data.StreamingFixtureIO;
 import com.opencsv.RFC4180Parser;
 import com.opencsv.RFC4180ParserBuilder;
@@ -8,8 +7,6 @@ import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.base.IdentifiableBean;
 import io.sdmx.api.sdmx.model.beans.datastructure.DataStructureBean;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -26,25 +23,29 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Streaming truncator for SDMX-CSV 2.0.0 data responses. Parses the header row to locate
+ * Streaming truncator for SDMX-CSV data responses. Parses the header row to locate
  * dimension columns by name (DSD-driven, excluding the time dimension); for each data row
  * builds a series key from those columns; keeps rows whose key is among the first {@code
  * N} distinct keys seen, drops the rest.
+ * <p>
+ * Locating columns by DSD ID makes the row logic the same for SDMX-CSV 1.0.0 and 2.0.0.
+ * The versions differ only in the leading envelope columns, which subclasses supply for the
+ * header-only {@link #emptyStream(SdmxBeans)} message.
  */
-@Slf4j
-@Component
 @RequiredArgsConstructor
-public class CsvSeriesLimitTruncator implements SeriesLimitTruncator {
+public abstract class CsvSeriesLimitTruncator implements SeriesLimitTruncator {
 
     private static final String LINE_SEPARATOR = "\n";
     private static final char SEPARATOR = ',';
 
     private final StreamingFixtureIO streamingFixtureIO;
 
-    @Override
-    public Set<SdmxFormat> supportedFormats() {
-        return Set.of(SdmxFormat.CSV_DATA_2_0_0);
-    }
+    /**
+     * The envelope columns that open the header and identify the SDMX-CSV version, for
+     * example {@code DATAFLOW} for 1.0.0. sdmx-core picks the reader from them, so a
+     * mismatched prefix leaves it with no reader for the declared format.
+     */
+    protected abstract List<String> envelopeColumns();
 
     @Override
     public InputStream truncate(InputStream rawData, int n, SdmxBeans sdmxBeans) {
@@ -63,14 +64,13 @@ public class CsvSeriesLimitTruncator implements SeriesLimitTruncator {
     }
 
     /**
-     * A header-only SDMX-CSV 2.0.0 message. The leading {@code STRUCTURE,STRUCTURE_ID} columns are
-     * what identifies the 2.0.0 format; the 1.0.0 {@code DATAFLOW} column leaves sdmx-core with no
-     * reader for a {@code CSV_DATA_2_0_0} stream.
+     * A header-only SDMX-CSV message: the {@link #envelopeColumns()}, the DSD dimensions, and
+     * {@code OBS_VALUE}.
      */
     @Override
     public InputStream emptyStream(SdmxBeans sdmxBeans) {
         List<String> dimensionIds = orderedDimensionIds(sdmxBeans);
-        StringBuilder header = new StringBuilder("STRUCTURE").append(SEPARATOR).append("STRUCTURE_ID");
+        StringBuilder header = new StringBuilder(String.join(String.valueOf(SEPARATOR), envelopeColumns()));
         for (String id : dimensionIds) {
             header.append(SEPARATOR).append(id);
         }
