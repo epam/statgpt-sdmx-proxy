@@ -34,6 +34,8 @@ ext['tomcat.version'] = tomcat_version
 ext['log4j2.version'] = log4j2_version
 ext['opentelemetry.version'] = opentelemetry_version
 ext['netty.version'] = netty_version
+ext['httpclient5.version'] = httpclient5_version
+ext['httpcore5.version'] = httpcore5_version
 
 dependencies {
     implementation project(':sdmx-proxy-config')
