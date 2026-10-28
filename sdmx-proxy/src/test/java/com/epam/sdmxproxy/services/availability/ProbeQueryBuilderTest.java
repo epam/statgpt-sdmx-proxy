@@ -115,6 +115,19 @@ class ProbeQueryBuilderTest {
         assertSame(chunkFilters, probe.getFilters());
     }
 
+    @Test
+    @DisplayName("SDMX 2.1 carries the time window as startPeriod/endPeriod (design 043, B8)")
+    void shouldCopyTimeWindowToProbe() {
+        TranslatedAvailabilityQuery query = query(SdmxVersion.SDMX_2_1, "*", null);
+        query.setStartPeriod("2020");
+        query.setEndPeriod("2021");
+
+        TranslatedDataQuery probe = builder.build(query);
+
+        assertEquals("2020", probe.getStartPeriod());
+        assertEquals("2021", probe.getEndPeriod());
+    }
+
     private static AvailabilityEmulationConfiguration emulationOf(TranslatedAvailabilityQuery query) {
         return query.getVersionConfiguration().getAvailabilityEndpointConfig().getEmulation();
     }

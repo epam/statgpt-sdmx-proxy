@@ -3,6 +3,7 @@ package com.epam.sdmxproxy.web.exception;
 import com.epam.sdmxproxy.configuration.telemetry.TraceContextUtils;
 import com.epam.sdmxproxy.exception.BadRequestException;
 import com.epam.sdmxproxy.exception.FilterValidationException;
+import com.epam.sdmxproxy.exception.NotFoundException;
 import com.epam.sdmxproxy.exception.NotImplementedException;
 import com.epam.sdmxproxy.exception.ServerErrorException;
 import com.epam.sdmxproxy.exception.ServiceUnavailableException;
@@ -75,6 +76,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNotImplemented(NotImplementedException ex) {
         log.warn("Not implemented: {}", ex.getMessage());
         return buildErrorResponse(ex.getClientMessage(), HttpStatus.NOT_IMPLEMENTED);
+    }
+
+    @ApiResponse(responseCode = "404", description = "Not Found - the requested resource does not exist")
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException ex) {
+        log.warn("Not found: {}", ex.getMessage());
+        return buildErrorResponse(ex.getClientMessage(), HttpStatus.NOT_FOUND);
     }
 
     @ApiResponse(responseCode = "429", description = "Too Many Requests - rate limit exceeded")

@@ -78,4 +78,28 @@ public class DataEndpointConfiguration extends EndpointConfiguration {
      * availability emulation probes.
      */
     private boolean emptyOnTimePeriodRejection;
+
+    /**
+     * When true, the SDMX 2.1 data {@code flowRef} is the bare dataflow ID instead of
+     * {@code agency,id,version}. Statistics Canada answers 404 to every other form, although its
+     * user guide documents them. Has no effect on SDMX 3.0 registries.
+     */
+    private boolean flowRefIdOnly;
+
+    /**
+     * When true, the SDMX 2.1 data path ends after the key: {@code GET /{flowRef}/{key}} instead of
+     * {@code GET /{flowRef}/{key}/all}. Statistics Canada answers 404 to any provider segment. Has
+     * no effect on SDMX 3.0 registries.
+     */
+    private boolean omitProviderRef;
+
+    /**
+     * When true, a key that matches everything -- no key, {@code *}, {@code all}, or wildcards in
+     * every position -- is sent as an OR over every code of the dimension with the smallest
+     * codelist, for example {@code .2+3+1.}. Statistics Canada rejects {@code all} with 400 and an
+     * all-empty key with 404. The OR selects the same series, so the response is unchanged. The
+     * decision ignores time filters, which travel as {@code startPeriod} and {@code endPeriod}.
+     * SDMX 2.1 registries only.
+     */
+    private boolean expandMatchAllKey;
 }

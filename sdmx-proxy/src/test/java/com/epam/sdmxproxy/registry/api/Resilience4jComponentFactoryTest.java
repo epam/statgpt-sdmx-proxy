@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -236,7 +237,39 @@ class Resilience4jComponentFactoryTest {
         assertFalse(recordPredicate.test(new IllegalArgumentException("not an upstream failure")));
     }
 
+    @Test
+    void testGetOrCreateCircuitBreaker_IgnoresRetryOnStatuses() {
+        RegistrySelectionResult selectedRegistry = createSelectedRegistry("TestRegistry", SdmxVersion.SDMX_2_1);
+        selectedRegistry.getVersionConfiguration().getResilienceConfig().setRetry(RegistryRetryConfig.builder().retryOnStatuses(Set.of(409)).build());
+
+        CircuitBreaker circuitBreaker = factory.getOrCreateCircuitBreaker(selectedRegistry, "testoperation");
+
+        // A table locked for an update says nothing about the health of the registry.
+        assertFalse(circuitBreaker.getCircuitBreakerConfig().getRecordExceptionPredicate().test(createFeignException(409)));
+    }
+
     // ========== Retry Tests ==========
+
+    @Test
+    void testGetOrCreateRetry_RetriesConfiguredStatuses() {
+        RegistrySelectionResult selectedRegistry = createSelectedRegistry("TestRegistry", SdmxVersion.SDMX_2_1);
+        selectedRegistry.getVersionConfiguration().getResilienceConfig().setRetry(RegistryRetryConfig.builder().retryOnStatuses(Set.of(409)).build());
+
+        Predicate<Throwable> retryPredicate = factory.getOrCreateRetry(selectedRegistry).getRetryConfig().getExceptionPredicate();
+
+        assertTrue(retryPredicate.test(createFeignException(409)));
+        assertTrue(retryPredicate.test(createFeignException(503)));
+        assertFalse(retryPredicate.test(createFeignException(404)));
+    }
+
+    @Test
+    void testGetOrCreateRetry_DoesNotRetry409ByDefault() {
+        RegistrySelectionResult selectedRegistry = createSelectedRegistry("TestRegistry", SdmxVersion.SDMX_2_1);
+
+        Predicate<Throwable> retryPredicate = factory.getOrCreateRetry(selectedRegistry).getRetryConfig().getExceptionPredicate();
+
+        assertFalse(retryPredicate.test(createFeignException(409)));
+    }
 
     @Test
     void testGetOrCreateRetry_WithRegistrySpecificConfig() {

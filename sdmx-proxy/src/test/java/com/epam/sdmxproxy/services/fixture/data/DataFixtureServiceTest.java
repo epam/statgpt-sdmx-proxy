@@ -74,6 +74,54 @@ class DataFixtureServiceTest {
     }
 
     @Test
+    void shouldRunRepairFirst() {
+        DataFixture monthly = mock(DataFixture.class);
+        when(monthly.getType()).thenReturn(DataFixtureType.TIME_PERIOD_MONTHLY_NORMALIZATION);
+        when(monthly.supportedFormats()).thenReturn(Set.of(SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1));
+        DataFixture repair = mock(DataFixture.class);
+        when(repair.getType()).thenReturn(DataFixtureType.REPAIR_EMPTY_DATASET);
+        when(repair.supportedFormats()).thenReturn(Set.of(SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1));
+        InputStream input = new ByteArrayInputStream("raw".getBytes(StandardCharsets.UTF_8));
+        InputStream repaired = new ByteArrayInputStream("repaired".getBytes(StandardCharsets.UTF_8));
+        InputStream normalized = new ByteArrayInputStream("normalized".getBytes(StandardCharsets.UTF_8));
+        when(repair.apply(any(), any(), any())).thenReturn(repaired);
+        when(monthly.apply(any(), any(), any())).thenReturn(normalized);
+
+        DataFixtureService service = new DataFixtureService(List.of(monthly, repair));
+        // Listed second on purpose: a StAX fixture would fail on the malformed body ahead of it.
+        InputStream result = service.applyFixtures(input, SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1, null, List.of(config(DataFixtureType.TIME_PERIOD_MONTHLY_NORMALIZATION), config(DataFixtureType.REPAIR_EMPTY_DATASET)));
+
+        assertSame(normalized, result);
+        InOrder order = inOrder(repair, monthly);
+        order.verify(repair).apply(any(), any(), any());
+        order.verify(monthly).apply(any(), any(), any());
+    }
+
+    @Test
+    void shouldApplyOnlyTheRequestedTypes() {
+        DataFixture monthly = mock(DataFixture.class);
+        when(monthly.getType()).thenReturn(DataFixtureType.TIME_PERIOD_MONTHLY_NORMALIZATION);
+        DataFixture repair = mock(DataFixture.class);
+        when(repair.getType()).thenReturn(DataFixtureType.REPAIR_EMPTY_DATASET);
+        when(repair.supportedFormats()).thenReturn(Set.of(SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1));
+        InputStream input = new ByteArrayInputStream("raw".getBytes(StandardCharsets.UTF_8));
+        InputStream repaired = new ByteArrayInputStream("repaired".getBytes(StandardCharsets.UTF_8));
+        when(repair.apply(any(), any(), any())).thenReturn(repaired);
+
+        DataFixtureService service = new DataFixtureService(List.of(monthly, repair));
+        InputStream result = service.applyFixtures(input, SdmxFormat.XML_STRUCTURE_SPECIFIC_DATA_2_1, null, List.of(config(DataFixtureType.TIME_PERIOD_MONTHLY_NORMALIZATION), config(DataFixtureType.REPAIR_EMPTY_DATASET)), Set.of(DataFixtureType.REPAIR_EMPTY_DATASET));
+
+        assertSame(repaired, result);
+        verify(monthly, never()).apply(any(), any(), any());
+    }
+
+    private static FixtureConfiguration<DataFixtureType> config(DataFixtureType type) {
+        FixtureConfiguration<DataFixtureType> fc = new FixtureConfiguration<>();
+        fc.setType(type);
+        return fc;
+    }
+
+    @Test
     void shouldSkipFixtureWhenFormatDoesNotMatch() {
         DataFixture jsonFixture = mock(DataFixture.class);
         when(jsonFixture.getType()).thenReturn(DataFixtureType.TIME_PERIOD_MONTHLY_NORMALIZATION);
