@@ -1,8 +1,11 @@
 name: test-core
 description: Run statgpt-sdmx-proxy E2E tests from this repo against the review DIAL Core URL
 inputs:
-  environment-url:
-    description: Application URL of the environment, e.g. `https://core-statgpt-sdmx-proxy-pr-1.example.com`
+  application-url:
+    description: URL of the deployed review environment (specific application)
+    required: true
+  environment-fqdn:
+    description: FQDN of the deployed review environment, useful to build additional application URLs
     required: true
   test-repository:
     description: GitHub repository with E2E test sources
@@ -32,14 +35,14 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         repository: ${{ inputs.test-repository }}
         ref: ${{ inputs.test-branch }}
         path: ${{ inputs.working-directory }}
         lfs: false
         persist-credentials: false
-    - uses: epam/ai-dial-ci/actions/java_prepare@4.5.0
+    - uses: epam/ai-dial-ci/actions/java_prepare@4.13.2
       with:
         java-version: ${{ inputs.java-version }}
         java-distribution: ${{ inputs.java-distribution }}
@@ -47,14 +50,14 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
-        E2E_HOST: ${{ inputs.environment-url }}
+        E2E_HOST: ${{ inputs.application-url }}
         E2E_PASSWORD: ${{ env.E2E_PASSWORD }}
       run: |
         echo "URL to run e2e tests against: ${E2E_HOST}"
         ./gradlew ${{ inputs.gradle-task }} --tests "${{ inputs.test-filter }}"
     - name: Upload JUnit reports
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: ${{ inputs.report-prefix }}-e2e
         path: ${{ inputs.working-directory }}/build/test-results/e2e/
