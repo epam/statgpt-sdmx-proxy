@@ -16,6 +16,7 @@ import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
+import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationType;
 import com.epam.sdmxproxy.exception.FilterValidationException;
 import com.epam.sdmxproxy.exception.IllegalRegistryConfigurationException;
 import com.epam.sdmxproxy.exception.UnsupportedAgencyWildcardException;
@@ -338,6 +339,23 @@ public class QueryTranslatorImpl implements QueryTranslator {
         }
     }
 
+    /**
+     * The {@code startPeriod}/{@code endPeriod} pair a {@code c[TIME_PERIOD]} filter implies, or
+     * {@code null} when the filters carry no time value.
+     */
+    private String[] deriveTimeWindow(MultiValueMap<String, String> filters, String timeDimensionId) {
+        List<String> timeValues = timeDimensionId != null ? filters.get(timeDimensionId) : null;
+        if (timeValues == null || timeValues.isEmpty()) {
+            return null;
+        }
+        return deriveStartEndFromTimeFilterValue(String.join(AND_SEPARATOR, timeValues));
+    }
+
+    /** Mirrors the dispatch in {@code AdapterRouterImpl.getAvailability}. */
+    private boolean isEmulatedAvailability(AvailabilityEndpointConfiguration availabilityConfig) {
+        return availabilityConfig != null && !availabilityConfig.isAvailabilityEnabled() && availabilityConfig.getEmulation() != null && availabilityConfig.getEmulation().getType() == AvailabilityEmulationType.DATA_QUERY;
+    }
+
     private Structure getStructure(VersionSpecificRegistryConfiguration versionConfig, String structureType, String agencyId, String resourceId, String version) {
         return new Structure(
                 checkStructureTypeIsSupported(structureType, versionConfig),
@@ -391,6 +409,17 @@ public class QueryTranslatorImpl implements QueryTranslator {
         boolean is21 = selectedRegistry.getVersionConfiguration().getSdmxVersion() == SdmxVersion.SDMX_2_1;
         if (is21) {
             processedKey = sdmx21QueryNormalizer.toKey(processedKey);
+        }
+
+        // Emulated 2.1 availability answers through a data probe, and 2.1 data carries the time
+        // window only as startPeriod/endPeriod (design 043, B8). Real 2.1 availability endpoints
+        // keep what they receive today.
+        if (is21 && startPeriod == null && endPeriod == null && filters != null && !filters.isEmpty() && isEmulatedAvailability(availabilityEndpointConfig)) {
+            String[] range = deriveTimeWindow(filters, dimensionService.getTimeDimensionId(sdmxBeans, agencyID, resourceID, version));
+            if (range != null) {
+                startPeriod = range[0];
+                endPeriod = range[1];
+            }
         }
 
         SdmxFormat returnFormat = determineAvailabilityReturnFormat(
@@ -537,10 +566,8 @@ public class QueryTranslatorImpl implements QueryTranslator {
             if (versionConfig.getSdmxVersion() == SdmxVersion.SDMX_2_1) {
                 String timeDimensionId = dimensionService.getTimeDimensionId(sdmxBeans, agencyID, resourceID, version);
                 MultiValueMap<String, String> nonTimeFilters = copyFiltersWithout(filters, timeDimensionId);
-                List<String> timeValues = filters.get(timeDimensionId);
-                if (timeValues != null && !timeValues.isEmpty()) {
-                    String combinedTimeValue = String.join(AND_SEPARATOR, timeValues);
-                    var range = deriveStartEndFromTimeFilterValue(combinedTimeValue);
+                String[] range = deriveTimeWindow(filters, timeDimensionId);
+                if (range != null) {
                     startPeriod = range[0];
                     endPeriod = range[1];
                 }

@@ -25,9 +25,11 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -144,6 +146,55 @@ class GenericRegistryAdapter21Test {
         assertThat(agencyCaptor.getValue()).isEqualTo("all");
         assertThat(idCaptor.getValue()).isEqualTo("all");
         assertThat(versionCaptor.getValue()).isEqualTo("all");
+    }
+
+    @Test
+    void shouldSendBareFlowRefWhenConfigured() {
+        TranslatedDataQuery query = dataQuery("1.1.1", "1.0");
+        query.getVersionConfiguration().getDataEndpointConfig().setFlowRefIdOnly(true);
+
+        adapter.getData(query);
+
+        ArgumentCaptor<String> flowRefCaptor = ArgumentCaptor.forClass(String.class);
+        verify(dataClient).getData(anyString(), flowRefCaptor.capture(), anyString(), anyString(), any());
+        assertThat(flowRefCaptor.getValue()).isEqualTo("DF_TEST");
+    }
+
+    @Test
+    void shouldKeepThreePartFlowRefByDefault() {
+        adapter.getData(dataQuery("1.1.1", "1.0"));
+
+        ArgumentCaptor<String> flowRefCaptor = ArgumentCaptor.forClass(String.class);
+        verify(dataClient).getData(anyString(), flowRefCaptor.capture(), anyString(), anyString(), any());
+        assertThat(flowRefCaptor.getValue()).isEqualTo("OECD.ENV.EPI,DF_TEST,1.0");
+    }
+
+    @Test
+    void shouldOmitProviderRefWhenConfigured() {
+        when(dataClient.getData(anyString(), anyString(), anyString(), anyMap())).thenReturn(new ByteArrayInputStream(new byte[0]));
+        TranslatedDataQuery query = dataQuery("1.1.1", "1.0");
+        query.setStartPeriod("2020");
+        query.getVersionConfiguration().getDataEndpointConfig().setOmitProviderRef(true);
+
+        adapter.getData(query);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, Object>> queryMapCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(dataClient).getData(anyString(), anyString(), anyString(), queryMapCaptor.capture());
+        verify(dataClient, never()).getData(anyString(), anyString(), anyString(), anyString(), any());
+        assertThat(queryMapCaptor.getValue()).containsEntry("startPeriod", "2020");
+    }
+
+    @Test
+    void shouldKeepThreePartFlowRefForAvailability() {
+        TranslatedAvailabilityQuery query = availabilityQuery("*", "*", "none");
+        query.getVersionConfiguration().getDataEndpointConfig().setFlowRefIdOnly(true);
+
+        adapter.getAvailability(query);
+
+        ArgumentCaptor<String> flowRefCaptor = ArgumentCaptor.forClass(String.class);
+        verify(availabilityClient).getAvailability(anyString(), flowRefCaptor.capture(), anyString(), anyString(), anyString(), isNull(), isNull(), isNull(), anyString(), isNull());
+        assertThat(flowRefCaptor.getValue()).isEqualTo("OECD.ENV.EPI,DF_TEST,1.0");
     }
 
     private TranslatedStructureQuery structureQuery(String agency, String id, String version) {
