@@ -43,6 +43,38 @@ public class QueryShapeTestSuitConfiguration {
      */
     private String emptyTimeRange;
 
+    /**
+     * When true, the availability pin for {@link #emptyTimeRange} also asserts that the constraint
+     * reports every non-time dimension with no values. Pins that emulated SDMX 2.1 availability
+     * carries the time window into its data probe (design 043, B8): without it the probe ignores
+     * the window and reports every code.
+     */
+    private boolean expectEmptyAvailabilityForEmptyTimeRange;
+
+    /**
+     * When true, {@code data/dataflow/{dataflowUrn}/*} with no filter returns HTTP 200 with at least
+     * one series. Pins the match-all key expansion for registries that reject {@code all}
+     * (design 043, R2).
+     */
+    private boolean unfilteredData;
+
+    /**
+     * A data key at least 4,000 characters long, an OR over many codes of one dimension, known to
+     * hold data. The pin expects HTTP 200 with a body (design 043, R2: the expanded match-all key
+     * can be long). Queried on {@link #longOrKeyDataflowUrn}, or on {@link #dataflowUrn} when that
+     * is null.
+     */
+    private String longOrKey;
+
+    /** Dataflow for {@link #longOrKey}; defaults to {@link #dataflowUrn}. */
+    private String longOrKeyDataflowUrn;
+
+    /**
+     * When true, the {@link #orKey} request in SDMX-JSON 1.0 and 2.0 must key every series with
+     * {@code :}-separated indexes, as the SDMX-JSON format requires (design 043, R3).
+     */
+    private boolean jsonSeriesKeyFormat;
+
     /** Accept header for data requests. Defaults to {@code application/vnd.sdmx.data+json;version=2.0.0}. */
     private String dataMediaType;
 

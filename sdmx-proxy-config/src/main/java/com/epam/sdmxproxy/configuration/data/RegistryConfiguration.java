@@ -30,6 +30,20 @@ public class RegistryConfiguration {
     private Map<SdmxVersion, VersionSpecificRegistryConfiguration> versions;
 
     /**
+     * Which adapter talks to this registry. Null or {@code SDMX} is a standard SDMX registry;
+     * {@code STATCAN} is Statistics Canada -- see {@link RegistryAdapterType}.
+     */
+    private RegistryAdapterType adapter = RegistryAdapterType.SDMX;
+
+    /**
+     * Free-form settings of a non-SDMX {@link #adapter}, in the shape of
+     * {@code FixtureConfiguration.config}. {@code STATCAN} reads {@code catalogUrl} (required: the
+     * WDS base URL, {@code .../t1/wds/rest/}) and {@code includeArchived} ({@code "true"} lists
+     * archived tables in the dataflow catalog; default {@code "false"}).
+     */
+    private Map<String, String> adapterConfig;
+
+    /**
      * Helper method to get version configuration by SDMX version.
      * Returns null if version not found.
      */

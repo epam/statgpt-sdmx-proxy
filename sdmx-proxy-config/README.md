@@ -37,6 +37,8 @@ versions, configured independently.
 | `name`        |   Yes    | Registry name. Used as the primary routing key and as the agency ID fallback |                                                                              |         |
 | `description` |    No    | Human-readable description                                                   |                                                                              |         |
 | `versions`    |   Yes    | Map of SDMX version to per-version configuration                             | Keys: `SDMX_2_1`, `SDMX_3_0`; Values: `VersionSpecificRegistryConfiguration` |         |
+| `adapter`     |    No    | Which adapter talks to the registry. `SDMX`: a standard SDMX registry. `STATCAN`: Statistics Canada, whose structures are emulated from per-table bundles (`structure/Data_Structure_{table}`, codelists and concept schemes renamed per table) and from the WDS `getAllCubesListLite` catalog; data and availability go through the SDMX adapter (design 043). `STATCAN` requires `adapterConfig.catalogUrl`, SDMX 2.1 versions only, and structure `supportedFormats` of exactly `XML_STRUCTURE_2_1` | `SDMX`, `STATCAN` | `SDMX` |
+| `adapterConfig` |  No    | Settings of a non-SDMX `adapter`, as string key/value pairs. `STATCAN` reads `catalogUrl` (required: the WDS base URL, `https://www150.statcan.gc.ca/t1/wds/rest/`) and `includeArchived` (`"true"` lists archived tables in the dataflow catalog; archived tables stay reachable by ID) | Map of string to string | (empty) |
 
 ### `VersionSpecificRegistryConfiguration`
 
@@ -86,6 +88,9 @@ Shared by every `*EndpointConfig` block below.
 | `limitEmulationProbeBudget`          |    No    | Hard cap on the number of availability probes issued per request when emulating `limit`. Ignored when `supportsLimit` is true                                            | `[1, 64]`                                        | `8`     |
 | `convertKeyToFilters`                |    No    | When true, every dim filter is moved into `c[]` and the path key is sent as a single `*` on outbound data requests, including availability emulation probes. Workaround for BIS-style registries (see design 016) and for Eurostat, which rejects `+` in the key. SDMX 3.0 only -- rejected at config load on an `SDMX_2_1` version, which has no `c[]` parameter | `true`, `false`                                  | `false` |
 | `emptyOnTimePeriodRejection`         |    No    | When true, a registry 400 `INVALID_QUERY_DIMENSION_VALUE` naming `TIME_PERIOD` is answered with an empty result instead of an error. Eurostat returns that 400 when the time filter matches no period of the dataflow. Applies to data queries and availability emulation probes | `true`, `false`                                  | `false` |
+| `flowRefIdOnly`                      |    No    | When true, the SDMX 2.1 data `flowRef` is the bare dataflow ID instead of `agency,id,version`. Statistics Canada answers 404 to every other form. Data only; availability keeps the three-part form. No effect on SDMX 3.0 | `true`, `false` | `false` |
+| `omitProviderRef`                    |    No    | When true, the SDMX 2.1 data path ends after the key (`/{flowRef}/{key}`) instead of `/{flowRef}/{key}/all`. Statistics Canada answers 404 to any provider segment. No effect on SDMX 3.0 | `true`, `false` | `false` |
+| `expandMatchAllKey`                  |    No    | When true, a key that matches everything (none, `*`, `all`, or wildcards in every position) is sent as an OR over every code of the dimension with the smallest codelist, e.g. `.2+3+1.`. Statistics Canada rejects `all` with 400. Applies to data queries and availability emulation probes. Time filters don't affect the decision. SDMX 2.1 only | `true`, `false` | `false` |
 
 ### `AvailabilityEndpointConfiguration` (extends `EndpointConfiguration`)
 
@@ -197,6 +202,7 @@ All durations are in milliseconds.
 | `initialIntervalMillis` |    No    | Initial interval for exponential backoff (ms)              | Long (ms)        | (app default) |
 | `multiplier`            |    No    | Exponential-backoff multiplier                             | Double           | (app default) |
 | `maxIntervalMillis`     |    No    | Maximum interval for exponential backoff (ms)              | Long (ms)        | (app default) |
+| `retryOnStatuses`       |    No    | Upstream HTTP statuses retried in addition to 5xx and I/O failures. They don't count as circuit-breaker failures. Statistics Canada uses `[409]` for tables being updated | Set of Integer | (empty) |
 
 #### `RegistryRateLimitConfig`
 
@@ -254,6 +260,7 @@ Fixtures are applied as a chain of responsibility in the order listed.
 | `VERSION_WILDCARD`                   | Patch wildcard version handling on structure responses                                                                                                                                                                   |
 | `ANNOTATION_VALUE_TO_TEXT`           | Rewrite annotation `value` (non-localised string) into `text` so sdmx-core's SDMX-JSON 2.0 reader preserves the field. Applied only when `text`/`texts` is absent on the annotation                                      |
 | `PRESERVE_METADATA_ATTRIBUTE_USAGES` | Capture raw `metadataAttributeUsages` arrays before conversion and re-inject them onto the matching DSD in the converted output. Works on the single-leg structure path; restores the field sdmx-core's bean model omits |
+| `FILL_MISSING_REPRESENTATIONS`       | Fill missing representations in SDMX-ML 2.1 structures (design 043). A concept without `CoreRepresentation` gets the effective representation of a component that references it, or `String`; a non-time component without one (and whose concept has none) gets `String`; the time dimension gets `ObservationalTimePeriod`. Changes a document only when it holds both the DSD and its concept scheme. `XML_STRUCTURE_2_1` only |
 
 #### `AvailabilityFixtureType`
 
@@ -267,6 +274,7 @@ Fixtures are applied as a chain of responsibility in the order listed.
 |-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `TIME_PERIOD_MONTHLY_NORMALIZATION` | Rewrite monthly `TIME_PERIOD` values to canonical `YYYY-Mmm` (e.g. `2024-03` → `2024-M03`). Supported for `JSON_DATA_1_0_0`, `JSON_DATA_2_0_0`, `XML_GENERIC_DATA_2_1`, `XML_STRUCTURE_SPECIFIC_DATA_2_1`, `CSV_DATA_1_0_0`, and `CSV_DATA_2_0_0`.                                                                                                                                                                                                                                                                                |
 | `PRESERVE_METADATA_ATTRIBUTES`      | Capture raw `data.structures[*].attributes` (all four buckets: `dataSet`, `dimensionGroup`, `series`, `observation`), `data.dataSets[*].attributes`, and `data.dataSets[*].dimensionGroupAttributes` from the upstream SDMX-JSON 2.0 response, then re-inject them onto the converted output. Restores SDMX 3.0 DSD `metadataAttributeUsages` definitions and values that sdmx-core's `DataStructureBean` model drops (any attachment level: dataset, observation, dimensionGroup, or series). JSON 2.0 → JSON 2.0 only. |
+| `REPAIR_EMPTY_DATASET`              | Drop the stray `</Series>` end tag that Statistics Canada puts inside an empty `DataSet`, which makes every empty result malformed XML (design 043). Byte-level and streaming. Always runs first in the chain, and is also applied to availability emulation probes. Supported for `XML_STRUCTURE_SPECIFIC_DATA_2_1` and `XML_GENERIC_DATA_2_1` |
 
 ### Enum: `SdmxVersion`
 

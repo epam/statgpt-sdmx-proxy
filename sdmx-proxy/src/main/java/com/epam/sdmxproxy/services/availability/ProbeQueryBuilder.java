@@ -67,6 +67,9 @@ public class ProbeQueryBuilder {
         if (sdmxVersion == SdmxVersion.SDMX_2_1) {
             // SDMX-REST 1.5.0: `detail` selects how much of each series to return.
             builder.detail(emulation.getProbeDetail());
+            // 2.1 data carries the time window only as startPeriod/endPeriod; the translator
+            // derives them from c[TIME_PERIOD] for emulated availability (design 043, B8).
+            builder.startPeriod(query.getStartPeriod()).endPeriod(query.getEndPeriod());
         } else {
             // SDMX-REST 2.x dropped `detail`; attributes+measures replace it. Sending `detail`
             // to a 3.0 registry is at best ignored and at worst a 400.

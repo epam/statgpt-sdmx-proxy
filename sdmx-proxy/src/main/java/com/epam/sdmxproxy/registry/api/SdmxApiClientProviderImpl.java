@@ -94,6 +94,15 @@ public class SdmxApiClientProviderImpl implements SdmxApiClientProvider {
         return getOrBuildClient(Sdmx30StructureClient.class, url, selectedRegistry);
     }
 
+    @Override
+    public <T extends SdmxApiBase> T getClient(Class<T> clientClass, String baseUrl, RegistrySelectionResult selectedRegistry) {
+        validateSelection(selectedRegistry);
+        if (baseUrl == null || baseUrl.isBlank()) {
+            throw new IllegalRegistryConfigurationException(String.format("No base URL for %s of registry %s", clientClass.getSimpleName(), selectedRegistry.getRegistryConfiguration().getName()));
+        }
+        return getOrBuildClient(clientClass, baseUrl, selectedRegistry);
+    }
+
     private void validateSelection(RegistrySelectionResult selectedRegistry) {
         if (selectedRegistry == null || selectedRegistry.getRegistryConfiguration() == null || selectedRegistry.getVersionConfiguration() == null) {
             throw new IllegalRegistryConfigurationException("Registry selection result cannot be null and must contain both registry and version configurations");

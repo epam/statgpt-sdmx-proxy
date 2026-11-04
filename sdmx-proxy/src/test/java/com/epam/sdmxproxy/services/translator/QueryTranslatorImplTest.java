@@ -4,6 +4,8 @@ import com.epam.sdmxproxy.common.data.TranslatedAvailabilityQuery;
 import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
+import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationConfiguration;
+import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationType;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
@@ -585,6 +587,54 @@ class QueryTranslatorImplTest {
 
         assertEquals("2020-06", query.getStartPeriod());
         assertNull(query.getEndPeriod());
+    }
+
+    @Test
+    void shouldDeriveTimeWindowForEmulated21Availability() {
+        TranslatedAvailabilityQuery query = translateAvailabilityWithTimeFilter(false, AvailabilityEmulationType.DATA_QUERY);
+
+        assertEquals("2020", query.getStartPeriod());
+        assertEquals("2021", query.getEndPeriod());
+    }
+
+    @Test
+    void shouldNotDeriveTimeWindowForRealAvailability() {
+        TranslatedAvailabilityQuery real = translateAvailabilityWithTimeFilter(true, null);
+        assertNull(real.getStartPeriod());
+        assertNull(real.getEndPeriod());
+
+        // Emulation configured while the registry's own endpoint stays enabled: the router serves
+        // the real endpoint, so the window must not be forwarded to it either.
+        TranslatedAvailabilityQuery bothOn = translateAvailabilityWithTimeFilter(true, AvailabilityEmulationType.DATA_QUERY);
+        assertNull(bothOn.getStartPeriod());
+        assertNull(bothOn.getEndPeriod());
+    }
+
+    private TranslatedAvailabilityQuery translateAvailabilityWithTimeFilter(boolean availabilityEnabled, AvailabilityEmulationType emulationType) {
+        RegistryConfiguration registryConfig = createRegistryWithSingleVersion("StatCan", SdmxVersion.SDMX_2_1);
+        AvailabilityEndpointConfiguration availabilityConfig = registryConfig.getVersionConfiguration(SdmxVersion.SDMX_2_1).getAvailabilityEndpointConfig();
+        availabilityConfig.setAvailabilityEnabled(availabilityEnabled);
+        if (emulationType != null) {
+            AvailabilityEmulationConfiguration emulation = new AvailabilityEmulationConfiguration();
+            emulation.setType(emulationType);
+            availabilityConfig.setEmulation(emulation);
+        }
+        proxyConfig(List.of(registryConfig));
+
+        when(agencyRoutingService.resolveRegistry(eq("StatCan"), isNull())).thenReturn(registryConfig);
+        SdmxBeans sdmxBeans = mock(SdmxBeans.class);
+        when(dimensionService.getDimensionIds(any(), anyString(), anyString(), anyString())).thenReturn(List.of("Geography", "Gender", "Age_group"));
+        when(dimensionService.getTimeDimensionId(any(), anyString(), anyString(), anyString())).thenReturn("TIME_PERIOD");
+        when(filterTranslator.mergeFiltersIntoKey(anyString(), any(), any())).thenAnswer(inv -> inv.getArgument(0));
+
+        MultiValueMap<String, String> c = new LinkedMultiValueMap<>();
+        c.add("c[TIME_PERIOD]", "ge:2020+le:2021");
+
+        return queryTranslator.translateAvailabilityQuery(
+                "dataflow", "StatCan", "DF_17100005", "1.0", null, null,
+                c, null, "exact", null, null, null, null,
+                "application/xml", sdmxBeans, null
+        );
     }
 
     @Test

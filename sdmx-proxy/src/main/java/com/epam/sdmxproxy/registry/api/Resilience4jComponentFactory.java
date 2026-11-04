@@ -21,6 +21,7 @@ import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 
 import java.time.Duration;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -58,7 +59,7 @@ public class Resilience4jComponentFactory {
                 .minimumNumberOfCalls(minimumNumberOfCalls)
                 .waitDurationInOpenState(Duration.ofMillis(waitDuration))
                 .slidingWindowSize(slidingWindowSize)
-                .recordException(upstreamFailurePredicate());
+                .recordException(upstreamFailurePredicate(Set.of()));
         if (isRateLimitRetryEnabled(versionConfig)) {
             circuitBreakerConfigBuilder.slowCallDurationThreshold(resolveSlowCallDurationThreshold(versionConfig));
         }
@@ -93,7 +94,7 @@ public class Resilience4jComponentFactory {
                                 Duration.ofMillis(maxIntervalMillis)
                         )
                 )
-                .retryOnException(upstreamFailurePredicate())
+                .retryOnException(upstreamFailurePredicate(resolveRetryOnStatuses(registryRetryConfig)))
                 .build();
 
         return Retry.of(registryConfig.getName() + "-" + versionConfig.getSdmxVersion() + "-retry", retryConfig);
@@ -211,16 +212,24 @@ public class Resilience4jComponentFactory {
      * longer time scale. Note that excluding it here is not sufficient on its own: a non-recorded
      * exception is still timed by the breaker, so slow-call detection is relaxed as well whenever
      * 429 retrying is enabled -- see {@link #resolveSlowCallDurationThreshold}.
+     * <p>
+     * {@code extraStatuses} adds registry-specific statuses to the retry only (design 043):
+     * Statistics Canada answers 409 while a table is being updated, which says nothing about the
+     * health of the registry, so the circuit breaker passes an empty set.
      */
-    private Predicate<Throwable> upstreamFailurePredicate() {
+    private Predicate<Throwable> upstreamFailurePredicate(Set<Integer> extraStatuses) {
         return throwable -> {
             if (throwable instanceof java.io.IOException) {
                 return true;
             }
             if (throwable instanceof feign.FeignException feignEx) {
-                return feignEx.status() >= 500;
+                return feignEx.status() >= 500 || extraStatuses.contains(feignEx.status());
             }
             return false;
         };
+    }
+
+    private Set<Integer> resolveRetryOnStatuses(RegistryRetryConfig registryRetryConfig) {
+        return registryRetryConfig != null && registryRetryConfig.getRetryOnStatuses() != null ? Set.copyOf(registryRetryConfig.getRetryOnStatuses()) : Set.of();
     }
 }

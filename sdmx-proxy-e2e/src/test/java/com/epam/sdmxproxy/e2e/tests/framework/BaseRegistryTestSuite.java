@@ -622,6 +622,120 @@ public abstract class BaseRegistryTestSuite {
     }
 
     /**
+     * Every component and concept carries a representation (design 043, R1). Statistics Canada
+     * leaves the primary measure and every concept without one; the FILL_MISSING_REPRESENTATIONS
+     * fixture fills them. The DSD is fetched with {@code references=children}, because
+     * {@code references=none} returns no concept schemes to check.
+     */
+    @Test
+    @DisplayName("Structure Endpoint: every DSD component and concept has a representation")
+    @SneakyThrows
+    void testAllComponentsHaveRepresentation() {
+        DsdFidelityTestSuitConfiguration cfg = testConfig.getDsdFidelityTestSuitConfiguration();
+        Assumptions.assumeTrue(cfg != null && cfg.isExpectAllRepresentations(), "No dsdFidelityTestSuitConfiguration.expectAllRepresentations -- skipping representation pin");
+
+        JsonNode data = fetchDsdWithChildren(cfg.getDsdUrn());
+        Map<String, JsonNode> conceptsByRef = new LinkedHashMap<>();
+        Map<String, JsonNode> conceptsById = new LinkedHashMap<>();
+        for (JsonNode scheme : data.path("conceptSchemes")) {
+            String schemeRef = scheme.path("agencyID").asText() + ":" + scheme.path("id").asText() + "(" + scheme.path("version").asText() + ")";
+            for (JsonNode concept : scheme.path("concepts")) {
+                conceptsByRef.put((schemeRef + "." + concept.path("id").asText()).toLowerCase(), concept);
+                conceptsById.put(concept.path("id").asText(), concept);
+                assertThat(isNonEmpty(concept.path("coreRepresentation")))
+                        .as("Concept %s.%s must have a non-empty coreRepresentation, got %s", schemeRef, concept.path("id").asText(), concept.path("coreRepresentation"))
+                        .isTrue();
+            }
+        }
+        assertThat(conceptsByRef).as("references=children response for %s must carry its concept schemes", cfg.getDsdUrn()).isNotEmpty();
+
+        JsonNode components = data.path("dataStructures").path(0).path("dataStructureComponents");
+        List<JsonNode> all = new ArrayList<>();
+        components.path("dimensionList").path("dimensions").forEach(all::add);
+        components.path("dimensionList").path("timeDimensions").forEach(all::add);
+        JsonNode timeDimension = components.path("dimensionList").path("timeDimension");
+        if (timeDimension.isObject()) {
+            all.add(timeDimension);
+        }
+        components.path("attributeList").path("attributes").forEach(all::add);
+        components.path("measureList").path("measures").forEach(all::add);
+        JsonNode primaryMeasure = components.path("measureList").path("primaryMeasure");
+        if (primaryMeasure.isObject()) {
+            all.add(primaryMeasure);
+        }
+        assertThat(all).as("DSD %s must carry components", cfg.getDsdUrn()).isNotEmpty();
+        for (JsonNode component : all) {
+            String conceptIdentity = component.path("conceptIdentity").asText();
+            String conceptRef = conceptIdentity.substring(conceptIdentity.indexOf('=') + 1);
+            JsonNode concept = conceptsByRef.get(conceptRef.toLowerCase());
+            boolean represented = isNonEmpty(component.path("localRepresentation")) || (concept != null && isNonEmpty(concept.path("coreRepresentation")));
+            assertThat(represented)
+                    .as("Component %s must have a localRepresentation or a concept (%s) with a coreRepresentation", component.path("id").asText(), conceptIdentity)
+                    .isTrue();
+        }
+
+        Map<String, String> enumerations = cfg.getExpectedConceptEnumerations();
+        if (enumerations != null) {
+            enumerations.forEach((conceptId, codelistSuffix) -> {
+                JsonNode concept = conceptsById.get(conceptId);
+                assertThat(concept).as("Concept %s must be present for %s", conceptId, cfg.getDsdUrn()).isNotNull();
+                assertThat(concept.path("coreRepresentation").path("enumeration").asText())
+                        .as("Concept %s coreRepresentation.enumeration must end with %s", conceptId, codelistSuffix)
+                        .endsWithIgnoringCase(codelistSuffix);
+            });
+        }
+    }
+
+    /**
+     * No codelist URN may stand for two different code sets (design 043, B3). Statistics Canada
+     * names its codelists {@code CL_{dimension}} in every table, with different codes; the proxy
+     * renames them per table.
+     */
+    @Test
+    @DisplayName("Structure Endpoint: a codelist URN means the same codes in every DSD")
+    @SneakyThrows
+    void testCodelistIdsUniquePerTable() {
+        DsdFidelityTestSuitConfiguration cfg = testConfig.getDsdFidelityTestSuitConfiguration();
+        Assumptions.assumeTrue(cfg != null && cfg.getUniqueCodelistDsdUrns() != null && cfg.getUniqueCodelistDsdUrns().size() >= 2, "No dsdFidelityTestSuitConfiguration.uniqueCodelistDsdUrns -- skipping codelist uniqueness pin");
+
+        Map<String, List<String>> codesByCodelist = new LinkedHashMap<>();
+        Map<String, String> ownerByCodelist = new LinkedHashMap<>();
+        for (String dsdUrn : cfg.getUniqueCodelistDsdUrns()) {
+            JsonNode data = fetchDsdWithChildren(dsdUrn);
+            assertThat(data.path("codelists").isEmpty()).as("references=children response for %s must carry its codelists", dsdUrn).isFalse();
+            for (JsonNode codelist : data.path("codelists")) {
+                String ref = codelist.path("agencyID").asText() + ":" + codelist.path("id").asText() + "(" + codelist.path("version").asText() + ")";
+                List<String> codes = new ArrayList<>();
+                codelist.path("codes").forEach(code -> codes.add(code.path("id").asText()));
+                List<String> previous = codesByCodelist.putIfAbsent(ref, codes);
+                if (previous != null) {
+                    assertThat(codes)
+                            .as("Codelist %s means different codes in %s and %s", ref, ownerByCodelist.get(ref), dsdUrn)
+                            .containsExactlyInAnyOrderElementsOf(previous);
+                } else {
+                    ownerByCodelist.put(ref, dsdUrn);
+                }
+            }
+        }
+    }
+
+    @SneakyThrows
+    private JsonNode fetchDsdWithChildren(String dsdUrn) {
+        String[] urnParts = parseUrn(dsdUrn);
+        // references/detail go through queryParams; see fetchDeclaredDimensionOrder.
+        String path = String.format("%s/sdmx/3.0/structure/datastructure/%s/%s/%s", BASE_PATH, urnParts[0], urnParts[1], urnParts[2]);
+        Response response = restClient.getResponseWithAccept(path, "application/vnd.sdmx.structure+json;version=2.0.0", Map.of("references", "children", "detail", "full"));
+        assertThat(response.getStatusCode())
+                .as("DSD %s with references=children must return HTTP 200, body: %s", dsdUrn, response.getBody().asString())
+                .isEqualTo(200);
+        return objectMapper.readTree(response.getBody().asByteArray()).path("data");
+    }
+
+    private static boolean isNonEmpty(JsonNode node) {
+        return node != null && node.isObject() && !node.isEmpty();
+    }
+
+    /**
      * Pin for the structure-DESCENDANTS metadata artefacts (design 033): the proxy must
      * forward {@code MetadataStructureDefinition} / {@code Metadataflow} /
      * {@code MetadataProvisionAgreement} artefacts that the upstream registry returns as
@@ -1011,6 +1125,105 @@ public abstract class BaseRegistryTestSuite {
         assertThat(response.getStatusCode())
                 .as("Availability with c[TIME_PERIOD]=%s must return HTTP 200 for %s, body: %s", cfg.getEmptyTimeRange(), cfg.getDataflowUrn(), response.getBody().asString())
                 .isEqualTo(200);
+
+        if (cfg.isExpectEmptyAvailabilityForEmptyTimeRange()) {
+            // Emulated 2.1 availability must carry the window into its probe (design 043, B8);
+            // a probe that ignores it reports every code of the dataflow.
+            Map<String, List<String>> valuesByDimension = constraintValuesByDimension(response);
+            List<String> nonTimeDimensions = fetchDeclaredDimensionOrder(urnParts, availabilityMediaType(cfg)).stream().filter(id -> !"TIME_PERIOD".equals(id)).toList();
+            assertThat(valuesByDimension.keySet())
+                    .as("Constraint for c[TIME_PERIOD]=%s must report every non-time dimension of %s -- a missing entry means no constraint came back at all", cfg.getEmptyTimeRange(), cfg.getDataflowUrn())
+                    .containsAll(nonTimeDimensions);
+            valuesByDimension.forEach((dimension, values) -> assertThat(values)
+                    .as("Dimension %s must have no values for c[TIME_PERIOD]=%s -- values here mean the probe ignored the time window", dimension, cfg.getEmptyTimeRange())
+                    .isEmpty());
+        }
+    }
+
+    /**
+     * A request with no key and no filter asks for the whole dataflow. Statistics Canada rejects
+     * the SDMX 2.1 match-all key {@code all} with 400; the proxy expands it into an OR over one
+     * dimension's codes ({@code expandMatchAllKey}, design 043).
+     */
+    @Test
+    @DisplayName("Data Endpoint: an unfiltered request returns data")
+    @SneakyThrows
+    void testUnfilteredDataReturnsData() {
+        QueryShapeTestSuitConfiguration cfg = testConfig.getQueryShapeTestSuitConfiguration();
+        Assumptions.assumeTrue(cfg != null && cfg.isUnfilteredData(), "No queryShapeTestSuitConfiguration.unfilteredData -- skipping unfiltered data pin");
+
+        String[] urnParts = parseUrn(cfg.getDataflowUrn());
+        String path = String.format("%s/sdmx/3.0/data/dataflow/%s/%s/%s/*", BASE_PATH, urnParts[0], urnParts[1], urnParts[2]);
+        Response response = restClient.getResponseWithAccept(path, "application/vnd.sdmx.data+json;version=2.0.0");
+
+        assertThat(response.getStatusCode())
+                .as("Unfiltered data must return HTTP 200 for %s, body: %s", cfg.getDataflowUrn(), response.getBody().asString())
+                .isEqualTo(200);
+        JsonNode series = objectMapper.readTree(response.getBody().asByteArray()).path("data").path("dataSets").path(0).path("series");
+        assertThat(series.isObject() && !series.isEmpty())
+                .as("Unfiltered data for %s must hold at least one series", cfg.getDataflowUrn())
+                .isTrue();
+    }
+
+    /**
+     * An OR over many codes makes a long URL; Statistics Canada rejects one above roughly 7,500
+     * characters. The proxy sends each {@code +} as {@code %2B}, so the outbound URL is longer than
+     * the client's: a 4,500-character key goes out as about 6,800. Pins that a key of at least
+     * 4,000 characters gets through the proxy.
+     */
+    @Test
+    @DisplayName("Data Endpoint: a key of 4,000+ characters returns data")
+    void testLongOrKeyReturnsData() {
+        QueryShapeTestSuitConfiguration cfg = testConfig.getQueryShapeTestSuitConfiguration();
+        Assumptions.assumeTrue(cfg != null && cfg.getLongOrKey() != null, "No queryShapeTestSuitConfiguration.longOrKey -- skipping long-key pin");
+        assertThat(cfg.getLongOrKey().length())
+                .as("longOrKey must be at least 4,000 characters to exercise a long URL")
+                .isGreaterThanOrEqualTo(4000);
+
+        String[] urnParts = parseUrn(cfg.getLongOrKeyDataflowUrn() != null ? cfg.getLongOrKeyDataflowUrn() : cfg.getDataflowUrn());
+        String path = String.format("%s/sdmx/3.0/data/dataflow/%s/%s/%s/%s", BASE_PATH, urnParts[0], urnParts[1], urnParts[2], cfg.getLongOrKey());
+        Response response = restClient.getResponseWithAccept(path, dataMediaType(cfg));
+
+        assertThat(response.getStatusCode())
+                .as("Data with a %d-character key must return HTTP 200 for %s:%s, body: %s", cfg.getLongOrKey().length(), urnParts[0], urnParts[1], response.getBody().asString())
+                .isEqualTo(200);
+        assertThat(response.getBody().asString())
+                .as("Data with a long key must not be empty")
+                .isNotEmpty();
+    }
+
+    /**
+     * SDMX-JSON keys a series by its dimension value indexes joined with {@code :}. Statistics
+     * Canada's own JSON joins them with {@code .}; the proxy never reads that JSON, and its own
+     * output must use {@code :} (design 043, R3).
+     */
+    @Test
+    @DisplayName("Data Endpoint: SDMX-JSON series keys use ':'")
+    @SneakyThrows
+    void testJsonSeriesKeysUseColon() {
+        QueryShapeTestSuitConfiguration cfg = testConfig.getQueryShapeTestSuitConfiguration();
+        Assumptions.assumeTrue(cfg != null && cfg.isJsonSeriesKeyFormat() && cfg.getOrKey() != null, "No queryShapeTestSuitConfiguration.jsonSeriesKeyFormat with orKey -- skipping JSON series key pin");
+
+        String[] urnParts = parseUrn(cfg.getDataflowUrn());
+        String path = String.format("%s/sdmx/3.0/data/dataflow/%s/%s/%s/%s", BASE_PATH, urnParts[0], urnParts[1], urnParts[2], cfg.getOrKey());
+        for (String mediaType : List.of("application/vnd.sdmx.data+json;version=1.0.0", "application/vnd.sdmx.data+json;version=2.0.0")) {
+            Response response = restClient.getResponseWithAccept(path, mediaType);
+            assertThat(response.getStatusCode())
+                    .as("Data in %s must return HTTP 200 for %s, body: %s", mediaType, cfg.getDataflowUrn(), response.getBody().asString())
+                    .isEqualTo(200);
+            JsonNode root = objectMapper.readTree(response.getBody().asByteArray());
+            // The proxy writes both versions as {meta, data: {dataSets}}; a root-level dataSets is
+            // the SDMX-JSON 1.0 draft layout, accepted as well.
+            JsonNode dataSets = root.path("data").has("dataSets") ? root.path("data").path("dataSets") : root.path("dataSets");
+            List<String> keys = new ArrayList<>();
+            for (JsonNode dataSet : dataSets) {
+                dataSet.path("series").fieldNames().forEachRemaining(keys::add);
+            }
+            assertThat(keys).as("%s response for %s must hold series", mediaType, cfg.getDataflowUrn()).isNotEmpty();
+            assertThat(keys)
+                    .as("%s series keys must be ':'-separated indexes", mediaType)
+                    .allMatch(key -> key.matches("^\\d+(:\\d+)*$"));
+        }
     }
 
     private static String dataMediaType(QueryShapeTestSuitConfiguration cfg) {

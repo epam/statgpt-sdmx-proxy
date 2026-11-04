@@ -1,0 +1,99 @@
+{
+  "configs": [
+    {
+      "name": "StatCan",
+      "description": "Statistics Canada (NSI Web Service 7.8, SDMX 2.1, structures emulated from per-table bundles and WDS)",
+      "adapter": "STATCAN",
+      "adapterConfig": {
+        "catalogUrl": "https://www150.statcan.gc.ca/t1/wds/rest/",
+        "includeArchived": "false"
+      },
+      "versions": {
+        "SDMX_2_1": {
+          "sdmxVersion": "SDMX_2_1",
+          "structureEndpointConfig": {
+            "url": "https://www150.statcan.gc.ca/t1/wds/sdmx/statcan/rest/",
+            "supportedFormats": [
+              "XML_STRUCTURE_2_1"
+            ],
+            "defaultFormat": "XML_STRUCTURE_2_1",
+            "bypassEnabled": false,
+            "supportedStructures": [
+              "dataflow",
+              "datastructure",
+              "codelist",
+              "conceptscheme"
+            ],
+            "supportedReferencesForAll": [
+              "none"
+            ],
+            "referencesDowngrade": {
+              "datastructure": "none",
+              "children": "none",
+              "descendants": "none",
+              "all": "none"
+            },
+            "fixtures": [
+              {
+                "type": "FILL_MISSING_REPRESENTATIONS"
+              }
+            ]
+          },
+          "dataEndpointConfig": {
+            "url": "https://www150.statcan.gc.ca/t1/wds/sdmx/statcan/rest/data/",
+            "supportedFormats": [
+              "XML_STRUCTURE_SPECIFIC_DATA_2_1",
+              "XML_GENERIC_DATA_2_1"
+            ],
+            "defaultFormat": "XML_STRUCTURE_SPECIFIC_DATA_2_1",
+            "bypassEnabled": false,
+            "supportsLimit": true,
+            "flowRefIdOnly": true,
+            "omitProviderRef": true,
+            "expandMatchAllKey": true,
+            "fixtures": [
+              {
+                "type": "REPAIR_EMPTY_DATASET"
+              }
+            ]
+          },
+          "availabilityEndpointConfig": {
+            "url": "https://www150.statcan.gc.ca/t1/wds/sdmx/statcan/rest/",
+            "supportedFormats": [
+              "XML_STRUCTURE_2_1"
+            ],
+            "defaultFormat": "XML_STRUCTURE_2_1",
+            "bypassEnabled": false,
+            "availabilityEnabled": false,
+            "emulation": {
+              "type": "DATA_QUERY",
+              "unfilteredSource": "PROBE",
+              "probeFormat": "XML_STRUCTURE_SPECIFIC_DATA_2_1",
+              "probeDetail": null
+            }
+          },
+          "resilienceConfig": {
+            "connectionTimeout": 30000,
+            "readTimeout": 120000,
+            "retry": {
+              "maxAttempts": 3,
+              "initialIntervalMillis": 2000,
+              "multiplier": 2.0,
+              "maxIntervalMillis": 8000,
+              "retryOnStatuses": [
+                409
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "agencies": [
+    {
+      "name": "StatCan",
+      "primaryRegistry": "StatCan",
+      "allowSubAgencies": false
+    }
+  ]
+}
