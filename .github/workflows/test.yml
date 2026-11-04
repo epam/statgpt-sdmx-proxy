@@ -37,16 +37,16 @@ on:
         description: Do not fail pipeline if ORT scan failed
       ort-version:
         type: string
-        default: "latest"
+        default: "92.5.0"
         description: ORT version to use
       ort-config-repository:
         type: string
         description: ORT config repository to use
-        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/oss-review-toolkit/ort-config.git' }}
+        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/epam/ai-dial-ort-config.git' }}
       ort-config-revision:
         type: string
         description: ORT config revision to use
-        default: ${{ vars.ORT_CONFIG_VCS_REVISION || 'main' }}
+        default: ${{ vars.ORT_CONFIG_VCS_REVISION || '92.5.0' }}
       java-version:
         type: string
         default: "17"
@@ -68,10 +68,10 @@ jobs:
     if: ${{ inputs.style-checks-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@4.5.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.13.2
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -94,10 +94,10 @@ jobs:
     if: ${{ inputs.code-checks-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@4.5.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.13.2
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -126,18 +126,44 @@ jobs:
   ort:
     if: ${{ inputs.ort-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
+    continue-on-error: ${{ inputs.bypass-checks || inputs.ort-bypassed }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - name: Use HTTPS instead of SSH for Git cloning # recommended by ort-ci-github-action doc but not *actually* required until we'll run downloader/scanner tools
+        run: git config --global url.https://github.com/.insteadOf ssh://git@github.com/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
-      - uses: oss-review-toolkit/ort-ci-github-action@9acdf1e56f1b42972b12274ae56c35bf70a5f65b # v1.0.1
-        env:
-          CONTINUE_ON_ERROR: ${{ inputs.bypass-checks || inputs.ort-bypassed }} # Hack to use the input below as a boolean
+      - uses: oss-review-toolkit/ort-ci-github-action@086d928d24ef1653dc0777296b312fda5faaaf52 # v1.2.0
         with:
-          image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort-version }}"
+          image: "ghcr.io/oss-review-toolkit/ort-minimal:${{ inputs.ort-version }}"
+          docker-cli-args: >-
+            -e GPR_USERNAME=${{ secrets.GPR_USERNAME }}
+            -e GPR_PASSWORD=${{ secrets.GPR_PASSWORD }}
           allow-dynamic-versions: "true"
           fail-on: "violations"
-          ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Gradle"
+          run: "cache-dependencies, labels, analyzer, evaluator, reporter, upload-results"
+          # Provide more RAM; Only applies to GitHub hosted runners for public repositories
+          # https://docs.github.com/en/actions/reference/runners/github-hosted-runners
+          ort-jdk-java-options: "-Xmx${{ github.event.repository.private && '5' || '12' }}g"
+          ort-cli-args: >-
+            -P ort.forceOverwrite=true
+            --stacktrace
+            -P ort.analyzer.enabledPackageManagers=GradleInspector
+            -P ort.analyzer.packageManagers.GradleInspector.options.javaVersion=${{ inputs.java-version }}
           ort-config-repository: ${{ inputs.ort-config-repository }}
           ort-config-revision: ${{ inputs.ort-config-revision }}
-        continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
+      - name: Fail on ORT Analyzer errors
+        run: |
+          result="$HOME/.ort/ort-results/analyzer-result.json"
+          [ -f "$result" ] || { echo "::error::Analyzer result not found: $result"; exit 1; }
+          # Recursively collect every object with a severity+message under `analyzer`,
+          # so this works regardless of layout (top-level issues map, dependency nodes, etc.)
+          # and across all package managers (NPM, Gradle, ...).
+          filter='[.analyzer | .. | objects | select(has("severity") and has("message")) | select(.severity == "ERROR")]'
+          count=$(jq "$filter | length" "$result")
+          echo "Analyzer ERROR issues: $count"
+          if [ "$count" -gt 0 ]; then
+            jq -r "$filter[] | \"[\(.severity)] \(.source // \"unknown\"): \(.message)\"" "$result"
+            echo "::error::ORT Analyzer reported $count error(s). Check the report to address them."
+            exit 1
+          fi

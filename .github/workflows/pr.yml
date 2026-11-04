@@ -25,13 +25,14 @@ jobs:
       bypass-checks: false
       style-checks-enabled: true
       style-checks-bypassed: false
+      style-task-name: "checkstyleMain"
       code-checks-enabled: true
       code-checks-bypassed: false
       ort-enabled: true
-      ort-bypassed: false
-      ort-version: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
-      ort-config-repository: "https://github.com/oss-review-toolkit/ort-config.git"
-      ort-config-revision: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
+      ort-bypassed: ${{ contains(github.event.pull_request.labels.*.name, 'ort-bypassed') }}
+      ort-version: "92.5.0"
+      ort-config-repository: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/epam/ai-dial-ort-config.git' }}
+      ort-config-revision: ${{ vars.ORT_CONFIG_VCS_REVISION || '92.5.0' }}
       java-version: "25"
       java-distribution: "corretto"
       runs-on: '["ubuntu-24.04"]'
@@ -43,14 +44,14 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@4.5.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.13.2
         with:
           java-version: "25"
           java-distribution: "corretto"
-      - uses: gradle/actions/dependency-submission@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+      - uses: gradle/actions/dependency-submission@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
           dependency-graph: generate-and-upload
           artifact-retention-days: 1
@@ -65,10 +66,10 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@4.5.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.13.2
         with:
           java-version: "25"
           java-distribution: "corretto"
@@ -121,11 +122,11 @@ jobs:
           docker-cleanup: "true"
           set-tmpdir: "true"
 
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
 
-      - uses: epam/ai-dial-ci/actions/build_docker@4.5.0
+      - uses: epam/ai-dial-ci/actions/build_docker@4.13.2
         with:
           image-names: ghcr.io/${{ matrix.image-name }}
           image-tags: test
@@ -139,3 +140,4 @@ jobs:
           gpr-username: ${{ secrets.GPR_USERNAME }}
           gpr-password: ${{ secrets.GPR_PASSWORD }}
           platforms: "linux/amd64"
+          build-args: ""
