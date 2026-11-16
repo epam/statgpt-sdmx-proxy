@@ -4,7 +4,9 @@ import com.epam.sdmxproxy.configuration.data.AgencyConfiguration;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
+import com.epam.sdmxproxy.configuration.data.RegistryAdapterType;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
 import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
@@ -73,6 +75,7 @@ public class ConfigValidator {
                 validateVersionCompatibility(registry.getName(), version, versionConfig);
                 validateAvailabilityEmulation(registry.getName(), version, versionConfig);
             });
+            validateAdapter(registry);
         }
     }
 
@@ -143,6 +146,32 @@ public class ConfigValidator {
                         + ". Add it, or set emulation.unfilteredSource to PROBE.");
             }
         }
+    }
+
+    /**
+     * Rejects a {@code STATCAN} registry adapter that cannot work -- see design 043, Revision 1.
+     * <p>
+     * The adapter fetches the dataflow catalog from {@code adapterConfig.catalogUrl} and answers
+     * every structure query with SDMX-ML 2.1 built from Statistics Canada's 2.1 bundles, so it needs
+     * the catalog URL, SDMX 2.1 versions only, and an XML 2.1 structure return format.
+     */
+    private void validateAdapter(RegistryConfiguration registry) {
+        if (registry.getAdapter() != RegistryAdapterType.STATCAN) {
+            return;
+        }
+        String catalogUrl = registry.getAdapterConfig() != null ? registry.getAdapterConfig().get("catalogUrl") : null;
+        if (catalogUrl == null || catalogUrl.isBlank()) {
+            throw new IllegalArgumentException("Registry '" + registry.getName() + "' sets adapter STATCAN without adapterConfig.catalogUrl.");
+        }
+        registry.getVersions().forEach((declaredVersion, versionConfig) -> {
+            if (declaredVersion != SdmxVersion.SDMX_2_1 || versionConfig == null || versionConfig.getSdmxVersion() != SdmxVersion.SDMX_2_1) {
+                throw new IllegalArgumentException("Registry '" + registry.getName() + "' sets adapter STATCAN, which requires every version to be SDMX_2_1, got " + declaredVersion + ".");
+            }
+            StructureEndpointConfiguration structureConfig = versionConfig.getStructureEndpointConfig();
+            if (structureConfig == null || structureConfig.getSupportedFormats() == null || !structureConfig.getSupportedFormats().equals(List.of(SdmxFormat.XML_STRUCTURE_2_1))) {
+                throw new IllegalArgumentException("Registry '" + registry.getName() + "' sets adapter STATCAN, which answers SDMX-ML 2.1 only; structureEndpointConfig.supportedFormats must be exactly [XML_STRUCTURE_2_1], not " + (structureConfig != null ? structureConfig.getSupportedFormats() : null) + ".");
+            }
+        });
     }
 
     private String resolveConstraintStructureType(SdmxVersion declaredVersion, AvailabilityEmulationConfiguration emulation) {

@@ -9,7 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Applies data-endpoint fixtures as a streaming chain of responsibility.
@@ -31,12 +33,37 @@ public class DataFixtureService {
             SdmxBeans sdmxBeans,
             List<FixtureConfiguration<DataFixtureType>> fixtureConfigs
     ) {
+        return applyFixtures(input, format, sdmxBeans, fixtureConfigs, null);
+    }
+
+    /**
+     * Applies only the configured fixtures whose type is in {@code onlyTypes}; null applies them
+     * all. The availability emulation probe uses it to run the transport repair alone (design 043).
+     * <p>
+     * {@link DataFixtureType#REPAIR_EMPTY_DATASET} always runs first, whatever its position in the
+     * list: it turns malformed XML into well-formed XML, and a StAX-based fixture ahead of it would
+     * fail on the malformed body.
+     */
+    public InputStream applyFixtures(
+            InputStream input,
+            SdmxFormat format,
+            SdmxBeans sdmxBeans,
+            List<FixtureConfiguration<DataFixtureType>> fixtureConfigs,
+            Set<DataFixtureType> onlyTypes
+    ) {
         if (fixtureConfigs == null || fixtureConfigs.isEmpty()) {
             return input;
         }
 
+        List<FixtureConfiguration<DataFixtureType>> ordered = new ArrayList<>();
+        fixtureConfigs.stream().filter(fc -> fc.getType() == DataFixtureType.REPAIR_EMPTY_DATASET).forEach(ordered::add);
+        fixtureConfigs.stream().filter(fc -> fc.getType() != DataFixtureType.REPAIR_EMPTY_DATASET).forEach(ordered::add);
+
         InputStream current = input;
-        for (FixtureConfiguration<DataFixtureType> fc : fixtureConfigs) {
+        for (FixtureConfiguration<DataFixtureType> fc : ordered) {
+            if (onlyTypes != null && !onlyTypes.contains(fc.getType())) {
+                continue;
+            }
             DataFixture fixture = findFixture(fc.getType(), format);
             if (fixture != null) {
                 log.debug("Applying data fixture {} for format {}", fc.getType(), format);

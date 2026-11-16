@@ -5,6 +5,7 @@ import com.epam.sdmxproxy.common.data.TranslatedAvailabilityQuery;
 import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
+import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistrySelectionResult;
 import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.exception.UnexpectedStateException;
@@ -117,7 +118,10 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
 
     private InputStream getData21(TranslatedDataQuery query, RegistrySelectionResult selectedRegistry) {
         Sdmx21DataClient data21Client = sdmxApiClientProvider.getData21Client(selectedRegistry);
-        String flowRef = getFlowRef(query.getAgencyID(), query.getResourceID(), query.getVersion());
+        DataEndpointConfiguration dataConfig = selectedRegistry.getVersionConfiguration().getDataEndpointConfig();
+        // Statistics Canada answers 404 to every flowRef but the bare ID, and to any provider
+        // segment (design 043). getFlowRef stays three-part: availability shares it.
+        String flowRef = dataConfig != null && dataConfig.isFlowRefIdOnly() ? sdmx21QueryNormalizer.toSdmx21PathSlot(query.getResourceID()) : getFlowRef(query.getAgencyID(), query.getResourceID(), query.getVersion());
         String key = sdmx21QueryNormalizer.toKey(query.getKey());
         String providerRef = "all";
         String acceptHeader = resolveDataAcceptHeader(query);
@@ -136,6 +140,9 @@ public class GenericRegistryAdapterImpl implements GenericRegistryAdapter {
         // It wins over the attributes/measures fold, which is what a client-facing SDMX 3.0 request
         // carries instead -- 3.0 has no data `detail`, so the two can never both be meaningful.
         putIfPresent(dataQueryParams, "detail", query.getDetail() != null ? query.getDetail() : toSdmx21Detail(query.getAttributes(), query.getMeasures()));
+        if (dataConfig != null && dataConfig.isOmitProviderRef()) {
+            return data21Client.getData(acceptHeader, flowRef, key, dataQueryParams);
+        }
         return data21Client.getData(
                 acceptHeader,
                 flowRef,

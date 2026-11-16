@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Set;
+
 /**
  * Configuration for retry per registry.
  * All durations are in milliseconds.
@@ -37,4 +39,11 @@ public class RegistryRetryConfig {
      * If null, default max interval will be used.
      */
     private Long maxIntervalMillis;
+
+    /**
+     * Upstream HTTP statuses retried in addition to 5xx and I/O failures. They don't count as
+     * failures for the circuit breaker. Statistics Canada answers 409 while a table is being
+     * updated -- see design 043. Null or empty retries only 5xx and I/O failures.
+     */
+    private Set<Integer> retryOnStatuses;
 }

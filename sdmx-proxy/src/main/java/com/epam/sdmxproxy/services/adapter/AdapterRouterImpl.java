@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,6 +32,7 @@ import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import com.epam.sdmxproxy.configuration.data.fixture.StructureFixtureType;
 import com.epam.sdmxproxy.exception.AvailabilityConversionException;
 import com.epam.sdmxproxy.exception.AvailabilityNotSupportedException;
+import com.epam.sdmxproxy.exception.BaseException;
 import com.epam.sdmxproxy.exception.DataConversionException;
 import com.epam.sdmxproxy.exception.RegistryNoDataException;
 import com.epam.sdmxproxy.exception.StructureConversionException;
@@ -100,6 +102,7 @@ public class AdapterRouterImpl implements AdapterRouter {
     private final AvailabilityEmulatorProvider availabilityEmulatorProvider;
     private final AvailabilityQueryCanonicalizer availabilityQueryCanonicalizer;
     private final NoDataFaultDetector noDataFaultDetector;
+    private final MatchAllKeyExpander matchAllKeyExpander;
 
     @Nullable
     private static List<FixtureConfiguration<AvailabilityFixtureType>> getFixtureConfigurations(TranslatedAvailabilityQuery query) {
@@ -141,7 +144,7 @@ public class AdapterRouterImpl implements AdapterRouter {
      */
     private InputStream fetchData(TranslatedDataQuery query) {
         try {
-            return orEmpty(genericRegistryAdapter.getData(query));
+            return orEmpty(genericRegistryAdapter.getData(expandMatchAllKey(query)));
         } catch (FeignException e) {
             if (noDataFaultDetector.isNoData(e, query.getVersionConfiguration().getDataEndpointConfig())) {
                 log.info("Registry {} reports no observations for {}:{}({}) key='{}' filters={}; answering with an empty result", query.getRegistryConfiguration().getName(), query.getAgencyID(), query.getResourceID(), query.getVersion(), query.getKey(), query.getFilters());
@@ -149,6 +152,24 @@ public class AdapterRouterImpl implements AdapterRouter {
             }
             throw e;
         }
+    }
+
+    /**
+     * Rewrites a match-all key as an OR over the codes of the smallest-codelist dimension when the
+     * data endpoint sets {@code expandMatchAllKey} -- see design 043. The decision rests on the key
+     * alone: for SDMX 2.1 the translator has already folded the non-time filters into the key, and
+     * a time filter travels as {@code startPeriod}/{@code endPeriod} while staying in
+     * {@code filters}, which {@code getData21} never sends.
+     */
+    private TranslatedDataQuery expandMatchAllKey(TranslatedDataQuery query) {
+        DataEndpointConfiguration dataConfig = query.getVersionConfiguration().getDataEndpointConfig();
+        if (dataConfig == null || !dataConfig.isExpandMatchAllKey() || !availabilityQueryCanonicalizer.isWildcardKey(query.getKey())) {
+            return query;
+        }
+        SdmxBeans beans = getSdmxBeans(getStructureQuery(query));
+        String expanded = matchAllKeyExpander.expand(beans);
+        log.debug("Expanding match-all key '{}' to '{}' for {}:{}({})", query.getKey(), expanded, query.getAgencyID(), query.getResourceID(), query.getVersion());
+        return query.toBuilder().key(expanded).build();
     }
 
     private static List<String> nonTimeDimensionIds(SdmxBeans beans) {
@@ -246,6 +267,11 @@ public class AdapterRouterImpl implements AdapterRouter {
                 }
             } catch (FeignException e) {
                 log.warn("Failure on registry side.", e);
+                throw e;
+            } catch (BaseException e) {
+                // Keep the proxy's own status (design 043): a 404 or 501 from an emulated structure
+                // source, a 429 rate limit, or a 501 unsupported conversion must not become a 500.
+                log.warn("Structure request failed: {}", e.getMessage());
                 throw e;
             } catch (Exception e) {
                 log.error("Failed to convert structures from {} to {}", returnFormat, requestedMediaType, e);
@@ -376,7 +402,7 @@ public class AdapterRouterImpl implements AdapterRouter {
         if (FormatSupportChecker.canBypassDataFormat(versionConfig, requestedMediaType)) {
             log.debug("Bypassing conversion for data - bypass enabled and format {} is supported", requestedMediaType);
             return outputStream -> {
-                try (InputStream dataInputStream = orEmpty(genericRegistryAdapter.getData(query))) {
+                try (InputStream dataInputStream = orEmpty(genericRegistryAdapter.getData(expandMatchAllKey(query)))) {
                     dataInputStream.transferTo(outputStream);
                 }
             };
@@ -652,7 +678,10 @@ public class AdapterRouterImpl implements AdapterRouter {
             if (dataConfig != null && dataConfig.isConvertKeyToFilters()) {
                 normalizeOutboundFilters(query);
             }
-            return AdapterRouterImpl.this.fetchData(query);
+            // The harvester parses the probe, so the transport repair a malformed empty result
+            // needs (design 043) runs here as well; other data fixtures keep their scope.
+            List<FixtureConfiguration<DataFixtureType>> dataFixtures = dataConfig != null ? dataConfig.getFixtures() : null;
+            return dataFixtureService.applyFixtures(AdapterRouterImpl.this.fetchData(query), query.getReturnFormat(), null, dataFixtures, Set.of(DataFixtureType.REPAIR_EMPTY_DATASET));
         }
 
         @Override

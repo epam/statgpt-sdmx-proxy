@@ -4,6 +4,7 @@ import com.epam.sdmxproxy.configuration.data.AgencyConfiguration;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
+import com.epam.sdmxproxy.configuration.data.RegistryAdapterType;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.SdmxFormat;
 import com.epam.sdmxproxy.configuration.data.SdmxVersion;
@@ -15,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -274,6 +276,47 @@ class ConfigValidatorTest {
         versionOf(registry).getStructureEndpointConfig().setSupportedStructures(Set.of("dataflow"));
 
         assertDoesNotThrow(() -> validator.validate(configWith(registry)));
+    }
+
+    @Test
+    void statCanAdapterPasses() {
+        assertDoesNotThrow(() -> validator.validate(configWith(statCan(SdmxVersion.SDMX_2_1, "https://www150.statcan.gc.ca/t1/wds/rest/", List.of(SdmxFormat.XML_STRUCTURE_2_1)))));
+    }
+
+    @Test
+    void statCanAdapterWithoutCatalogUrlFails() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> validator.validate(configWith(statCan(SdmxVersion.SDMX_2_1, null, List.of(SdmxFormat.XML_STRUCTURE_2_1)))));
+        assertTrue(e.getMessage().contains("catalogUrl"));
+    }
+
+    @Test
+    void statCanAdapterOnSdmx30Fails() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> validator.validate(configWith(statCan(SdmxVersion.SDMX_3_0, "https://example.com/", List.of(SdmxFormat.XML_STRUCTURE_2_1)))));
+        assertTrue(e.getMessage().contains("SDMX_2_1"));
+    }
+
+    @Test
+    void statCanAdapterWithJsonFormatFails() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> validator.validate(configWith(statCan(SdmxVersion.SDMX_2_1, "https://example.com/", List.of(SdmxFormat.XML_STRUCTURE_2_1, SdmxFormat.JSON_STRUCTURE_2_0_0)))));
+        assertTrue(e.getMessage().contains("XML_STRUCTURE_2_1"));
+    }
+
+    private RegistryConfiguration statCan(SdmxVersion version, String catalogUrl, List<SdmxFormat> structureFormats) {
+        StructureEndpointConfiguration structureConfig = new StructureEndpointConfiguration();
+        structureConfig.setSupportedFormats(structureFormats);
+
+        VersionSpecificRegistryConfiguration versionConfig = new VersionSpecificRegistryConfiguration();
+        versionConfig.setSdmxVersion(version);
+        versionConfig.setStructureEndpointConfig(structureConfig);
+
+        RegistryConfiguration registry = new RegistryConfiguration();
+        registry.setName("StatCan");
+        registry.setAdapter(RegistryAdapterType.STATCAN);
+        Map<String, String> adapterConfig = new HashMap<>();
+        adapterConfig.put("catalogUrl", catalogUrl);
+        registry.setAdapterConfig(adapterConfig);
+        registry.setVersions(Map.of(version, versionConfig));
+        return registry;
     }
 
     private AvailabilityEmulationConfiguration estatEmulation() {

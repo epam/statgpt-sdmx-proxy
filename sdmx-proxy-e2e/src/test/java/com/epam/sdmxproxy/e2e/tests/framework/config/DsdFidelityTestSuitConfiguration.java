@@ -81,4 +81,25 @@ public class DsdFidelityTestSuitConfiguration {
      * text equals the id) -- i.e. the XML 3.0 usage injector restored the MSD usages (design 036).
      */
     private List<String> expectedMetadataAttributeUsageIdsXml30;
+
+    /**
+     * When true, fetches {@link #dsdUrn} with {@code references=children} in SDMX-JSON 2.0 and
+     * asserts that every concept has a non-empty {@code coreRepresentation} and every component has
+     * a {@code localRepresentation} or a concept with one (design 043, R1).
+     */
+    private boolean expectAllRepresentations;
+
+    /**
+     * Optional. {@code conceptId -> codelist URN suffix} the concept's
+     * {@code coreRepresentation.enumeration} must end with, in the same {@code references=children}
+     * response (e.g. {@code "Geography" -> "StatCan:CL_17100005_Geography(1.0)"}).
+     */
+    private Map<String, String> expectedConceptEnumerations;
+
+    /**
+     * Optional. DSDs fetched with {@code references=children}; no codelist URN may appear under two
+     * of them with different codes (design 043, B3: Statistics Canada reuses
+     * {@code CL_Geography} with different content in every table).
+     */
+    private List<String> uniqueCodelistDsdUrns;
 }
