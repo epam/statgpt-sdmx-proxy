@@ -6,9 +6,12 @@ import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
+import com.epam.sdmxproxy.configuration.data.SdmxVersion;
+import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationConfiguration;
 import com.epam.sdmxproxy.exception.UnexpectedStateException;
 import com.epam.sdmxproxy.services.availability.AvailabilityQueryCanonicalizer;
+import com.epam.sdmxproxy.services.translator.Sdmx21QueryNormalizer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
@@ -24,8 +27,8 @@ import java.util.TreeMap;
 /**
  * Utility class for generating cache keys for structures and responses.
  * <p>
- * Structure keys: structure:{registryName}:{agencyId}:{resourceId}:{version}:{references}:{detail}
- * Response keys: response:structure:{registryName}:{agencyId}:{resourceId}:{version}:{references}:{detail}:{md5Hash(Accept+queryParams)}
+ * Structure keys: structure:{type}:{registryName}:{sdmxVersion}:{returnFormat}:{md5(structureUrl)}:{agencyId}:{resourceId}:{version}:{references}:{detail}
+ * Response keys: response:structure:{structure key without its prefix}:{md5Hash(Accept+queryParams)}
  */
 @Slf4j
 public class CacheKeyGenerator {
@@ -38,51 +41,64 @@ public class CacheKeyGenerator {
     private static final String KEY_SEPARATOR = ":";
 
     /**
-     * Generate cache key for parsed structures.
-     * Format: structure:{registryName}:{agencyId}:{resourceId}:{version}:{references}:{detail}
+     * Generate cache key for raw registry structure bytes. The key identifies the request as it
+     * goes over the wire, so requests that produce the same URL share a key -- see design 042.
+     * Format: structure:{type}:{registryName}:{sdmxVersion}:{returnFormat}:{md5(structureUrl)}:{agencyId}:{resourceId}:{version}:{references}:{detail}
      * <p>
-     * Note: references and detail are NOT normalized - exact values are used.
+     * For SDMX 2.1, the type and path slots go through the same {@link Sdmx21QueryNormalizer}
+     * calls as {@code GenericRegistryAdapterImpl.getStructures21}. References and detail are sent
+     * verbatim by both versions, so they stay verbatim here.
      *
-     * @param query translated structure query
-     * @return cache key for parsed structures
+     * @param query      translated structure query
+     * @param normalizer the normalizer the 2.1 adapter applies to the outbound path
+     * @return cache key for raw structures
      */
-    public static String generateStructureKey(TranslatedStructureQuery query) {
-        String registryName = query.getRegistryConfiguration().getName();
+    public static String generateStructureKey(TranslatedStructureQuery query, Sdmx21QueryNormalizer normalizer) {
+        VersionSpecificRegistryConfiguration versionConfig = query.getVersionConfiguration();
+        SdmxVersion sdmxVersion = versionConfig != null ? versionConfig.getSdmxVersion() : null;
         Structure structure = query.getStructure();
-        String type = structure.type();
-        String agencyId = structure.agency();
-        String resourceId = structure.id();
-        String version = structure.version() != null ? structure.version() : "";
-        String references = query.getReferences() != null ? query.getReferences() : "";
-        String detail = query.getDetail() != null ? query.getDetail() : "";
+        boolean sdmx21 = sdmxVersion == SdmxVersion.SDMX_2_1;
 
-        return STRUCTURE_KEY_PREFIX +
-                type + KEY_SEPARATOR +
-                registryName + KEY_SEPARATOR +
-                agencyId + KEY_SEPARATOR +
-                resourceId + KEY_SEPARATOR +
-                version + KEY_SEPARATOR +
-                references + KEY_SEPARATOR +
-                detail;
+        String type = sdmx21 ? normalizer.toSdmx21StructureType(structure.type()) : structure.type();
+        String agencyId = sdmx21 ? normalizer.toSdmx21PathSlot(structure.agency()) : nullToEmpty(structure.agency());
+        String resourceId = sdmx21 ? normalizer.toSdmx21PathSlot(structure.id()) : nullToEmpty(structure.id());
+        String version = sdmx21 ? normalizer.toSdmx21PathSlot(structure.version()) : nullToEmpty(structure.version());
+        String structureUrl = versionConfig != null && versionConfig.getStructureEndpointConfig() != null ? versionConfig.getStructureEndpointConfig().getUrl() : null;
+        String returnFormat = query.getRegistryReturnFormat() != null ? query.getRegistryReturnFormat().name() : "";
+
+        return STRUCTURE_KEY_PREFIX
+                + type + KEY_SEPARATOR
+                + query.getRegistryConfiguration().getName() + KEY_SEPARATOR
+                + (sdmxVersion != null ? sdmxVersion.name() : "") + KEY_SEPARATOR
+                + returnFormat + KEY_SEPARATOR
+                + md5Hash(nullToEmpty(structureUrl)) + KEY_SEPARATOR
+                + agencyId + KEY_SEPARATOR
+                + resourceId + KEY_SEPARATOR
+                + version + KEY_SEPARATOR
+                + nullToEmpty(query.getReferences()) + KEY_SEPARATOR
+                + nullToEmpty(query.getDetail());
     }
 
     /**
-     * Generate cache key for ready response.
-     * Format: response:structure:{registryName}:{agencyId}:{resourceId}:{version}:{references}:{detail}:{md5Hash(Accept+queryParams)}
+     * Generate cache key for ready response. Built on the canonical structure key, so it inherits
+     * the wire-level canonicalization of {@link #generateStructureKey}.
+     * Format: response:structure:{structure key without its prefix}:{md5Hash(Accept+queryParams)}
      *
      * @param query              translated structure query
      * @param requestedMediaType Requested media type
      * @param queryParams        additional query parameters (filters, etc.)
+     * @param normalizer         the normalizer the 2.1 adapter applies to the outbound path
      * @return cache key for ready response
      */
     public static String generateResponseKey(
             TranslatedStructureQuery query,
             MediaType requestedMediaType,
-            Map<String, String> queryParams) {
+            Map<String, String> queryParams,
+            Sdmx21QueryNormalizer normalizer) {
 
         String acceptHeader = requestedMediaType != null ? requestedMediaType.toString() : null;
 
-        String baseKey = generateStructureKey(query);
+        String baseKey = generateStructureKey(query, normalizer);
 
         // Build fingerprint string from Accept header and query params
         StringBuilder fingerprint = new StringBuilder();
@@ -262,6 +278,10 @@ public class CacheKeyGenerator {
             out.append(entry.getKey()).append('=').append(String.join(",", entry.getValue()));
         }
         return out.toString();
+    }
+
+    private static String nullToEmpty(String value) {
+        return value != null ? value : "";
     }
 
     /**

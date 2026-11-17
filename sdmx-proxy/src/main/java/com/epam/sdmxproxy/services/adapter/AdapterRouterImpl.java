@@ -60,6 +60,7 @@ import com.epam.sdmxproxy.services.limit.LimitEmulationService;
 import com.epam.sdmxproxy.services.limit.truncate.SeriesLimitTruncator;
 import com.epam.sdmxproxy.services.limit.truncate.SeriesLimitTruncatorProvider;
 import com.epam.sdmxproxy.services.translator.QueryTranslator;
+import com.epam.sdmxproxy.services.translator.Sdmx21QueryNormalizer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
@@ -103,6 +104,8 @@ public class AdapterRouterImpl implements AdapterRouter {
     private final AvailabilityQueryCanonicalizer availabilityQueryCanonicalizer;
     private final NoDataFaultDetector noDataFaultDetector;
     private final MatchAllKeyExpander matchAllKeyExpander;
+    private final RawStructureFetcher rawStructureFetcher;
+    private final Sdmx21QueryNormalizer sdmx21QueryNormalizer;
 
     @Nullable
     private static List<FixtureConfiguration<AvailabilityFixtureType>> getFixtureConfigurations(TranslatedAvailabilityQuery query) {
@@ -188,7 +191,7 @@ public class AdapterRouterImpl implements AdapterRouter {
         MediaType requestedMediaType = query.getContentType();
         SdmxFormat returnFormat = query.getRegistryReturnFormat();
 
-        String responseKey = CacheKeyGenerator.generateResponseKey(query, requestedMediaType, Collections.emptyMap());
+        String responseKey = CacheKeyGenerator.generateResponseKey(query, requestedMediaType, Collections.emptyMap(), sdmx21QueryNormalizer);
 
         Optional<byte[]> cachedResponse = cacheService.getReadyResponse(responseKey);
         if (cachedResponse.isPresent()) {
@@ -207,23 +210,15 @@ public class AdapterRouterImpl implements AdapterRouter {
         return getStructuresConversion(query, returnFormat, requestedMediaType, responseKey);
     }
 
-    private InputStream getFixedStructureStream(TranslatedStructureQuery query) {
-        InputStream structures = genericRegistryAdapter.getStructures(query);
-        return structures != null
-                ? fixtureService.applyFixtures(
-                structures,
-                query.getRegistryReturnFormat(),
-                query.getVersionConfiguration().getStructureEndpointConfig().getFixtures()
-        )
-                : null;
-    }
-
     private StreamingResponseBody getStructuresConversion(TranslatedStructureQuery query, SdmxFormat returnFormat, MediaType requestedMediaType, String responseKey) {
         return outputStream -> {
-            try (InputStream rawStream = genericRegistryAdapter.getStructures(query)) {
-                if (rawStream == null) {
-                    return;
-                }
+            // Fetched outside the conversion try, so registry, timeout and cooldown failures reach
+            // the exception handler as themselves rather than as StructureConversionException.
+            byte[] rawBytes = rawStructureFetcher.fetch(query);
+            if (rawBytes.length == 0) {
+                return;
+            }
+            try {
                 List<FixtureConfiguration<StructureFixtureType>> fixtures = query.getVersionConfiguration().getStructureEndpointConfig().getFixtures();
                 boolean markerEnabled = metadataAttributeUsagePreserver.isEnabled(fixtures);
                 // JSON output: capture the usages verbatim and re-inject after conversion. XML 2.1 output:
@@ -238,13 +233,12 @@ public class AdapterRouterImpl implements AdapterRouter {
                 Map<String, JsonNode> capturedUsages = Map.of();
                 InputStream forFixtures;
                 if (preserveUsages || injectUsagesXml30) {
-                    byte[] rawBytes = rawStream.readAllBytes();
                     capturedUsages = metadataAttributeUsagePreserver.capture(rawBytes);
                     forFixtures = new ByteArrayInputStream(rawBytes);
                 } else if (foldUsages) {
-                    forFixtures = new ByteArrayInputStream(metadataAttributeUsageFolder.foldForXml21(rawStream.readAllBytes(), query));
+                    forFixtures = new ByteArrayInputStream(metadataAttributeUsageFolder.foldForXml21(rawBytes, query));
                 } else {
-                    forFixtures = rawStream;
+                    forFixtures = new ByteArrayInputStream(rawBytes);
                 }
 
                 try (InputStream postFixtureStream = fixtureService.applyFixtures(forFixtures, query.getRegistryReturnFormat(), fixtures)) {
@@ -283,45 +277,33 @@ public class AdapterRouterImpl implements AdapterRouter {
     @NotNull
     private StreamingResponseBody getStructuresBypass(TranslatedStructureQuery query, String responseKey) {
         return outputStream -> {
-            try (InputStream structures = orEmpty(genericRegistryAdapter.getStructures(query))) {
-                byte[] bytes = structures.readAllBytes();
-                outputStream.write(bytes);
-                cacheService.putReadyResponse(responseKey, bytes);
-            }
+            byte[] bytes = rawStructureFetcher.fetch(query);
+            outputStream.write(bytes);
+            cacheService.putReadyResponse(responseKey, bytes);
         };
     }
 
     @Override
     public SdmxBeans getSdmxBeans(TranslatedStructureQuery query) {
-        String structureKey = CacheKeyGenerator.generateStructureKey(query);
-        byte[] structures = getStructureBytes(query, structureKey);
+        byte[] rawBytes = rawStructureFetcher.fetch(query);
+        byte[] structures = rawBytes.length == 0 ? rawBytes : applyStructureFixtures(query, rawBytes);
         if (structures.length == 0) {
-            log.debug("Empty structures payload for {}; returning empty SdmxBeans", structureKey);
+            log.debug("Empty structures payload for {}:{}; returning empty SdmxBeans", query.getRegistryConfiguration().getName(), query.getStructure());
             return new SdmxBeansImpl();
         }
         SdmxFormat structureReturnFormat = query.getRegistryReturnFormat();
         return streamingStructureConversionService.parseStructures(new ByteArrayInputStream(structures), structureReturnFormat);
     }
 
-    private byte[] getStructureBytes(TranslatedStructureQuery query, String structureKey) {
-        Optional<byte[]> cachedStructures = cacheService.getRawStructures(structureKey);
-        if (cachedStructures.isPresent()) {
-            log.debug("Cache hit for raw structures: {}", structureKey);
-            return cachedStructures.get();
-        }
-
-        log.debug("Cache miss for raw structures: {}", structureKey);
-        InputStream structuresStream = getFixedStructureStream(query);
-        if (structuresStream == null) {
-            log.debug("Registry returned no body (e.g. HTTP 204) for raw structures: {}", structureKey);
-            return new byte[0];
-        }
-        try (structuresStream) {
-            byte[] structures = structuresStream.readAllBytes();
-            cacheService.putRawStructures(structureKey, structures);
-            return structures;
+    /**
+     * The raw cache holds registry bytes verbatim (design 042), so fixtures run on every read.
+     */
+    private byte[] applyStructureFixtures(TranslatedStructureQuery query, byte[] rawBytes) {
+        List<FixtureConfiguration<StructureFixtureType>> fixtures = query.getVersionConfiguration().getStructureEndpointConfig().getFixtures();
+        try (InputStream fixed = fixtureService.applyFixtures(new ByteArrayInputStream(rawBytes), query.getRegistryReturnFormat(), fixtures)) {
+            return fixed != null ? fixed.readAllBytes() : new byte[0];
         } catch (IOException e) {
-            throw new StructureConversionException("Failed to read structures", e);
+            throw new StructureConversionException("Failed to apply structure fixtures", e);
         }
     }
 
@@ -665,7 +647,7 @@ public class AdapterRouterImpl implements AdapterRouter {
 
         @Override
         public InputStream fetchStructure(TranslatedStructureQuery query) {
-            return orEmpty(genericRegistryAdapter.getStructures(query));
+            return new ByteArrayInputStream(rawStructureFetcher.fetch(query));
         }
 
         /**

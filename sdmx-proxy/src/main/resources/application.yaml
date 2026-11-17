@@ -102,6 +102,9 @@ sdmxproxy:
       availabilityEmulation:
         duration: PT6H
         jitter: PT30M
+    singleFlight:
+      waitTimeout: PT590S
+      rateLimitCooldown: PT30S
 
 # OpenTelemetry configuration
 otel:

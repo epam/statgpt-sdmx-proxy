@@ -1,7 +1,7 @@
 package com.epam.sdmxproxy.services.fixture;
 
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
-import com.epam.sdmxproxy.services.adapter.GenericRegistryAdapter;
+import com.epam.sdmxproxy.services.adapter.RawStructureFetcher;
 import com.epam.sdmxproxy.services.fixture.structure.MetadataAttributeUsageFolder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -92,8 +92,8 @@ class MetadataAttributeUsageFolderTest {
             }
             """;
 
-    private final GenericRegistryAdapter adapter = mock(GenericRegistryAdapter.class);
-    private final MetadataAttributeUsageFolder folder = new MetadataAttributeUsageFolder(adapter, MAPPER);
+    private final RawStructureFetcher fetcher = mock(RawStructureFetcher.class);
+    private final MetadataAttributeUsageFolder folder = new MetadataAttributeUsageFolder(fetcher, MAPPER);
 
     private byte[] bytes(String json) {
         return json.getBytes(StandardCharsets.UTF_8);
@@ -190,7 +190,7 @@ class MetadataAttributeUsageFolderTest {
     @SneakyThrows
     void shouldLeaveUsagesWhenMsdCannotBeResolved() {
         // No inline MSD; side-fetch returns nothing -> usages left in place (dropped later by converter).
-        when(adapter.getStructures(any())).thenReturn(null);
+        when(fetcher.fetch(any())).thenReturn(new byte[0]);
         String json = """
                 {
                   "data": {
