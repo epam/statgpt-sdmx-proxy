@@ -26,4 +26,9 @@ public class CacheProperties {
      * TTL configuration
      */
     private TtlProperties ttl = new TtlProperties();
+
+    /**
+     * Single-flight configuration for registry structure fetches
+     */
+    private SingleFlightProperties singleFlight = new SingleFlightProperties();
 }

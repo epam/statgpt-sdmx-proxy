@@ -17,6 +17,7 @@ import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationT
 import com.epam.sdmxproxy.configuration.data.fixture.DataFixtureType;
 import com.epam.sdmxproxy.configuration.data.fixture.FixtureConfiguration;
 import com.epam.sdmxproxy.exception.RateLimitExceededException;
+import com.epam.sdmxproxy.exception.RegistryResponseTimeoutException;
 import com.epam.sdmxproxy.exception.StructureFanOutException;
 import com.epam.sdmxproxy.exception.StructureListNotSupportedException;
 import com.epam.sdmxproxy.exception.StructureNotFoundException;
@@ -41,6 +42,7 @@ import com.epam.sdmxproxy.services.fixture.structure.StructureFixtureService;
 import com.epam.sdmxproxy.services.limit.LimitEmulationService;
 import com.epam.sdmxproxy.services.limit.truncate.SeriesLimitTruncatorProvider;
 import com.epam.sdmxproxy.services.translator.QueryTranslator;
+import com.epam.sdmxproxy.services.translator.Sdmx21QueryNormalizerImpl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
@@ -55,7 +57,9 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -65,6 +69,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -89,6 +94,7 @@ public class AdapterRouterImplTest {
     private QueryTranslator queryTranslator;
     private DataFixtureService dataFixtureService;
     private MatchAllKeyExpander matchAllKeyExpander;
+    private RawStructureFetcher rawStructureFetcher;
     private AdapterRouterImpl router;
 
     @BeforeEach
@@ -112,6 +118,7 @@ public class AdapterRouterImplTest {
         FilterNormalizer filterNormalizer = mock(FilterNormalizer.class);
         ObjectMapper objectMapper = new ObjectMapper();
         availabilityEmulatorProvider = mock(AvailabilityEmulatorProvider.class);
+        rawStructureFetcher = mock(RawStructureFetcher.class);
 
         router = new AdapterRouterImpl(
                 streamingDataConversionService,
@@ -134,16 +141,16 @@ public class AdapterRouterImplTest {
                 availabilityEmulatorProvider,
                 new AvailabilityQueryCanonicalizer(),
                 new NoDataFaultDetector(),
-                matchAllKeyExpander
+                matchAllKeyExpander,
+                rawStructureFetcher,
+                new Sdmx21QueryNormalizerImpl()
         );
     }
 
     @Test
     void getSdmxBeans_returnsEmptyBeans_whenRegistryReturnsNullStream() {
         TranslatedStructureQuery query = buildStructureQuery("TEST_REG");
-        when(cacheService.getRawStructures(any())).thenReturn(Optional.empty());
-        when(genericRegistryAdapter.getStructures(query)).thenReturn(null);
-        when(structureFixtureService.applyFixtures(any(), any(), any())).thenReturn(null);
+        when(rawStructureFetcher.fetch(query)).thenReturn(new byte[0]);
 
         SdmxBeans beans = router.getSdmxBeans(query);
 
@@ -152,7 +159,85 @@ public class AdapterRouterImplTest {
         assertTrue(beans.getDataflows().isEmpty());
         assertTrue(beans.getCodelists().isEmpty());
         verify(streamingStructureConversionService, never()).parseStructures(any(), any());
-        verify(cacheService, never()).putRawStructures(any(), any());
+        verify(structureFixtureService, never()).applyFixtures(any(), any(), any());
+    }
+
+    @Test
+    void getSdmxBeans_appliesFixturesAfterFetch() {
+        TranslatedStructureQuery query = buildStructureQuery("TEST_REG");
+        byte[] raw = "raw".getBytes(StandardCharsets.UTF_8);
+        byte[] fixed = "fixed".getBytes(StandardCharsets.UTF_8);
+        when(rawStructureFetcher.fetch(query)).thenReturn(raw);
+        List<byte[]> fixtureInputs = new ArrayList<>();
+        when(structureFixtureService.applyFixtures(any(), any(), any())).thenAnswer(invocation -> {
+            fixtureInputs.add(invocation.getArgument(0, InputStream.class).readAllBytes());
+            return new ByteArrayInputStream(fixed);
+        });
+        List<byte[]> parserInputs = new ArrayList<>();
+        when(streamingStructureConversionService.parseStructures(any(), any())).thenAnswer(invocation -> {
+            parserInputs.add(invocation.getArgument(0, InputStream.class).readAllBytes());
+            return new SdmxBeansImpl();
+        });
+
+        router.getSdmxBeans(query);
+
+        assertThat(fixtureInputs).containsExactly(raw);
+        assertThat(parserInputs).containsExactly(fixed);
+        verify(genericRegistryAdapter, never()).getStructures(any());
+    }
+
+    @Test
+    void getStructures_conversionUsesFetcher_neverAdapter() throws IOException {
+        TranslatedStructureQuery query = buildStructureQuery("TEST_REG");
+        when(cacheService.getReadyResponse(any())).thenReturn(Optional.empty());
+        when(rawStructureFetcher.fetch(query)).thenReturn("{}".getBytes(StandardCharsets.UTF_8));
+        when(structureFixtureService.applyFixtures(any(), any(), any())).thenReturn(new ByteArrayInputStream(new byte[0]));
+
+        router.getStructures(query).writeTo(new ByteArrayOutputStream());
+
+        verify(rawStructureFetcher, times(1)).fetch(query);
+        verify(genericRegistryAdapter, never()).getStructures(any());
+        verify(cacheService, times(1)).putReadyResponse(any(), any(byte[].class));
+    }
+
+    @Test
+    void getStructures_conversion_capturesUsagesFromRegistryBytes() throws IOException {
+        TranslatedStructureQuery query = buildXml30Query();
+        byte[] raw = "{\"registry\":true}".getBytes(StandardCharsets.UTF_8);
+        when(cacheService.getReadyResponse(any())).thenReturn(Optional.empty());
+        when(rawStructureFetcher.fetch(query)).thenReturn(raw);
+        when(metadataAttributeUsagePreserver.isEnabled(any())).thenReturn(true);
+        when(metadataAttributeUsagePreserver.capture(any())).thenReturn(Map.of());
+        when(structureFixtureService.applyFixtures(any(), any(), any())).thenReturn(new ByteArrayInputStream("{\"fixed\":true}".getBytes(StandardCharsets.UTF_8)));
+
+        router.getStructures(query).writeTo(new ByteArrayOutputStream());
+
+        verify(metadataAttributeUsagePreserver, times(1)).capture(aryEq(raw));
+    }
+
+    @Test
+    void getStructures_conversion_fetchTimeoutPropagatesUnwrapped() {
+        TranslatedStructureQuery query = buildStructureQuery("TEST_REG");
+        when(cacheService.getReadyResponse(any())).thenReturn(Optional.empty());
+        when(rawStructureFetcher.fetch(query)).thenThrow(new RegistryResponseTimeoutException("timed out"));
+
+        StreamingResponseBody body = router.getStructures(query);
+
+        assertThatThrownBy(() -> body.writeTo(new ByteArrayOutputStream())).isExactlyInstanceOf(RegistryResponseTimeoutException.class);
+    }
+
+    @Test
+    void getStructures_conversion_emptyFetch_writesNothing() throws IOException {
+        TranslatedStructureQuery query = buildStructureQuery("TEST_REG");
+        when(cacheService.getReadyResponse(any())).thenReturn(Optional.empty());
+        when(rawStructureFetcher.fetch(query)).thenReturn(new byte[0]);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        router.getStructures(query).writeTo(out);
+
+        assertThat(out.size()).isZero();
+        verify(streamingStructureConversionService, never()).convert(any(InputStream.class), any(), any(), any());
+        verify(cacheService, never()).putReadyResponse(any(), any(byte[].class));
     }
 
     @Test
@@ -243,7 +328,7 @@ public class AdapterRouterImplTest {
     void getStructures_xml30WithUsageMarker_invokesXmlInjectorNotJsonPreserver() throws IOException {
         TranslatedStructureQuery query = buildXml30Query();
         when(cacheService.getReadyResponse(any())).thenReturn(Optional.empty());
-        when(genericRegistryAdapter.getStructures(query)).thenReturn(new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)));
+        when(rawStructureFetcher.fetch(query)).thenReturn("{}".getBytes(StandardCharsets.UTF_8));
         when(metadataAttributeUsagePreserver.isEnabled(any())).thenReturn(true);
         Map<String, JsonNode> captured = Map.of("IMF.STA|DSD_QNEA|7.0.0", new ObjectMapper().createArrayNode());
         when(metadataAttributeUsagePreserver.capture(any())).thenReturn(captured);
@@ -348,7 +433,7 @@ public class AdapterRouterImplTest {
     void shouldAnswer404ForUnknownStatCanArtefact() {
         TranslatedStructureQuery query = buildStructureQuery();
         when(cacheService.getReadyResponse(any())).thenReturn(Optional.empty());
-        when(genericRegistryAdapter.getStructures(query)).thenThrow(new StructureNotFoundException("No Statistics Canada codelist 'CL_Geography'"));
+        when(rawStructureFetcher.fetch(query)).thenThrow(new StructureNotFoundException("No Statistics Canada codelist 'CL_Geography'"));
 
         StreamingResponseBody body = router.getStructures(query);
 
@@ -360,7 +445,7 @@ public class AdapterRouterImplTest {
     void shouldAnswer501ForStatCanCodelistList() {
         TranslatedStructureQuery query = buildStructureQuery();
         when(cacheService.getReadyResponse(any())).thenReturn(Optional.empty());
-        when(genericRegistryAdapter.getStructures(query)).thenThrow(new StructureListNotSupportedException("listing every codelist is not supported"));
+        when(rawStructureFetcher.fetch(query)).thenThrow(new StructureListNotSupportedException("listing every codelist is not supported"));
 
         StreamingResponseBody body = router.getStructures(query);
 
@@ -371,7 +456,7 @@ public class AdapterRouterImplTest {
     void shouldKeep429ForRateLimitOnStructureConversion() {
         TranslatedStructureQuery query = buildStructureQuery();
         when(cacheService.getReadyResponse(any())).thenReturn(Optional.empty());
-        when(genericRegistryAdapter.getStructures(query)).thenThrow(new RateLimitExceededException("rate limit"));
+        when(rawStructureFetcher.fetch(query)).thenThrow(new RateLimitExceededException("rate limit"));
 
         StreamingResponseBody body = router.getStructures(query);
 
@@ -382,7 +467,7 @@ public class AdapterRouterImplTest {
     void shouldKeep501ForUnsupportedConversion() {
         TranslatedStructureQuery query = buildStructureQuery();
         when(cacheService.getReadyResponse(any())).thenReturn(Optional.empty());
-        when(genericRegistryAdapter.getStructures(query)).thenReturn(new ByteArrayInputStream(new byte[0]));
+        when(rawStructureFetcher.fetch(query)).thenReturn("{}".getBytes(StandardCharsets.UTF_8));
         when(structureFixtureService.applyFixtures(any(), any(), any())).thenReturn(new ByteArrayInputStream(new byte[0]));
         doThrow(new UnsupportedConversionException("Json for SDMX 2.1 (JSON v1.0) is not currently supported")).when(streamingStructureConversionService).convert(any(java.io.InputStream.class), any(), any(), any());
 
@@ -393,7 +478,7 @@ public class AdapterRouterImplTest {
 
     private void stubStructures() {
         when(queryTranslator.translateStructureQuery(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(buildStructureQuery());
-        when(cacheService.getRawStructures(any())).thenReturn(Optional.of("<structures/>".getBytes(StandardCharsets.UTF_8)));
+        when(rawStructureFetcher.fetch(any())).thenReturn("<structures/>".getBytes(StandardCharsets.UTF_8));
         when(streamingStructureConversionService.parseStructures(any(), any())).thenReturn(new SdmxBeansImpl());
     }
 

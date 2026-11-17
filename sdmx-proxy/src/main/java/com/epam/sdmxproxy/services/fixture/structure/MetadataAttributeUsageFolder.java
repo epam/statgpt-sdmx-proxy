@@ -4,7 +4,7 @@ import com.epam.jsdmx.infomodel.sdmx30.SdmxUrn;
 import com.epam.jsdmx.infomodel.sdmx30.UrnComponents;
 import com.epam.sdmxproxy.common.data.Structure;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
-import com.epam.sdmxproxy.services.adapter.GenericRegistryAdapter;
+import com.epam.sdmxproxy.services.adapter.RawStructureFetcher;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +46,7 @@ public class MetadataAttributeUsageFolder {
     private static final String ATTRIBUTES = "attributes";
     private static final String USAGES = "metadataAttributeUsages";
 
-    private final GenericRegistryAdapter genericRegistryAdapter;
+    private final RawStructureFetcher rawStructureFetcher;
     private final ObjectMapper objectMapper;
 
     /**
@@ -159,11 +158,12 @@ public class MetadataAttributeUsageFolder {
                 .contentType(dsdQuery.getContentType())
                 .registryReturnFormat(dsdQuery.getRegistryReturnFormat())
                 .build();
-        try (InputStream in = genericRegistryAdapter.getStructures(msdQuery)) {
-            if (in == null) {
+        try {
+            byte[] bytes = rawStructureFetcher.fetch(msdQuery);
+            if (bytes.length == 0) {
                 return null;
             }
-            JsonNode root = objectMapper.readTree(in.readAllBytes());
+            JsonNode root = objectMapper.readTree(bytes);
             JsonNode arr = root.path(DATA).path(METADATA_STRUCTURES);
             return (arr.isArray() && !arr.isEmpty()) ? arr.get(0) : null;
         } catch (Exception e) {

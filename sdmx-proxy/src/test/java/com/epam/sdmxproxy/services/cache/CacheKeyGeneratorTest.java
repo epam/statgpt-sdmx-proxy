@@ -1,20 +1,28 @@
 package com.epam.sdmxproxy.services.cache;
 
+import com.epam.sdmxproxy.common.data.Structure;
 import com.epam.sdmxproxy.common.data.TranslatedAvailabilityQuery;
 import com.epam.sdmxproxy.common.data.TranslatedDataQuery;
+import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
+import com.epam.sdmxproxy.configuration.data.SdmxFormat;
+import com.epam.sdmxproxy.configuration.data.SdmxVersion;
+import com.epam.sdmxproxy.configuration.data.StructureEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguration;
 import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationConfiguration;
 import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationType;
 import com.epam.sdmxproxy.services.availability.AvailabilityQueryCanonicalizer;
+import com.epam.sdmxproxy.services.translator.Sdmx21QueryNormalizer;
+import com.epam.sdmxproxy.services.translator.Sdmx21QueryNormalizerImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -241,6 +249,104 @@ class CacheKeyGeneratorTest {
                 .filters(filters)
                 .mode("exact")
                 .contentType(MediaType.parseMediaType("application/vnd.sdmx.structure+json;version=2.0.0"))
+                .build();
+    }
+
+    // --- Canonical structure key (design 042) ---
+    // The real normalizer is used on purpose: these tests fail if the adapter's outbound
+    // normalization and the cache key drift apart.
+
+    private static final Sdmx21QueryNormalizer NORMALIZER = new Sdmx21QueryNormalizerImpl();
+
+    @Test
+    void generateStructureKey_sdmx21_plusAndLatestShareKey() {
+        assertThat(structureKey(structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "OECD", "DF", "+")))
+                .isEqualTo(structureKey(structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "OECD", "DF", "latest")));
+    }
+
+    @Test
+    void generateStructureKey_sdmx21_wildcardsShareKey() {
+        String all = structureKey(structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "all", "all", "all"));
+        assertThat(structureKey(structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "*", "*", "*"))).isEqualTo(all);
+        assertThat(structureKey(structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "", "", ""))).isEqualTo(all);
+        // Structure requires agency and id; only the version slot can be null.
+        assertThat(structureKey(structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "all", "all", null))).isEqualTo(all);
+    }
+
+    @Test
+    void generateStructureKey_sdmx21_dataconstraintAndContentconstraintShareKey() {
+        assertThat(structureKey(structureQuery(SdmxVersion.SDMX_2_1, "dataconstraint", "OECD", "CC", "1.0")))
+                .isEqualTo(structureKey(structureQuery(SdmxVersion.SDMX_2_1, "contentconstraint", "OECD", "CC", "1.0")));
+    }
+
+    @Test
+    void generateStructureKey_sdmx30_plusAndTildeDiffer() {
+        assertThat(structureKey(structureQuery(SdmxVersion.SDMX_3_0, "dataflow", "BIS", "DF", "+")))
+                .isNotEqualTo(structureKey(structureQuery(SdmxVersion.SDMX_3_0, "dataflow", "BIS", "DF", "~")));
+    }
+
+    @Test
+    void generateStructureKey_referencesAbsentAndNoneDiffer() {
+        TranslatedStructureQuery none = structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "OECD", "DF", "1.0");
+        TranslatedStructureQuery absent = structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "OECD", "DF", "1.0");
+        absent.setReferences(null);
+        assertThat(structureKey(none)).isNotEqualTo(structureKey(absent));
+    }
+
+    @Test
+    void generateStructureKey_agencyCasePreserved() {
+        assertThat(structureKey(structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "OECD", "DF", "1.0")))
+                .isNotEqualTo(structureKey(structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "oecd", "DF", "1.0")));
+    }
+
+    @Test
+    void generateStructureKey_differsBySdmxVersion() {
+        assertThat(structureKey(structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "OECD", "DF", "1.0")))
+                .isNotEqualTo(structureKey(structureQuery(SdmxVersion.SDMX_3_0, "dataflow", "OECD", "DF", "1.0")));
+    }
+
+    @Test
+    void generateStructureKey_differsByReturnFormat() {
+        TranslatedStructureQuery xml = structureQuery(SdmxVersion.SDMX_3_0, "dataflow", "BIS", "DF", "1.0");
+        TranslatedStructureQuery json = structureQuery(SdmxVersion.SDMX_3_0, "dataflow", "BIS", "DF", "1.0");
+        json.setRegistryReturnFormat(SdmxFormat.JSON_STRUCTURE_2_0_0);
+        assertThat(structureKey(xml)).isNotEqualTo(structureKey(json));
+    }
+
+    @Test
+    void generateStructureKey_differsByStructureUrl() {
+        TranslatedStructureQuery a = structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "OECD", "DF", "1.0");
+        TranslatedStructureQuery b = structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "OECD", "DF", "1.0");
+        b.getVersionConfiguration().getStructureEndpointConfig().setUrl("https://other.example.com/rest");
+        assertThat(structureKey(a)).isNotEqualTo(structureKey(b));
+    }
+
+    @Test
+    void generateResponseKey_usesCanonicalStructureKey() {
+        MediaType accept = MediaType.APPLICATION_JSON;
+        assertThat(CacheKeyGenerator.generateResponseKey(structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "OECD", "DF", "+"), accept, Map.of(), NORMALIZER))
+                .isEqualTo(CacheKeyGenerator.generateResponseKey(structureQuery(SdmxVersion.SDMX_2_1, "dataflow", "OECD", "DF", "latest"), accept, Map.of(), NORMALIZER));
+    }
+
+    private static String structureKey(TranslatedStructureQuery query) {
+        return CacheKeyGenerator.generateStructureKey(query, NORMALIZER);
+    }
+
+    private static TranslatedStructureQuery structureQuery(SdmxVersion sdmxVersion, String type, String agency, String id, String version) {
+        StructureEndpointConfiguration structureEndpoint = new StructureEndpointConfiguration();
+        structureEndpoint.setUrl("https://registry.example.com/rest");
+        VersionSpecificRegistryConfiguration versionConfig = new VersionSpecificRegistryConfiguration();
+        versionConfig.setSdmxVersion(sdmxVersion);
+        versionConfig.setStructureEndpointConfig(structureEndpoint);
+        RegistryConfiguration registryConfig = new RegistryConfiguration();
+        registryConfig.setName("TEST");
+        return TranslatedStructureQuery.builder()
+                .registryConfiguration(registryConfig)
+                .versionConfiguration(versionConfig)
+                .structure(new Structure(type, agency, id, version))
+                .references("none")
+                .detail("full")
+                .registryReturnFormat(SdmxFormat.XML_STRUCTURE_2_1)
                 .build();
     }
 
