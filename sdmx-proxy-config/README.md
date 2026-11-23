@@ -26,6 +26,7 @@ fields default to `false` when omitted.
 | `configs`                |   Yes    | List of registries the proxy can route to                                                                                                                              | Array of `RegistryConfiguration` |         |
 | `agencies`               |    No    | Explicit agency-to-registry routing overrides and sub-agency allowances                                                                                                | Array of `AgencyConfiguration`   | (empty) |
 | `structureFanOutEnabled` |    No    | When true, `GET /structure/{type}/*/.../...` is fanned out to every registry that supports the requested structure type and the parsed structures are merged into one response. Comma-separated agency IDs remain rejected with HTTP 501 | `true`, `false`                  | `false` |
+| `preheat`                |    No    | Dataflows the proxy keeps warm in the structure caches, grouped by client media type (design 044). Only registries whose structure endpoint sets `preheatEnabled` are warmed. Editing this list doesn't invalidate the caches. Preheat also needs the Spring property `sdmxproxy.preheat.enabled` (`SDMXPROXY_PREHEAT_ENABLED`), which is off by default | Array of `PreheatConfiguration`  | (empty) |
 
 ### `RegistryConfiguration`
 
@@ -75,6 +76,7 @@ Shared by every `*EndpointConfig` block below.
 | `supportedReferencesForAll` |    No    | `references` values the registry accepts when the resource id is a wildcard. Eurostat accepts `descendants` for one dataflow and rejects it for all dataflows. Null falls back to `supportedReferences` | e.g. `none` | (none) |
 | `referencesDowngrade` |    No    | What to send instead when the requested `references` value is outside the accepted set for the query's scope. A value absent from the map is a rejection | Map of `references` value to `references` value | (empty) |
 | `fixtures`            |    No    | Response patches applied before conversion/bypass, in order                                 | Array of `FixtureConfiguration<StructureFixtureType>`                                                  | (empty) |
+| `preheatEnabled`      |    No    | When true, dataflows of this registry listed in the root `preheat` section are kept warm, and their concept schemes and codelists are split into ready responses for the group's media type (design 044) | `true`, `false` | `false` |
 
 ### `DataEndpointConfiguration` (extends `EndpointConfiguration`)
 
@@ -241,6 +243,18 @@ regardless of the registry's own `name`.
 | `name`             |   Yes    | Agency ID as it appears in SDMX URLs (e.g. `IMF`, `BIS`, `ECB`)                |                  |         |
 | `primaryRegistry`  |   Yes    | Name of the `RegistryConfiguration` that serves this agency                    |                  |         |
 | `allowSubAgencies` |    No    | Allow routing of sub-agencies (dot-separated descendants) to the same registry | `true`, `false`  | `false` |
+
+### `PreheatConfiguration`
+
+One preheat group: the dataflows to keep warm for one client media type (design 044). The media
+type states the format and, through its `version` parameter, the SDMX version the client asks
+for. Preheat warms the dataflow and its descendants, and writes each concept scheme and codelist
+as a ready response in this media type. To warm a second format, add a second group.
+
+| Field       | Required | Description                                                                                          | Available Values                                                               | Default |
+|-------------|:--------:|------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|---------|
+| `mediaType` |   Yes    | Client `Accept` value to warm and split into. Must be an SDMX structure media type with a `version` parameter | e.g. `application/vnd.sdmx.structure+xml;version=2.1`, `application/vnd.sdmx.structure+json;version=2.0.0` |         |
+| `dataflows` |   Yes    | Dataflows to keep warm, as shown in the StatGPT admin dataset list. The version is sent as given, so `latest` matches a client `latest` request | Array of `AGENCY:ID(VERSION)`, e.g. `OECD.SDD.TPS:DSD_BATIS@DF_BATIS(latest)` |         |
 
 ### `FixtureConfiguration<T>`
 

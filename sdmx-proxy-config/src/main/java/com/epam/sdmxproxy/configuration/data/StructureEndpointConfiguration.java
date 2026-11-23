@@ -54,4 +54,11 @@ public class StructureEndpointConfiguration extends EndpointConfiguration {
      */
     private List<FixtureConfiguration<StructureFixtureType>> fixtures;
 
+    /**
+     * When true, dataflows of this registry listed in the root {@code preheat} section are kept
+     * warm, and their concept schemes and codelists are split into ready responses. Default
+     * false. See design 044.
+     */
+    private boolean preheatEnabled;
+
 }

@@ -105,6 +105,20 @@ sdmxproxy:
     singleFlight:
       waitTimeout: PT590S
       rateLimitCooldown: PT30S
+      emptyResultTtl: PT10M
+  # Structure cache preheat -- see design 044. Off by default so tests and E2E never call live registries.
+  preheat:
+    enabled: ${SDMXPROXY_PREHEAT_ENABLED:false}
+    startDelay: PT10S
+    configChangeDebounce: PT10S
+    upstreamInterval: PT4S
+    refreshInterval: PT1H
+    refreshAhead: PT12H
+    refreshSpread: PT6H
+    readyRefreshAhead: PT2H
+    maxRefreshesPerRun: 10
+    rateLimitBackoff: PT30S
+    maxAttemptsPerDataflow: 3
 
 # OpenTelemetry configuration
 otel:

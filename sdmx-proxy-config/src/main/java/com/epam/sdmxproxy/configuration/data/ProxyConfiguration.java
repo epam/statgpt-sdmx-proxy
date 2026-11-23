@@ -19,4 +19,11 @@ public class ProxyConfiguration {
      */
     private boolean structureFanOutEnabled;
 
+    /**
+     * Dataflows the proxy keeps warm in the structure caches, grouped by client media type.
+     * Only registries whose structure endpoint sets {@code preheatEnabled} are warmed. Null or
+     * empty disables preheat. See design 044.
+     */
+    private List<PreheatConfiguration> preheat;
+
 }

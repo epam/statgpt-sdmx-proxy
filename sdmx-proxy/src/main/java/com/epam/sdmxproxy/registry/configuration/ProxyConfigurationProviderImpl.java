@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -21,6 +22,7 @@ public class ProxyConfigurationProviderImpl implements ProxyConfigurationProvide
 
     private final Set<ProxyConfigurationExtractor> configExtractors;
     private final ObjectProvider<CacheService> cacheService;
+    private final ApplicationEventPublisher eventPublisher;
     @Value("${sdmxproxy.registry.config.source.type}")
     private ProxyConfigurationSourceType sourceType;
 
@@ -51,8 +53,15 @@ public class ProxyConfigurationProviderImpl implements ProxyConfigurationProvide
     public void setRuntimeOverride(ProxyConfiguration configuration) {
         ProxyConfiguration previous = runtimeOverride.getAndSet(configuration);
         if (!Objects.equals(previous, configuration)) {
-            log.info("Registry configuration changed; invalidating cache");
-            cacheService.getObject().invalidateAll();
+            // A preheat-only change keeps the caches -- see design 044, step 2.
+            boolean invalidate = !ProxyConfigurationComparator.sameForCaching(previous, configuration);
+            if (invalidate) {
+                log.info("Registry configuration changed; invalidating cache");
+                cacheService.getObject().invalidateAll();
+            } else {
+                log.info("Preheat configuration changed; caches kept");
+            }
+            eventPublisher.publishEvent(new ProxyConfigurationChangedEvent("runtime-override", invalidate));
         }
     }
 }

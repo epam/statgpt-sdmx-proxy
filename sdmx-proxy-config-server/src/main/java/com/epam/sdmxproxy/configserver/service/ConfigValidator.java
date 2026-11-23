@@ -3,6 +3,7 @@ package com.epam.sdmxproxy.configserver.service;
 import com.epam.sdmxproxy.configuration.data.AgencyConfiguration;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
+import com.epam.sdmxproxy.configuration.data.PreheatConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryAdapterType;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
@@ -13,11 +14,14 @@ import com.epam.sdmxproxy.configuration.data.VersionSpecificRegistryConfiguratio
 import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationConfiguration;
 import com.epam.sdmxproxy.configuration.data.availability.AvailabilityEmulationType;
 import com.epam.sdmxproxy.configuration.data.availability.UnfilteredAvailabilitySource;
+import org.springframework.http.InvalidMediaTypeException;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Component
@@ -26,6 +30,8 @@ public class ConfigValidator {
     private static final String DROPPED_NARROWING_REASON = "SDMX 2.1 REST has no c[] filter parameter, so every dimension narrowing moved out of the path key would be dropped silently and the registry would return the whole cube.";
 
     private static final String COMMA_COMPONENT_ID_REASON = "SDMX 2.1 availability accepts a single componentId or 'all', not the comma-joined dimension list this flag produces.";
+
+    private static final Pattern PREHEAT_DATAFLOW_PATTERN = Pattern.compile("^[^:()]+:[^:()]+\\([^:()]+\\)$");
 
     public void validate(ProxyConfiguration configuration) {
         if (configuration == null) {
@@ -76,6 +82,51 @@ public class ConfigValidator {
                 validateAvailabilityEmulation(registry.getName(), version, versionConfig);
             });
             validateAdapter(registry);
+        }
+
+        validatePreheat(configuration.getPreheat());
+    }
+
+    /**
+     * Rejects preheat groups that could never warm anything -- see design 044. Whether an agency
+     * routes to a registry is not checked: routing can change at runtime, and preheat skips
+     * unroutable entries with a warning.
+     */
+    private void validatePreheat(List<PreheatConfiguration> groups) {
+        if (groups == null) {
+            return;
+        }
+        for (PreheatConfiguration group : groups) {
+            if (group == null) {
+                throw new IllegalArgumentException("A preheat group must not be null");
+            }
+            validatePreheatMediaType(group.getMediaType());
+            if (group.getDataflows() == null || group.getDataflows().isEmpty()) {
+                throw new IllegalArgumentException("Preheat group for '" + group.getMediaType() + "' must list at least one dataflow");
+            }
+            for (String dataflow : group.getDataflows()) {
+                if (dataflow == null || !PREHEAT_DATAFLOW_PATTERN.matcher(dataflow).matches()) {
+                    throw new IllegalArgumentException("Preheat dataflow '" + dataflow + "' must have the form AGENCY:ID(VERSION), for example OECD.SDD.TPS:DSD_BATIS@DF_BATIS(latest)");
+                }
+            }
+        }
+    }
+
+    private void validatePreheatMediaType(String mediaType) {
+        if (mediaType == null || mediaType.isBlank()) {
+            throw new IllegalArgumentException("A preheat group must set mediaType");
+        }
+        MediaType parsed;
+        try {
+            parsed = MediaType.parseMediaType(mediaType);
+        } catch (InvalidMediaTypeException e) {
+            throw new IllegalArgumentException("Preheat mediaType '" + mediaType + "' is not a valid media type", e);
+        }
+        if (!parsed.getSubtype().contains("structure")) {
+            throw new IllegalArgumentException("Preheat mediaType '" + mediaType + "' must be an SDMX structure media type");
+        }
+        if (parsed.getParameter("version") == null) {
+            throw new IllegalArgumentException("Preheat mediaType '" + mediaType + "' must carry a version parameter, for example application/vnd.sdmx.structure+xml;version=2.1");
         }
     }
 

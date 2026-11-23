@@ -1,5 +1,6 @@
 package com.epam.sdmxproxy.services.cache;
 
+import java.time.Duration;
 import java.util.Optional;
 
 /**
@@ -92,5 +93,23 @@ public interface CacheService {
      * responses fetched under the previous configuration.
      */
     void invalidateAll();
+
+    /**
+     * Remaining time to live of a raw-structures entry, read without fetching the value. See
+     * design 044.
+     *
+     * @param key cache key for structures
+     * @return the remaining TTL, or empty when the entry is absent
+     */
+    Optional<Duration> getRawStructuresTimeToLive(String key);
+
+    /**
+     * Remaining time to live of a ready-response entry, read without fetching the value. See
+     * design 044.
+     *
+     * @param key cache key for the response
+     * @return the remaining TTL, or empty when the entry is absent
+     */
+    Optional<Duration> getReadyResponseTimeToLive(String key);
 
 }

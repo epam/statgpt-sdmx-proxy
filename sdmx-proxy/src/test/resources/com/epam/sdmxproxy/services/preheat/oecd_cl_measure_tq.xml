@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--NSI Web Service v10.11.8.0-->
+<message:Structure xmlns:message="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message" xmlns:structure="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure" xmlns:common="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common">
+  <message:Header>
+    <message:ID>IDREF7984</message:ID>
+    <message:Test>false</message:Test>
+    <message:Prepared>2026-11-18T11:06:01.4224877+01:00</message:Prepared>
+    <message:Sender id="Unknown" />
+    <message:Receiver id="Unknown" />
+  </message:Header>
+  <message:Structures>
+    <structure:Codelists>
+      <structure:Codelist id="CL_MEASURE_TQ" agencyID="OECD.STI.DEP" version="1.0" isFinal="true">
+        <common:Name xml:lang="en">Codelist for indicators (Truth Quest)</common:Name>
+        <common:Name xml:lang="fr">Codelist pour les indicateurs (Truth Quest)</common:Name>
+        <structure:Code id="TQ1">
+          <common:Annotations>
+            <common:Annotation id="@SDMX">
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">10</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Perception of the ability of adults to recognise false and misleading content online</common:Name>
+          <common:Name xml:lang="fr">Perception of the ability of adults to recognise false and misleading content online</common:Name>
+        </structure:Code>
+        <structure:Code id="TQ2">
+          <common:Annotations>
+            <common:Annotation id="@SDMX">
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">20</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Share of adults who feel democracy works well in their country</common:Name>
+          <common:Name xml:lang="fr">Share of adults who feel democracy works well in their country</common:Name>
+        </structure:Code>
+        <structure:Code id="TQ3">
+          <common:Annotations>
+            <common:Annotation id="@SDMX">
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">30</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Share of adults who feel it is important to tolerate opinions they disagree with</common:Name>
+          <common:Name xml:lang="fr">Share of adults who feel it is important to tolerate opinions they disagree with</common:Name>
+        </structure:Code>
+        <structure:Code id="TQ4">
+          <common:Annotations>
+            <common:Annotation id="@SDMX">
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">40</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Share of adults who feel politicians and the media collude to manipulate public opinion</common:Name>
+          <common:Name xml:lang="fr">Share of adults who feel politicians and the media collude to manipulate public opinion</common:Name>
+        </structure:Code>
+        <structure:Code id="TQ5">
+          <common:Annotations>
+            <common:Annotation id="@SDMX">
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">50</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Share of adults who feel democracy can function without independent journalism</common:Name>
+          <common:Name xml:lang="fr">Share of adults who feel democracy can function without independent journalism</common:Name>
+        </structure:Code>
+        <structure:Code id="TQ6">
+          <common:Annotations>
+            <common:Annotation id="@SDMX">
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">60</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Share of adults who feel AI will have a positive impact on their life</common:Name>
+          <common:Name xml:lang="fr">Share of adults who feel AI will have a positive impact on their life</common:Name>
+        </structure:Code>
+        <structure:Code id="TQ7">
+          <common:Annotations>
+            <common:Annotation id="@SDMX">
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">70</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Share of adults who avoid using websites, apps, or social media due to privacy concerns</common:Name>
+          <common:Name xml:lang="fr">Share of adults who avoid using websites, apps, or social media due to privacy concerns</common:Name>
+        </structure:Code>
+        <structure:Code id="TQ8">
+          <common:Annotations>
+            <common:Annotation id="@SDMX">
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">80</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Share of adults who feel they have control over their personal information when using websites, apps, or social media</common:Name>
+          <common:Name xml:lang="fr">Share of adults who feel they have control over their personal information when using websites, apps, or social media</common:Name>
+        </structure:Code>
+        <structure:Code id="TQ9">
+          <common:Annotations>
+            <common:Annotation id="@SDMX">
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">90</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Media consumption by source and frequency</common:Name>
+          <common:Name xml:lang="fr">Media consumption by source and frequency</common:Name>
+        </structure:Code>
+        <structure:Code id="TQ10">
+          <common:Annotations>
+            <common:Annotation id="@SDMX">
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">100</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Trust in information by media source</common:Name>
+          <common:Name xml:lang="fr">Trust in information by media source</common:Name>
+        </structure:Code>
+        <structure:Code id="TQ11">
+          <common:Annotations>
+            <common:Annotation id="@SDMX">
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">110</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Overall Truth Quest score</common:Name>
+          <common:Name xml:lang="fr">Overall Truth Quest score</common:Name>
+        </structure:Code>
+        <structure:Code id="TQ12">
+          <common:Annotations>
+            <common:Annotation id="@SDMX">
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">120</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Truth Quest score by type</common:Name>
+          <common:Name xml:lang="fr">Truth Quest score by type</common:Name>
+        </structure:Code>
+        <structure:Code id="TQ13">
+          <common:Annotations>
+            <common:Annotation id="@SDMX">
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">130</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Truth Quest score by theme</common:Name>
+          <common:Name xml:lang="fr">Truth Quest score by theme</common:Name>
+        </structure:Code>
+        <structure:Code id="TQ14">
+          <common:Annotations>
+            <common:Annotation id="@SDMX">
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">140</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Truth Quest score for AI-labelled content</common:Name>
+          <common:Name xml:lang="fr">Truth Quest score for AI-labelled content</common:Name>
+        </structure:Code>
+      </structure:Codelist>
+    </structure:Codelists>
+  </message:Structures>
+</message:Structure>

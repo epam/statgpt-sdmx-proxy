@@ -3,6 +3,7 @@ package com.epam.sdmxproxy.services.adapter;
 import com.epam.sdmxproxy.common.data.TranslatedStructureQuery;
 import com.epam.sdmxproxy.exception.RegistryCoolingDownException;
 import com.epam.sdmxproxy.exception.StructureConversionException;
+import com.epam.sdmxproxy.registry.configuration.ProxyConfigurationChangedEvent;
 import com.epam.sdmxproxy.services.cache.CacheKeyGenerator;
 import com.epam.sdmxproxy.services.cache.CacheService;
 import com.epam.sdmxproxy.services.cache.config.CacheProperties;
@@ -20,6 +21,7 @@ import io.opentelemetry.api.metrics.Meter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -45,6 +47,7 @@ public class RawStructureFetcherImpl implements RawStructureFetcher {
     private final Sdmx21QueryNormalizer sdmx21QueryNormalizer;
     private final Duration rateLimitCooldown;
     private final Cache<String, Boolean> coolingDown;
+    private final Cache<String, Boolean> emptyResults;
     private final LongCounter upstreamCounter;
     private final LongCounter cooldownRejectionCounter;
 
@@ -60,6 +63,7 @@ public class RawStructureFetcherImpl implements RawStructureFetcher {
         this.sdmx21QueryNormalizer = sdmx21QueryNormalizer;
         this.rateLimitCooldown = cacheProperties.getSingleFlight().getRateLimitCooldown();
         this.coolingDown = Caffeine.newBuilder().expireAfterWrite(rateLimitCooldown).ticker(ticker).build();
+        this.emptyResults = Caffeine.newBuilder().expireAfterWrite(cacheProperties.getSingleFlight().getEmptyResultTtl()).ticker(ticker).build();
         Meter meter = openTelemetry.getIfAvailable(OpenTelemetry::noop).getMeter("sdmx-proxy.single-flight");
         this.upstreamCounter = meter.counterBuilder("sdmxproxy.registry.structure_requests").setDescription("Structure requests actually sent to a registry").build();
         this.cooldownRejectionCounter = meter.counterBuilder("sdmxproxy.singleflight.cooldown_rejections").setDescription("Structure fetches refused during a rate-limit cooldown").build();
@@ -73,8 +77,29 @@ public class RawStructureFetcherImpl implements RawStructureFetcher {
             log.debug("Cache hit for raw structures: {}", key);
             return cached.get();
         }
+        if (emptyResults.getIfPresent(key) != null) {
+            log.debug("Empty registry answer remembered for raw structures: {}", key);
+            return new byte[0];
+        }
         throwIfCoolingDown(key);
         return requestCoalescer.coalesce(key, () -> load(query, key));
+    }
+
+    @Override
+    public byte[] refresh(TranslatedStructureQuery query) {
+        String key = CacheKeyGenerator.generateStructureKey(query, sdmx21QueryNormalizer);
+        // Keeps the cooldown: a key that just ended in 429 must not spend more quota (design 044).
+        throwIfCoolingDown(key);
+        return requestCoalescer.coalesce(key, () -> loadFromRegistry(query, key));
+    }
+
+    /**
+     * Forgets remembered empty answers: a configuration change can re-point a registry, and the
+     * next request should ask it again.
+     */
+    @EventListener(ProxyConfigurationChangedEvent.class)
+    public void onConfigurationChanged() {
+        emptyResults.invalidateAll();
     }
 
     private byte[] load(TranslatedStructureQuery query, String key) {
@@ -86,16 +111,21 @@ public class RawStructureFetcherImpl implements RawStructureFetcher {
             return cached.get();
         }
         throwIfCoolingDown(key);
+        return loadFromRegistry(query, key);
+    }
 
+    private byte[] loadFromRegistry(TranslatedStructureQuery query, String key) {
         String registryName = query.getRegistryConfiguration().getName();
         upstreamCounter.add(1, Attributes.of(REGISTRY, registryName));
         log.info("Single-flight: calling registry {} for {}", registryName, key);
         try (InputStream in = genericRegistryAdapter.getStructures(query)) {
-            if (in == null) {
+            byte[] bytes = in == null ? new byte[0] : in.readAllBytes();
+            if (bytes.length == 0) {
+                // Remembered briefly instead of stored as a 24-hour raw entry (design 044).
                 log.debug("Registry returned no body (e.g. HTTP 204) for raw structures: {}", key);
-                return new byte[0];
+                emptyResults.put(key, Boolean.TRUE);
+                return bytes;
             }
-            byte[] bytes = in.readAllBytes();
             cacheService.putRawStructures(key, bytes);
             return bytes;
         } catch (FeignException e) {

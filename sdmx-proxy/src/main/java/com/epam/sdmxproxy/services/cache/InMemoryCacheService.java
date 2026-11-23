@@ -129,4 +129,18 @@ public class InMemoryCacheService implements CacheService {
         log.info("Cache invalidated: registry configuration changed");
     }
 
+    @Override
+    public Optional<Duration> getRawStructuresTimeToLive(String key) {
+        return timeToLive(rawStructuresCache, key);
+    }
+
+    @Override
+    public Optional<Duration> getReadyResponseTimeToLive(String key) {
+        return timeToLive(readyResponseCache, key);
+    }
+
+    private static Optional<Duration> timeToLive(Cache<String, byte[]> cache, String key) {
+        return cache.policy().expireAfterWrite().flatMap(expiration -> expiration.ageOf(key).map(age -> expiration.getExpiresAfter().minus(age)));
+    }
+
 }
