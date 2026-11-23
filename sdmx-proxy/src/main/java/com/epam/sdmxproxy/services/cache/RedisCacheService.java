@@ -1,5 +1,6 @@
 package com.epam.sdmxproxy.services.cache;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -173,6 +174,33 @@ public class RedisCacheService implements CacheService {
             log.info("Cache invalidated: registry configuration changed, {} keys deleted", deleted);
         } catch (Exception e) {
             log.error("Failed to invalidate Redis cache after a configuration change", e);
+            throw new CacheUnavailableException("Redis cache operation failed", e);
+        }
+    }
+
+    @Override
+    public Optional<Duration> getRawStructuresTimeToLive(String key) {
+        return timeToLive(rawStructuresRedisTemplate, RAW_STRUCTURES_PREFIX + key);
+    }
+
+    @Override
+    public Optional<Duration> getReadyResponseTimeToLive(String key) {
+        return timeToLive(readyResponseRedisTemplate, READY_RESPONSE_PREFIX + key);
+    }
+
+    /**
+     * Reads the TTL with {@code PTTL}, without downloading the value. Redis answers {@code -2}
+     * for a missing key and {@code -1} for a key without expiry.
+     */
+    private static Optional<Duration> timeToLive(RedisTemplate<String, byte[]> template, String redisKey) {
+        try {
+            Long millis = template.getExpire(redisKey, TimeUnit.MILLISECONDS);
+            if (millis == null || millis == -2) {
+                return Optional.empty();
+            }
+            return Optional.of(millis == -1 ? Duration.ofDays(3650) : Duration.ofMillis(millis));
+        } catch (Exception e) {
+            log.error("Error reading TTL from Redis cache: {}", redisKey, e);
             throw new CacheUnavailableException("Redis cache operation failed", e);
         }
     }

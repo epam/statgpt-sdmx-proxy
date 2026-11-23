@@ -3,6 +3,8 @@ package com.epam.sdmxproxy.registry.configuration.extractor;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfigurationSourceType;
 import com.epam.sdmxproxy.exception.ConfigurationLoadException;
+import com.epam.sdmxproxy.registry.configuration.ProxyConfigurationChangedEvent;
+import com.epam.sdmxproxy.registry.configuration.ProxyConfigurationComparator;
 import com.epam.sdmxproxy.registry.configuration.configserver.ConfigServerFeignApi;
 import com.epam.sdmxproxy.registry.configuration.configserver.ConfigServerProperties;
 import com.epam.sdmxproxy.services.cache.CacheService;
@@ -12,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -29,6 +32,7 @@ public class ConfigServerConfigExtractor implements ProxyConfigurationExtractor 
     private final ConfigServerProperties properties;
     private final ObjectMapper objectMapper;
     private final ObjectProvider<CacheService> cacheService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final AtomicReference<ProxyConfiguration> cachedConfig = new AtomicReference<>();
 
@@ -62,8 +66,15 @@ public class ConfigServerConfigExtractor implements ProxyConfigurationExtractor 
             }
             ProxyConfiguration previous = cachedConfig.getAndSet(config);
             if (!Objects.equals(previous, config)) {
-                log.info("Registry configuration changed; invalidating cache");
-                cacheService.getObject().invalidateAll();
+                // A preheat-only change keeps the caches -- see design 044, step 2.
+                boolean invalidate = !ProxyConfigurationComparator.sameForCaching(previous, config);
+                if (invalidate) {
+                    log.info("Registry configuration changed; invalidating cache");
+                    cacheService.getObject().invalidateAll();
+                } else {
+                    log.info("Preheat configuration changed; caches kept");
+                }
+                eventPublisher.publishEvent(new ProxyConfigurationChangedEvent("config-server", invalidate));
             }
             log.debug("Successfully fetched configuration from config server");
         } catch (Exception e) {

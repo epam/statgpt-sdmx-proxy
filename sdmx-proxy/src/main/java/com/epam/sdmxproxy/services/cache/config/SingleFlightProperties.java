@@ -22,4 +22,10 @@ public class SingleFlightProperties {
      * calling the registry.
      */
     private Duration rateLimitCooldown = Duration.ofSeconds(30);
+
+    /**
+     * How long an empty registry answer (for example HTTP 204) is served without calling the
+     * registry again. Local to each instance. See design 044.
+     */
+    private Duration emptyResultTtl = Duration.ofMinutes(10);
 }

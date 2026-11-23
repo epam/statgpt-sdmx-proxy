@@ -1,11 +1,13 @@
 package com.epam.sdmxproxy.registry.configuration;
 
+import com.epam.sdmxproxy.configuration.data.PreheatConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
 import com.epam.sdmxproxy.services.cache.CacheService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Set;
@@ -23,15 +25,17 @@ import static org.mockito.Mockito.when;
 class ProxyConfigurationProviderImplTest {
 
     private CacheService cacheService;
+    private ApplicationEventPublisher eventPublisher;
     private ProxyConfigurationProviderImpl sut;
 
     @BeforeEach
     @SuppressWarnings("unchecked")
     void setUp() {
         cacheService = mock(CacheService.class);
+        eventPublisher = mock(ApplicationEventPublisher.class);
         ObjectProvider<CacheService> cacheServiceProvider = mock(ObjectProvider.class);
         when(cacheServiceProvider.getObject()).thenReturn(cacheService);
-        sut = new ProxyConfigurationProviderImpl(Set.of(), cacheServiceProvider);
+        sut = new ProxyConfigurationProviderImpl(Set.of(), cacheServiceProvider, eventPublisher);
     }
 
     @Test
@@ -56,6 +60,29 @@ class ProxyConfigurationProviderImplTest {
     void shouldNotInvalidateCacheWhenOverrideStaysNull() {
         sut.setRuntimeOverride(null);
         verify(cacheService, never()).invalidateAll();
+    }
+
+    @Test
+    void shouldKeepCachesOnPreheatOnlyChange() {
+        sut.setRuntimeOverride(configuration("OECD"));
+        verify(cacheService, times(1)).invalidateAll();
+
+        ProxyConfiguration withPreheat = configuration("OECD");
+        PreheatConfiguration group = new PreheatConfiguration();
+        group.setMediaType("application/vnd.sdmx.structure+xml;version=2.1");
+        group.setDataflows(List.of("OECD.SDD.TPS:DSD_BATIS@DF_BATIS(latest)"));
+        withPreheat.setPreheat(List.of(group));
+        sut.setRuntimeOverride(withPreheat);
+
+        verify(cacheService, times(1)).invalidateAll();
+        verify(eventPublisher).publishEvent(new ProxyConfigurationChangedEvent("runtime-override", false));
+    }
+
+    @Test
+    void shouldPublishInvalidatingEventOnRegistryChange() {
+        sut.setRuntimeOverride(configuration("ESTAT"));
+
+        verify(eventPublisher).publishEvent(new ProxyConfigurationChangedEvent("runtime-override", true));
     }
 
     private ProxyConfiguration configuration(String registryName) {

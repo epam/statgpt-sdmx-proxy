@@ -3,6 +3,7 @@ package com.epam.sdmxproxy.configserver.service;
 import com.epam.sdmxproxy.configuration.data.AgencyConfiguration;
 import com.epam.sdmxproxy.configuration.data.AvailabilityEndpointConfiguration;
 import com.epam.sdmxproxy.configuration.data.DataEndpointConfiguration;
+import com.epam.sdmxproxy.configuration.data.PreheatConfiguration;
 import com.epam.sdmxproxy.configuration.data.ProxyConfiguration;
 import com.epam.sdmxproxy.configuration.data.RegistryAdapterType;
 import com.epam.sdmxproxy.configuration.data.RegistryConfiguration;
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -299,6 +301,70 @@ class ConfigValidatorTest {
     void statCanAdapterWithJsonFormatFails() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> validator.validate(configWith(statCan(SdmxVersion.SDMX_2_1, "https://example.com/", List.of(SdmxFormat.XML_STRUCTURE_2_1, SdmxFormat.JSON_STRUCTURE_2_0_0)))));
         assertTrue(e.getMessage().contains("XML_STRUCTURE_2_1"));
+    }
+
+    @Test
+    void validPreheatPasses() {
+        assertDoesNotThrow(() -> validator.validate(configWithPreheat(preheat(XML_21, List.of("OECD.SDD.TPS:DSD_BATIS@DF_BATIS(latest)")))));
+    }
+
+    @Test
+    void nullPreheatGroupFails() {
+        List<PreheatConfiguration> groups = new ArrayList<>();
+        groups.add(null);
+        ProxyConfiguration config = validConfig();
+        config.setPreheat(groups);
+
+        assertThrows(IllegalArgumentException.class, () -> validator.validate(config));
+    }
+
+    @Test
+    void blankPreheatMediaTypeFails() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> validator.validate(configWithPreheat(preheat(" ", List.of("OECD:DF_X(1.0)")))));
+        assertTrue(e.getMessage().contains("mediaType"));
+    }
+
+    @Test
+    void nonStructurePreheatMediaTypeFails() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> validator.validate(configWithPreheat(preheat("application/vnd.sdmx.data+xml;version=3.0.0", List.of("OECD:DF_X(1.0)")))));
+        assertTrue(e.getMessage().contains("structure"));
+    }
+
+    @Test
+    void preheatMediaTypeWithoutVersionFails() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> validator.validate(configWithPreheat(preheat("application/vnd.sdmx.structure+xml", List.of("OECD:DF_X(1.0)")))));
+        assertTrue(e.getMessage().contains("version"));
+    }
+
+    @Test
+    void emptyPreheatDataflowsFails() {
+        assertThrows(IllegalArgumentException.class, () -> validator.validate(configWithPreheat(preheat(XML_21, List.of()))));
+    }
+
+    @Test
+    void malformedPreheatDataflowFails() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> validator.validate(configWithPreheat(preheat(XML_21, List.of("OECD:DF_X")))));
+        assertTrue(e.getMessage().contains("AGENCY:ID(VERSION)"));
+    }
+
+    @Test
+    void preheatDataflowWithExtraColonFails() {
+        assertThrows(IllegalArgumentException.class, () -> validator.validate(configWithPreheat(preheat(XML_21, List.of("OECD:SUB:DF_X(1.0)")))));
+    }
+
+    private static final String XML_21 = "application/vnd.sdmx.structure+xml;version=2.1";
+
+    private ProxyConfiguration configWithPreheat(PreheatConfiguration group) {
+        ProxyConfiguration config = validConfig();
+        config.setPreheat(List.of(group));
+        return config;
+    }
+
+    private PreheatConfiguration preheat(String mediaType, List<String> dataflows) {
+        PreheatConfiguration group = new PreheatConfiguration();
+        group.setMediaType(mediaType);
+        group.setDataflows(dataflows);
+        return group;
     }
 
     private RegistryConfiguration statCan(SdmxVersion version, String catalogUrl, List<SdmxFormat> structureFormats) {

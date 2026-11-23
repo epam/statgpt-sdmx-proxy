@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -33,5 +34,24 @@ class InMemoryCacheServiceTest {
         assertTrue(sut.getRawStructures("structure:dataflow:ESTAT").isEmpty(), "raw structures must be dropped");
         assertTrue(sut.getReadyResponse("response:structure:dataflow:ESTAT").isEmpty(), "ready responses must be dropped");
         assertTrue(sut.getLimitEmulationShrinkFilters("limit_emu:ESTAT").isEmpty(), "limit emulation entries must be dropped");
+    }
+
+    @Test
+    void timeToLiveShouldBeEmptyForMissingEntries() {
+        assertTrue(sut.getRawStructuresTimeToLive("structure:missing").isEmpty());
+        assertTrue(sut.getReadyResponseTimeToLive("response:missing").isEmpty());
+    }
+
+    @Test
+    void timeToLiveShouldStayWithinConfiguredTtl() {
+        byte[] payload = "payload".getBytes(StandardCharsets.UTF_8);
+        sut.putRawStructures("structure:dataflow:OECD", payload);
+        sut.putReadyResponse("response:structure:dataflow:OECD", payload);
+
+        Duration rawTtl = sut.getRawStructuresTimeToLive("structure:dataflow:OECD").orElseThrow();
+        Duration readyTtl = sut.getReadyResponseTimeToLive("response:structure:dataflow:OECD").orElseThrow();
+
+        assertTrue(rawTtl.compareTo(Duration.ofHours(24)) <= 0 && rawTtl.compareTo(Duration.ofHours(23)) > 0, "raw TTL close to 24h, was " + rawTtl);
+        assertTrue(readyTtl.compareTo(Duration.ofHours(6)) <= 0 && readyTtl.compareTo(Duration.ofHours(5)) > 0, "ready TTL close to 6h, was " + readyTtl);
     }
 }

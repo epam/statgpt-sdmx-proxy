@@ -190,6 +190,88 @@ class RawStructureFetcherImplTest {
         verify(cache, never()).putRawStructures(any(), any());
     }
 
+    // --- design 044: negative cache and refresh ---
+
+    @Test
+    void fetch_emptyAnswer_servedFromNegativeCacheWithinTtl() {
+        RawStructureFetcherImpl fetcher = fetcher(new InMemoryCacheService(properties));
+        when(adapter.getStructures(any())).thenReturn(null);
+
+        assertThat(fetcher.fetch(query("DSD_A"))).isEmpty();
+        awaitCondition(() -> coalescerInFlight() == 0);
+        assertThat(fetcher.fetch(query("DSD_A"))).isEmpty();
+
+        verify(adapter, times(1)).getStructures(any());
+    }
+
+    @Test
+    void fetch_zeroByteBody_goesToNegativeCacheNotRawCache() {
+        CacheService cache = mock(CacheService.class);
+        when(cache.getRawStructures(anyString())).thenReturn(Optional.empty());
+        when(adapter.getStructures(any())).thenReturn(new ByteArrayInputStream(new byte[0]));
+        RawStructureFetcherImpl fetcher = fetcher(cache);
+
+        assertThat(fetcher.fetch(query("DSD_A"))).isEmpty();
+        awaitCondition(() -> coalescerInFlight() == 0);
+        assertThat(fetcher.fetch(query("DSD_A"))).isEmpty();
+
+        verify(cache, never()).putRawStructures(any(), any());
+        verify(adapter, times(1)).getStructures(any());
+    }
+
+    @Test
+    void fetch_emptyAnswer_refetchedAfterTtl() {
+        RawStructureFetcherImpl fetcher = fetcher(new InMemoryCacheService(properties));
+        when(adapter.getStructures(any())).thenReturn(null).thenReturn(new ByteArrayInputStream(bytes("dsd-a")));
+
+        assertThat(fetcher.fetch(query("DSD_A"))).isEmpty();
+        awaitCondition(() -> coalescerInFlight() == 0);
+        ticker.advance(properties.getSingleFlight().getEmptyResultTtl().plusSeconds(1));
+
+        assertThat(fetcher.fetch(query("DSD_A"))).isEqualTo(bytes("dsd-a"));
+        verify(adapter, times(2)).getStructures(any());
+    }
+
+    @Test
+    void onConfigurationChanged_clearsNegativeCache() {
+        RawStructureFetcherImpl fetcher = fetcher(new InMemoryCacheService(properties));
+        when(adapter.getStructures(any())).thenReturn(null).thenReturn(new ByteArrayInputStream(bytes("dsd-a")));
+
+        assertThat(fetcher.fetch(query("DSD_A"))).isEmpty();
+        awaitCondition(() -> coalescerInFlight() == 0);
+        fetcher.onConfigurationChanged();
+
+        assertThat(fetcher.fetch(query("DSD_A"))).isEqualTo(bytes("dsd-a"));
+    }
+
+    @Test
+    void refresh_bypassesCacheAndReplacesEntry() {
+        CacheService cache = new InMemoryCacheService(properties);
+        RawStructureFetcherImpl fetcher = fetcher(cache);
+        TranslatedStructureQuery query = query("DSD_A");
+        when(adapter.getStructures(any())).thenReturn(new ByteArrayInputStream(bytes("old"))).thenReturn(new ByteArrayInputStream(bytes("new")));
+        fetcher.fetch(query);
+        awaitCondition(() -> coalescerInFlight() == 0);
+
+        assertThat(fetcher.refresh(query)).isEqualTo(bytes("new"));
+        awaitCondition(() -> coalescerInFlight() == 0);
+
+        assertThat(cache.getRawStructures(key(query)).orElseThrow()).isEqualTo(bytes("new"));
+        verify(adapter, times(2)).getStructures(any());
+    }
+
+    @Test
+    void refresh_respectsCooldown() {
+        RawStructureFetcherImpl fetcher = fetcher(new InMemoryCacheService(properties));
+        TranslatedStructureQuery query = query("DSD_A");
+        FeignException tooManyRequests = feignException(429, Map.of());
+        when(adapter.getStructures(any())).thenThrow(tooManyRequests);
+        assertThatThrownBy(() -> fetcher.fetch(query)).isSameAs(tooManyRequests);
+
+        assertThatThrownBy(() -> fetcher.refresh(query)).isInstanceOf(RegistryCoolingDownException.class);
+        verify(adapter, times(1)).getStructures(any());
+    }
+
     @Test
     void fetch_exhausted429_entersCooldown() {
         RawStructureFetcherImpl fetcher = fetcher(new InMemoryCacheService(properties));

@@ -191,7 +191,8 @@
               "agencyscheme",
               "metadatastructure",
               "metadataflow"
-            ]
+            ],
+            "preheatEnabled": true
           },
           "dataEndpointConfig": {
             "url": "https://sdmx.oecd.org/public/rest/data/",
@@ -448,5 +449,31 @@
       "allowSubAgencies": false
     }
   ],
-  "structureFanOutEnabled": true
+  "structureFanOutEnabled": true,
+  "preheat": [
+    {
+      "mediaType": "application/vnd.sdmx.structure+xml;version=2.1",
+      "dataflows": [
+        "OECD.SDD.TPS:DSD_BATIS@DF_BATIS(latest)",
+        "OECD.SDD.STES:DSD_STES@DF_BTS(latest)",
+        "OECD.SDD.STES:DSD_STES@DF_CS(latest)",
+        "OECD.WISE.WDP:DSD_HSL@DF_HSL_CWB(latest)",
+        "OECD.ECO.MAD:DSD_EO@DF_EO(latest)",
+        "OECD.CFE.EDS:DSD_LA_EXTREME_TEMP_DDOWN@DF_EXTREME_TEMP_DDOWN(latest)",
+        "OECD.DAF.INV:DSD_FDI@DF_FDI_INC_IND(latest)",
+        "OECD.EDU.IMEP:DSD_EAG_UOE_FIN@DF_UOE_FIN_INDIC_SOURCE_NATURE(latest)",
+        "OECD.GOV.GIP:DSD_GOV_TDG_SPS_GPC@DF_GOV_GPC_2023(latest)",
+        "OECD.SDD.TPS:DSD_SDBSBD_ISIC4@DF_BD_API(latest)",
+        "OECD.ECO.MAD:DSD_EO_LTB@DF_EO_LTB(latest)",
+        "OECD.STI.PIE:DSD_PATENTS@DF_PATENTS(latest)",
+        "OECD.CFE.EDS:DSD_LA_DEMO_POP_AGE_DDOWN@DF_POP_AGE_DDOWN(latest)",
+        "OECD.TAD.TPD:DSD_STRI@DF_STRI_MAIN(latest)",
+        "OECD.EDU.IMEP:DSD_EAG_UOE_NON_FIN_STUD@DF_UOE_NF_STUD_DB(latest)",
+        "OECD.EDU.ECS:DSD_TALIS@DF_TALIS(latest)",
+        "OECD.STI.PIE:DSD_TIM_2025@DF_TIM_2025(latest)",
+        "OECD.STI.DEP:DSD_TQ_SURVEY@DF_TRUTH_QUEST(latest)",
+        "OECD.SDD.TPS:DSD_BIMTS@DF_BIMTS_HS2017_2D(latest)"
+      ]
+    }
+  ]
 }
