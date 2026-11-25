@@ -45,6 +45,8 @@ out/
 .cursor/
 
 ### Claude Code ###
-.claude/
-CLAUDE.md
+# Track CLAUDE.md and .claude/skills/ (the shared harness); ignore per-machine state.
+.claude/*
+!.claude/skills/
+CLAUDE.local.md
 

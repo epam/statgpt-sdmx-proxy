@@ -1,6 +1,6 @@
 # End-to-End Test Module Design for sdmx-proxy
 
-> **Status:** Superseded by [design 019](../designs/019-e2e-against-review-env/DESIGN.md).
+> **Status:** Superseded by [design 019](../../openspec/changes/archive/2026-05-12-019-e2e-against-review-env/design.md).
 > Retained for historical context only. The Testcontainers / `GenericContainer` /
 > `HttpWaitStrategy` / logs-gate model described below no longer reflects the
 > code: the test module now runs against an externally provided base URL

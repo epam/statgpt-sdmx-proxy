@@ -1,0 +1,3 @@
+schema: spec-driven
+created: 2026-04-27
+goal: "Design: Heuristic `limit` emulation for registries that do not support it (Issue #40)"

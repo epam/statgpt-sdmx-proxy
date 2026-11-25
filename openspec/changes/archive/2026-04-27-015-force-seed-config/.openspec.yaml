@@ -1,0 +1,3 @@
+schema: spec-driven
+created: 2026-04-27
+goal: "Design: Force Seed Config via `CONFIG_SERVER_FORCE_SEED`"

@@ -6,7 +6,7 @@ generation and [RestAssured](https://rest-assured.io/) for HTTP assertions.
 
 The tests do **not** start the proxy. They assume the proxy is already running
 at a base URL supplied externally — either a local `bootRun` or a deployed
-review environment (see [design 019](../docs/designs/019-e2e-against-review-env/DESIGN.md)).
+review environment (see [design 019](../openspec/changes/archive/2026-05-12-019-e2e-against-review-env/design.md)).
 
 ## Prerequisites
 

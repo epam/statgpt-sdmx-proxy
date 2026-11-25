@@ -109,7 +109,7 @@ Shared by every `*EndpointConfig` block below.
 ### `AvailabilityEmulationConfiguration`
 
 Only consulted when `availabilityEndpointConfig.availabilityEnabled` is `false`. See
-`docs/designs/040-availability-emulation/DESIGN.md`.
+`openspec/changes/archive/2026-10-15-040-availability-emulation/design.md`.
 
 The emulation splits on whether the request narrows anything. A request with no narrowing at all
 (absent / `all` / `*` / all-wildcard key **and** no filters) may be answered from the registry's
