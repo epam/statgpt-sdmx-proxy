@@ -1,0 +1,3 @@
+schema: spec-driven
+created: 2026-05-21
+goal: "`all` keyword alias for `*` on the structure endpoint"

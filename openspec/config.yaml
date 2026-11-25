@@ -1,0 +1,78 @@
+schema: spec-driven
+
+context: |
+  Language: en. Write every artifact in English. Keep OpenSpec structural headings and the
+  SHALL/MUST keywords in English. Never use Cyrillic text or emojis in any artifact.
+
+  Project: SDMX API Proxy for the StatGPT platform. Java 25, Spring Boot 4.0, Gradle. It exposes
+  one SDMX 3.0 REST API, routes requests to external SDMX registries (SDMX 2.1 or 3.0: IMF, BIS,
+  OECD, Eurostat, StatCan), and converts between SDMX-ML, SDMX-JSON and SDMX-CSV.
+  Process rules: CLAUDE.md and PROCESS.md at the repo root. Read both before authoring or
+  implementing.
+
+  Modules: sdmx-proxy (the app), sdmx-proxy-config (pure config data classes, shared with E2E),
+  sdmx-proxy-config-server, sdmx-proxy-e2e (E2E suites against live registries).
+  Key entry points: QueryTranslatorImpl, AdapterRouterImpl, GenericRegistryAdapterImpl,
+  LimitEmulationServiceImpl, sdmx_registries_config.json.
+
+  Code style: Lombok (@Data, @Builder, @RequiredArgsConstructor, @Slf4j), constructor injection
+  only, Log4j2, API interface + controller implementation, braces on every if/else/for/while,
+  method calls and initializers kept on one line unless the argument list is unwieldy.
+
+  Sources of truth: the SDMX REST 2.2.0 and SDMX-JSON 2.0.0 standards, and the sdmx-core source
+  at the version in gradle.properties (sdmx_core_version). Never assume sdmx-core implements the
+  spec correctly; verify against the spec. Local copies of these, if any, are listed in
+  CLAUDE.local.md and are read-only.
+
+  Archived changes before 2026-11-25 were migrated from docs/designs/; they have no delta specs.
+  Main specs under openspec/specs/ grow one capability at a time as changes touch them.
+
+rules:
+  proposal:
+    - State what is out of scope.
+    - Name the registries affected (or "none") and whether the change is registry-facing,
+      meaning it changes a request sent to a registry or the handling of a registry response.
+    - "Name capabilities in kebab-case after the behavior area, for example data-query,
+      structure-query, availability, limit-emulation, structure-cache, registry-routing,
+      format-conversion, response-fixtures, proxy-configuration. Reuse an existing capability
+      under openspec/specs/ before creating a new one."
+  specs:
+    - Write requirements as observable proxy behavior at the REST boundary (request in, response
+      out, registry calls made), not as class names.
+    - Every requirement has at least one scenario; each scenario names a concrete request
+      (path, query, Accept header) and the expected response or registry call.
+    - When a defect exposes behavior no spec states, add the requirement in this change.
+  design:
+    - "Keep these sections when they apply: Context, Problem (with root cause and the failing
+      code path for bugs), Current architecture, Solution (with rejected alternatives),
+      Files affected (table: file, New or Modified, description), No changes required,
+      Edge cases (numbered), Verification (unit tests by class and method, manual curl
+      commands, E2E impact), SDMX standard references, Open questions."
+    - Verify every file path, class, method and import against the code before writing it.
+      Cite file:line for claims about current behavior.
+    - Code snippets follow the project code style and must compile against real package paths.
+    - Never fabricate sdmx-core behavior; read the sdmx-core source or state the uncertainty.
+    - Put PlantUML diagrams as separate .puml files in the change folder.
+  tasks:
+    - Order tasks by dependency. Each task names the file(s) it touches.
+    - Pair each behavior task with the unit tests that cover it, in the same group.
+    - A field added, removed or renamed in a config class under
+      sdmx-proxy-config/src/main/java/com/epam/sdmxproxy/configuration/ gets a task to update
+      the schema tables in sdmx-proxy-config/README.md.
+    - "End with a final group named Gates, in this order: build and unit tests
+      (./gradlew clean build); scenario coverage check against the delta specs; independent
+      diff review; E2E via the e2e-report skill (registry-facing changes only, run once, last)."
+
+operations:
+  apply:
+    guidance:
+      - Implement strictly from the change artifacts. If the code has moved or a task no longer
+        fits, stop and propose an artifact update instead of improvising.
+      - Unit tests run with each task group (./gradlew :<module>:test --tests ...). Never run E2E
+        during implementation; it takes 30 to 60 minutes and runs once in the Gates group.
+      - Record gate results in the change's evidence/gates.md (command, result, counts, date).
+      - Never commit, branch, stash or push. The user owns every git write.
+  archive:
+    guidance:
+      - Archive only after every Gates task is checked and evidence/gates.md records the results.
+      - Before archiving, confirm the delta specs still describe the implemented behavior.

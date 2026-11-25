@@ -1,0 +1,3 @@
+schema: spec-driven
+created: 2026-05-27
+goal: "SDMX-JSON 2.0 dimension-group attributes round-trip"
